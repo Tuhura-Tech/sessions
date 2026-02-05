@@ -157,8 +157,9 @@ test.describe('API Integration', () => {
 					expect(dobText).not.toMatch(/\d{13}|undefined|null/); // Not a timestamp or null
 
 					// Check that it looks like a date (contains numbers and separators or month names)
-					const hasDatePattern =
-						/\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}|[A-Za-z]+ \d{1,2}, \d{4}/.test(dobText);
+					const hasDatePattern = /\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}|[A-Za-z]+ \d{1,2}, \d{4}/.test(
+						dobText,
+					);
 					expect(hasDatePattern).toBeTruthy();
 				}
 

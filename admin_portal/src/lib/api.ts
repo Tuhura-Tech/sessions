@@ -9,12 +9,11 @@ export const API_BASE_URL =
 	(env.PUBLIC_BASE_URL as string | undefined) ||
 	fallbackBaseUrl;
 
-const baseURL =
-	API_BASE_URL?.endsWith('/api/v1')
-		? API_BASE_URL
-		: API_BASE_URL
-			? `${API_BASE_URL}/api/v1`
-			: '/api/v1';
+const baseURL = API_BASE_URL?.endsWith('/api/v1')
+	? API_BASE_URL
+	: API_BASE_URL
+		? `${API_BASE_URL}/api/v1`
+		: '/api/v1';
 
 const api = axios.create({
 	baseURL,

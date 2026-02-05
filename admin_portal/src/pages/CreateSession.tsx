@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
-import { adminApi } from '../services/api';
 import { toSessionCreate } from '../lib/mappers';
+import { adminApi } from '../services/api';
 import type { SessionBlock, SessionLocation } from '../types';
 
 const CreateSession: React.FC = () => {

@@ -158,7 +158,7 @@ test.describe('API Integration', () => {
 
 					// Check that it looks like a date (contains numbers and separators or month names)
 					const hasDatePattern =
-						/\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4}|[A-Za-z]+ \d{1,2}, \d{4}/.test(dobText);
+						/\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}|[A-Za-z]+ \d{1,2}, \d{4}/.test(dobText);
 					expect(hasDatePattern).toBeTruthy();
 				}
 
@@ -172,7 +172,7 @@ test.describe('API Integration', () => {
 					const ageMatches = ageText.match(/(\d+)\s*years?/i);
 					expect(ageMatches).toBeTruthy(); // Should match "X years" format
 					if (ageMatches) {
-						const age = parseInt(ageMatches[1], 10);
+						const age = Number.parseInt(ageMatches[1], 10);
 						expect(age).toBeGreaterThanOrEqual(0);
 						expect(age).toBeLessThan(150); // Reasonable age limit
 					}

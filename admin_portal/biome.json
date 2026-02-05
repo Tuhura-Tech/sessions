@@ -6,11 +6,12 @@
 		"indentWidth": 2,
 		"lineWidth": 100,
 		"formatWithErrors": true,
-		"includes": ["**", "!**/*.astro"]
+		"includes": ["src/**", "tests/**"]
 	},
 	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {
 		"enabled": true,
+		"includes": ["src/**", "tests/**"],
 		"domains": {
 			"react": "recommended"
 		},

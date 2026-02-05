@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Check, X } from 'lucide-react';
+import { Calendar, Check, MapPin, X } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

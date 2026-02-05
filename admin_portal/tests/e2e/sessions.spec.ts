@@ -236,8 +236,8 @@ test.describe('Sessions Management', () => {
 				expect(matches).toBeTruthy(); // Must have "X/Y" format
 
 				if (matches) {
-					const confirmed = parseInt(matches[1], 10);
-					const capacity = parseInt(matches[2], 10);
+					const confirmed = Number.parseInt(matches[1], 10);
+					const capacity = Number.parseInt(matches[2], 10);
 					// Confirmed should not exceed capacity
 					expect(confirmed).toBeLessThanOrEqual(capacity);
 					// Capacity should be positive
@@ -357,7 +357,7 @@ test.describe('Sessions Management', () => {
 				const match = signupText?.match(/(\d+)\/(\d+)/);
 
 				if (match) {
-					const displayedConfirmed = parseInt(match[1], 10);
+					const displayedConfirmed = Number.parseInt(match[1], 10);
 					// Should match confirmed count from API
 					expect(displayedConfirmed).toBe(confirmedCount);
 				}

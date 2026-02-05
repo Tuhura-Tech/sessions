@@ -195,7 +195,6 @@ test.describe('Magic Link Complete Authentication Flow', () => {
 		await page.goto(`${FRONTEND_BASE_URL}/auth/login`, { waitUntil: 'networkidle' });
 
 		const emailInput = page.locator('#email');
-		const _submitBtn = page.locator('#submit-btn');
 
 		// Try to submit with invalid email
 		await emailInput.fill('not-an-email');

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle, Info, X, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface Toast {
 	id: string;

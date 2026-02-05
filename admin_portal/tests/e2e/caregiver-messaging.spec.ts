@@ -119,7 +119,7 @@ test.describe('Caregiver Messaging', () => {
 		// If there's a table of caregivers, verify it has data
 		const caregiverTable = page.locator('table');
 		if ((await caregiverTable.count()) > 0) {
-			const rows = caregiverTable.locator('tbody tr');
+			const _rows = caregiverTable.locator('tbody tr');
 			const rowText = await page.locator('body').innerText();
 			// Should have some caregiver data displayed
 			expect(rowText.length).toBeGreaterThan(50);

@@ -3,12 +3,12 @@
  */
 
 import type {
-	Session,
-	SessionCreate,
-	SessionUpdate,
 	AttendanceUpsert,
 	ChildDetails,
+	Session,
 	SessionBlock,
+	SessionCreate,
+	SessionUpdate,
 } from '../types';
 
 /**

@@ -164,7 +164,7 @@ test.describe('Students Management', () => {
 			await page.waitForLoadState('networkidle');
 
 			// Check for status badges (confirmed, waitlisted, pending, withdrawn)
-			const statusBadges = page.locator('span').filter({
+			const _statusBadges = page.locator('span').filter({
 				hasText: /Confirmed|Waitlisted|Pending|Withdrawn/i,
 			});
 			// May or may not have signups, so just check the page loaded

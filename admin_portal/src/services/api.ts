@@ -80,7 +80,7 @@ export const adminApi = {
 	getLocationSessions: async (
 		id: string,
 		year?: number,
-		includeArchived: boolean = false,
+		includeArchived = false,
 	): Promise<Session[]> => {
 		const params = new URLSearchParams();
 		if (year !== undefined) params.append('year', String(year));

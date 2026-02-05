@@ -10,7 +10,7 @@ export const API_BASE_URL =
 	fallbackBaseUrl;
 
 const baseURL =
-	API_BASE_URL && API_BASE_URL.endsWith('/api/v1')
+	API_BASE_URL?.endsWith('/api/v1')
 		? API_BASE_URL
 		: API_BASE_URL
 			? `${API_BASE_URL}/api/v1`

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { createAdminSessionToken } from './helpers';
 
 test.describe('Exclusions Page', () => {

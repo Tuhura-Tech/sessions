@@ -223,7 +223,7 @@ const StaffSchedulePage: React.FC = () => {
 							>
 								<option value="">All days</option>
 								{DAYS.map((day, idx) => (
-									<option key={idx} value={idx}>
+									<option key={day} value={idx}>
 										{day}
 									</option>
 								))}

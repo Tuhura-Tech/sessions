@@ -237,5 +237,7 @@ test('Data persistence: student data persists across navigation', async ({ page 
 	const studentsList = (await listResponse.json()) as Array<{ id: string; name: string }>;
 	const found = studentsList.find((s) => s.id === studentId);
 	expect(found).toBeDefined();
-	expect(found.name).toBe(studentName);
+	if (found) {
+		expect(found.name).toBe(studentName);
+	}
 });

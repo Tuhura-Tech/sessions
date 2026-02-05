@@ -70,7 +70,7 @@ test.describe('Session Detail - Signup Counts', () => {
 		expect(match).toBeTruthy();
 
 		if (match) {
-			const displayedCount = parseInt(match[1], 10);
+			const displayedCount = Number.parseInt(match[1], 10);
 
 			// The tab should show ONLY confirmed signups
 			expect(displayedCount).toBe(confirmedCount);
@@ -214,7 +214,7 @@ test.describe('Session Detail - Signup Counts', () => {
 
 				// If it's a number, should be reasonable (0-120)
 				if (ageText && /^\d+$/.test(ageText)) {
-					const age = parseInt(ageText, 10);
+					const age = Number.parseInt(ageText, 10);
 					expect(age).toBeGreaterThanOrEqual(0);
 					expect(age).toBeLessThan(120);
 				}

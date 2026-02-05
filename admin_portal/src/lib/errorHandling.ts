@@ -28,15 +28,24 @@ export function extractErrorMessage(error: unknown): string {
 		// Handle specific HTTP status codes
 		switch (status) {
 			case 400:
-				return (responseData?.detail as string | undefined) || (responseData?.message as string | undefined) || 'Invalid request. Please check your input.';
+				return (
+					(responseData?.detail as string | undefined) ||
+					(responseData?.message as string | undefined) ||
+					'Invalid request. Please check your input.'
+				);
 			case 401:
 				return 'You are not authorized. Please log in again.';
 			case 403:
 				return 'You do not have permission to perform this action.';
 			case 404:
-				return (responseData?.detail as string | undefined) || 'The requested resource was not found.';
+				return (
+					(responseData?.detail as string | undefined) || 'The requested resource was not found.'
+				);
 			case 409:
-				return (responseData?.detail as string | undefined) || 'This action conflicts with existing data.';
+				return (
+					(responseData?.detail as string | undefined) ||
+					'This action conflicts with existing data.'
+				);
 			case 422:
 				// Validation error
 				if (responseData?.detail && Array.isArray(responseData.detail)) {
@@ -48,7 +57,11 @@ export function extractErrorMessage(error: unknown): string {
 						.join('; ');
 					return `Validation error: ${errors}`;
 				}
-				return (responseData?.detail as string | undefined) || (responseData?.message as string | undefined) || 'Invalid data submitted.';
+				return (
+					(responseData?.detail as string | undefined) ||
+					(responseData?.message as string | undefined) ||
+					'Invalid data submitted.'
+				);
 			case 429:
 				return 'Too many requests. Please wait a moment and try again.';
 			case 500:
@@ -58,7 +71,11 @@ export function extractErrorMessage(error: unknown): string {
 			case 504:
 				return 'Request timeout. The server took too long to respond.';
 			default:
-				return (responseData?.detail as string | undefined) || (responseData?.message as string | undefined) || `Error: ${status}`;
+				return (
+					(responseData?.detail as string | undefined) ||
+					(responseData?.message as string | undefined) ||
+					`Error: ${status}`
+				);
 		}
 	}
 
@@ -103,8 +120,8 @@ export function parseApiError(error: unknown): ApiError {
 		return {
 			status: error.response.status,
 			message: extractErrorMessage(error),
-			detail: (responseData?.detail as string | undefined),
-			field: (responseData?.field as string | undefined),
+			detail: responseData?.detail as string | undefined,
+			field: responseData?.field as string | undefined,
 		};
 	}
 

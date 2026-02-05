@@ -1,22 +1,23 @@
 import { ArrowLeft } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
 import { adminApi } from '../services/api';
-import type { SessionLocation } from '../types';
+import { toSessionCreate } from '../lib/mappers';
+import type { SessionBlock, SessionLocation } from '../types';
 
 const CreateSession: React.FC = () => {
 	const navigate = useNavigate();
 	const [locations, setLocations] = useState<SessionLocation[]>([]);
-	const [blocks, setBlocks] = useState<any[]>([]);
+	const [blocks, setBlocks] = useState<SessionBlock[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const [formData, setFormData] = useState({
 		name: '',
 		year: new Date().getFullYear(),
-		sessionLocationId: '',
+		locationId: '',
 		ageLower: '',
 		ageUpper: '',
 		dayOfWeek: '',
@@ -28,15 +29,11 @@ const CreateSession: React.FC = () => {
 		prerequisites: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
-		sessionType: 'term',
-		blockIds: [] as string[],
+		sessionType: 'term' as 'term' | 'special',
+		blocks: [] as string[],
 	});
 
-	useEffect(() => {
-		loadFormData();
-	}, []);
-
-	const loadFormData = async () => {
+	const loadFormData = useCallback(async () => {
 		try {
 			const [locationsData, blocksData] = await Promise.all([
 				adminApi.getLocations(),
@@ -47,33 +44,36 @@ const CreateSession: React.FC = () => {
 		} catch (error) {
 			console.error('Failed to load form data:', error);
 		}
-	};
+	}, []);
+
+	useEffect(() => {
+		loadFormData();
+	}, [loadFormData]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		try {
 			setIsSubmitting(true);
-			const sessionData = {
+			const sessionCreate = toSessionCreate({
 				name: formData.name,
 				year: formData.year,
-				sessionLocationId: formData.sessionLocationId || null,
-				ageLower: formData.ageLower ? Number.parseInt(formData.ageLower) : null,
-				ageUpper: formData.ageUpper ? Number.parseInt(formData.ageUpper) : null,
-				dayOfWeek: formData.dayOfWeek ? Number.parseInt(formData.dayOfWeek) : null,
-				startTime: formData.startTime || null,
-				endTime: formData.endTime || null,
-				capacity: formData.capacity ? Number.parseInt(formData.capacity) : null,
-				waitlist: formData.waitlist,
+				locationId: formData.locationId,
+				ageLower: Number.parseInt(String(formData.ageLower), 10),
+				ageUpper: Number.parseInt(String(formData.ageUpper), 10),
+				dayOfWeek: Number.parseInt(String(formData.dayOfWeek), 10),
+				startTime: formData.startTime,
+				endTime: formData.endTime,
+				capacity: Number.parseInt(String(formData.capacity), 10),
+				sessionType: formData.sessionType,
 				whatToBring: formData.whatToBring || null,
 				prerequisites: formData.prerequisites || null,
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
-				sessionType: formData.sessionType,
-				blockIds: formData.blockIds,
-			};
+				blocks: formData.blocks,
+			});
 
-			const created = await adminApi.createSession(sessionData);
+			const created = await adminApi.createSession(sessionCreate);
 			navigate(`/sessions/${created.id}`);
 		} catch (error) {
 			console.error('Failed to create session:', error);
@@ -92,6 +92,7 @@ const CreateSession: React.FC = () => {
 			<div className="flex-1">
 				<Layout>
 					<button
+						type="button"
 						onClick={() => navigate('/sessions')}
 						className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
 					>
@@ -124,7 +125,7 @@ const CreateSession: React.FC = () => {
 										onChange={(e) =>
 											setFormData({
 												...formData,
-												year: Number.parseInt(e.target.value),
+												year: Number.parseInt(e.target.value, 10),
 											})
 										}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -136,7 +137,12 @@ const CreateSession: React.FC = () => {
 									<select
 										required
 										value={formData.sessionType}
-										onChange={(e) => setFormData({ ...formData, sessionType: e.target.value })}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												sessionType: e.target.value as 'term' | 'special',
+											})
+										}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 									>
 										<option value="term">Term (Recurring)</option>
@@ -147,11 +153,11 @@ const CreateSession: React.FC = () => {
 								<div>
 									<label className="block text-sm font-medium text-gray-700">Location</label>
 									<select
-										value={formData.sessionLocationId}
+										value={formData.locationId}
 										onChange={(e) =>
 											setFormData({
 												...formData,
-												sessionLocationId: e.target.value,
+												locationId: e.target.value,
 											})
 										}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -268,24 +274,24 @@ const CreateSession: React.FC = () => {
 											<label key={block.id} className="flex items-center">
 												<input
 													type="checkbox"
-													checked={formData.blockIds.includes(block.id)}
+													checked={formData.blocks.includes(block.id)}
 													onChange={(e) => {
 														if (e.target.checked) {
 															setFormData({
 																...formData,
-																blockIds: [...formData.blockIds, block.id],
+																blocks: [...formData.blocks, block.id],
 															});
 														} else {
 															setFormData({
 																...formData,
-																blockIds: formData.blockIds.filter((id) => id !== block.id),
+																blocks: formData.blocks.filter((id) => id !== block.id),
 															});
 														}
 													}}
 													className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 												/>
 												<span className="ml-2 text-sm text-gray-900">
-													{block.name} ({block.blockType}) - {block.year}
+													{block.name} ({block.block_type}) - {block.year}
 												</span>
 											</label>
 										))}

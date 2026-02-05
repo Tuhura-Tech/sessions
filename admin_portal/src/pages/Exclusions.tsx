@@ -1,6 +1,6 @@
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ErrorMessage, LoadingSpinner, SuccessMessage } from '../components/Alert';
 import { FormInput, FormTextarea } from '../components/FormComponents';
 import Layout from '../components/Layout';
@@ -30,11 +30,7 @@ const Exclusions: React.FC = () => {
 		reason: '',
 	});
 
-	useEffect(() => {
-		loadExclusions();
-	}, [selectedYear]);
-
-	const loadExclusions = async () => {
+	const loadExclusions = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			setError(null);
@@ -46,7 +42,11 @@ const Exclusions: React.FC = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [selectedYear]);
+
+	useEffect(() => {
+		loadExclusions();
+	}, [loadExclusions]);
 
 	const handleCreate = () => {
 		setEditingExclusion(null);
@@ -89,8 +89,9 @@ const Exclusions: React.FC = () => {
 
 			setShowModal(false);
 			loadExclusions();
-		} catch (err: any) {
-			setError(err.response?.data?.detail || 'Failed to save exclusion');
+		} catch (err) {
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to save exclusion');
 		}
 	};
 
@@ -109,8 +110,9 @@ const Exclusions: React.FC = () => {
 			await adminApi.deleteExclusion(exclusion.id);
 			setSuccess('Exclusion deleted successfully');
 			loadExclusions();
-		} catch (err: any) {
-			setError(err.response?.data?.detail || 'Failed to delete exclusion');
+		} catch (err) {
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to delete exclusion');
 		}
 	};
 
@@ -149,6 +151,7 @@ const Exclusions: React.FC = () => {
 					title="Exclusion Dates (Holidays & Closures)"
 					actions={
 						<button
+							type="button"
 							onClick={handleCreate}
 							className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
 						>
@@ -230,6 +233,7 @@ const Exclusions: React.FC = () => {
 														</div>
 														<div className="flex gap-2">
 															<button
+																type="button"
 																onClick={() => handleEdit(exclusion)}
 																className="text-blue-600 hover:text-blue-900"
 																title="Edit exclusion"
@@ -237,6 +241,7 @@ const Exclusions: React.FC = () => {
 																<Edit2 className="h-4 w-4" />
 															</button>
 															<button
+																type="button"
 																onClick={() => handleDelete(exclusion)}
 																className="text-red-600 hover:text-red-900"
 																title="Delete exclusion"

@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/api';
 import type { Occurrence, Session } from '../types';
@@ -29,11 +29,77 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 	const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		loadCalendarData();
-	}, [currentDate]);
+	const toDateKey = useCallback(
+		(d: Date) =>
+			new Intl.DateTimeFormat('en-CA', {
+				timeZone: 'Pacific/Auckland',
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+			}).format(d),
+		[],
+	);
 
-	const loadCalendarData = async () => {
+	const buildCalendarGrid = useCallback(
+		(date: Date, sessions: Session[], occurrences: Occurrence[]): CalendarDay[] => {
+			const year = date.getFullYear();
+			const month = date.getMonth();
+
+			// First day of the month
+			const firstDay = new Date(year, month, 1);
+
+			// Start from the Sunday before the first day of the month
+			const startDate = new Date(firstDay);
+			const dayOfWeek = firstDay.getDay();
+			const daysToSubtract = dayOfWeek;
+			startDate.setDate(firstDay.getDate() - daysToSubtract);
+
+			// Build 6 weeks (42 days) to cover all possible month layouts
+			const days: CalendarDay[] = [];
+			const currentDay = new Date(startDate);
+
+			for (let i = 0; i < 42; i++) {
+				const dateStr = toDateKey(currentDay);
+
+				// Find occurrences for this day
+				const dayOccurrences = occurrences
+					.filter((occ) => toDateKey(new Date(occ.starts_at)) === dateStr)
+					.map((occ) => {
+						const session = sessions.find((s) => s.id === occ.session_id);
+						const start = occ.starts_at ? new Date(occ.starts_at) : null;
+						const end = occ.ends_at ? new Date(occ.ends_at) : null;
+						const formattedStart = start
+							? start.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' })
+							: '';
+						const formattedEnd = end
+							? end.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' })
+							: '';
+						return {
+							id: occ.id,
+							sessionId: occ.session_id,
+							sessionName: session?.name || 'Unknown',
+							startTime: formattedStart,
+							endTime: formattedEnd,
+							isAssigned: false, // Staff assignments not included in calendar
+							cancelled: occ.cancelled,
+						};
+					});
+
+				days.push({
+					date: new Date(currentDay),
+					isCurrentMonth: currentDay.getMonth() === month,
+					occurrences: dayOccurrences,
+				});
+
+				currentDay.setDate(currentDay.getDate() + 1);
+			}
+
+			return days;
+		},
+		[toDateKey],
+	);
+
+	const loadCalendarData = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const year = currentDate.getFullYear();
@@ -55,59 +121,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [currentDate, buildCalendarGrid]);
 
-	const buildCalendarGrid = (
-		date: Date,
-		sessions: Session[],
-		occurrences: Occurrence[],
-	): CalendarDay[] => {
-		const year = date.getFullYear();
-		const month = date.getMonth();
-
-		// First day of the month
-		const firstDay = new Date(year, month, 1);
-
-		// Start from the Monday before the first day of the month
-		const startDate = new Date(firstDay);
-		const dayOfWeek = firstDay.getDay();
-		const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-		startDate.setDate(firstDay.getDate() - daysToSubtract);
-
-		// Build 6 weeks (42 days) to cover all possible month layouts
-		const days: CalendarDay[] = [];
-		const currentDay = new Date(startDate);
-
-		for (let i = 0; i < 42; i++) {
-			const dateStr = currentDay.toISOString().split('T')[0];
-
-			// Find occurrences for this day
-			const dayOccurrences = occurrences
-				.filter((occ) => occ.startsAt.split('T')[0] === dateStr)
-				.map((occ) => {
-					const session = sessions.find((s) => s.id === occ.sessionId);
-					return {
-						id: occ.id,
-						sessionId: occ.sessionId,
-						sessionName: session?.name || 'Unknown',
-						startTime: session?.startTime || '',
-						endTime: session?.endTime || '',
-						isAssigned: false, // Staff assignments not included in calendar
-						cancelled: occ.cancelled,
-					};
-				});
-
-			days.push({
-				date: new Date(currentDay),
-				isCurrentMonth: currentDay.getMonth() === month,
-				occurrences: dayOccurrences,
-			});
-
-			currentDay.setDate(currentDay.getDate() + 1);
-		}
-
-		return days;
-	};
+	useEffect(() => {
+		loadCalendarData();
+	}, [loadCalendarData]);
 
 	const goToPreviousMonth = () => {
 		setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -125,7 +143,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 		month: 'long',
 		year: 'numeric',
 	});
-	const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+	const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 	return (
 		<div className="rounded-lg bg-white shadow">
@@ -133,16 +151,21 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 				<h2 className="text-lg font-semibold text-gray-900">Session Calendar</h2>
 				<div className="flex items-center gap-2">
 					<button
+						type="button"
 						onClick={goToToday}
 						className="rounded-md bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200"
 					>
 						Today
 					</button>
-					<button onClick={goToPreviousMonth} className="rounded p-1 hover:bg-gray-100">
+					<button
+						type="button"
+						onClick={goToPreviousMonth}
+						className="rounded p-1 hover:bg-gray-100"
+					>
 						<ChevronLeft className="h-5 w-5" />
 					</button>
 					<span className="min-w-37.5 text-center text-sm font-medium">{monthName}</span>
-					<button onClick={goToNextMonth} className="rounded p-1 hover:bg-gray-100">
+					<button type="button" onClick={goToNextMonth} className="rounded p-1 hover:bg-gray-100">
 						<ChevronRight className="h-5 w-5" />
 					</button>
 				</div>
@@ -161,12 +184,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 						))}
 
 						{/* Calendar days */}
-						{calendarDays.map((day, index) => {
-							const isToday = day.date.toDateString() === new Date().toDateString();
+						{calendarDays.map((day) => {
+							const isToday = toDateKey(day.date) === toDateKey(new Date());
 
 							return (
 								<div
-									key={index}
+									key={toDateKey(day.date)}
 									className={`min-h-25 rounded border p-1 ${
 										day.isCurrentMonth ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50'
 									} ${isToday ? 'ring-2 ring-blue-500' : ''}`}
@@ -181,9 +204,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 
 									<div className="space-y-1">
 										{day.occurrences.map((occ) => (
-											<div
+											<button
 												key={occ.id}
+												type="button"
 												onClick={() => !occ.cancelled && navigate(`/attendance/${occ.id}`)}
+												disabled={occ.cancelled}
 												className={`truncate rounded p-1 text-xs ${
 													occ.cancelled
 														? 'cursor-not-allowed bg-gray-200 text-gray-500 line-through'
@@ -195,7 +220,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ currentStaffId }) => {
 											>
 												{occ.startTime && `${occ.startTime} `}
 												{occ.sessionName}
-											</div>
+											</button>
 										))}
 									</div>
 								</div>

@@ -1,0 +1,12 @@
+Hi {{ caregiver_name }},
+
+This is a reminder for {{ student_name }}'s session {{ session_name }} on {{ occurrence_date }}.
+
+Session details:
+- Student: {{ student_name }}
+- Session: {{ session_name }}
+{% if session_venue %}- Location: {{ session_venue }}{% endif %}
+{% if session_address %}
+- Address: {{ session_address }}{% endif %}
+
+If you have questions, contact {{ support_email }}.

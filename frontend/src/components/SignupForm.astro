@@ -5,16 +5,34 @@ interface Props {
 }
 
 const { sessionId, children } = Astro.props;
+
+// Determine API base URL from environment or defaults
+const apiBaseUrl =
+	import.meta.env.PUBLIC_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
 ---
 
 <form id="signup-form" class="mt-8 space-y-6">
 	<!-- Success Message -->
-	<div id="success-message" class="hidden rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-		<p class="font-semibold text-emerald-800">✓ Signup successful!</p>
-		<p class="mt-1 text-sm text-emerald-700">
-			Your child has been registered for the session. You'll receive a confirmation email shortly.
-		</p>
-		<a href="/account" class="btn btn-primary mt-4"> Back to account </a>
+	<div
+		id="success-message"
+		class="hidden rounded-lg border border-emerald-200 bg-emerald-50 p-4 md:p-6"
+	>
+		<div class="flex items-start gap-3">
+			<div class="flex-shrink-0">
+				<svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
+					></path>
+				</svg>
+			</div>
+			<div class="flex-1">
+				<p class="font-semibold text-emerald-800">Signup successful!</p>
+				<p class="mt-1 text-sm text-emerald-700">
+					Your child has been registered for the session. You'll receive a confirmation email
+					shortly.
+				</p>
+				<a href="/account" class="btn btn-primary mt-4 inline-block"> Back to account </a>
+			</div>
+		</div>
 	</div>
 
 	<!-- Form Content (hidden after success) -->
@@ -22,18 +40,20 @@ const { sessionId, children } = Astro.props;
 		<!-- Child Selection -->
 		<div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
 			<h2 class="text-xl font-semibold text-gray-900">Select child</h2>
+			<p class="mt-1 text-sm text-gray-600">Which child would you like to register?</p>
 			<div class="mt-4 space-y-3">
 				{
 					children.map((child) => (
-						<label class="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50">
+						<label class="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-4 transition-all focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:border-blue-300 hover:bg-gray-50">
 							<input
 								type="radio"
 								name="childId"
 								value={child.id}
 								required
-								class="h-4 w-4 text-tuhura-green focus:ring-tuhura-green"
+								aria-required="true"
+								class="h-4 w-4 cursor-pointer text-tuhura-green focus:ring-tuhura-green"
 							/>
-							<div class="flex-1">
+							<div class="min-w-0 flex-1">
 								<p class="font-semibold text-gray-900">{child.name}</p>
 								{child.dateOfBirth && (
 									<p class="text-sm text-gray-600">
@@ -48,26 +68,60 @@ const { sessionId, children } = Astro.props;
 		</div>
 
 		<!-- Error Message -->
-		<div id="error-message" class="hidden rounded-lg border border-red-200 bg-red-50 p-4">
-			<p class="font-semibold text-red-800">Error</p>
-			<p id="error-text" class="mt-1 text-sm text-red-700"></p>
+		<div
+			id="error-message"
+			class="hidden rounded-lg border border-red-200 bg-red-50 p-4 md:p-6"
+			role="alert"
+		>
+			<div class="flex items-start gap-3">
+				<div class="flex-shrink-0">
+					<svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+					</svg>
+				</div>
+				<div class="min-w-0 flex-1">
+					<p class="font-semibold text-red-800">Signup failed</p>
+					<p id="error-text" class="mt-1 text-sm text-red-700"></p>
+				</div>
+			</div>
 		</div>
 
 		<!-- Submit -->
-		<div class="flex gap-3">
-			<button type="submit" id="submit-btn" class="btn btn-primary flex-1">
-				Complete signup
+		<div class="flex flex-col gap-3 sm:flex-row">
+			<button
+				type="submit"
+				id="submit-btn"
+				class="btn btn-primary flex-1 transition-all hover:shadow-lg active:scale-95"
+				aria-busy="false"
+			>
+				<span id="submit-text">Complete signup</span>
 			</button>
-			<a href={`/sessions/${sessionId}`} class="btn btn-secondary flex-1 text-center"> Cancel </a>
+			<a
+				href={`/sessions/${sessionId}`}
+				class="btn btn-secondary flex-1 text-center transition-all hover:shadow-lg active:scale-95"
+			>
+				Cancel
+			</a>
+		</div>
+
+		<!-- Additional info -->
+		<div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+			<p class="text-sm text-blue-900">
+				<strong>Note:</strong> After signup, your child's enrollment status will be processed automatically
+				and you'll receive confirmation via email.
+			</p>
 		</div>
 	</div>
 </form>
 
-<!-- <script define:vars={{ sessionId }} is:inline>
-	const API_BASE_URL = import.meta.env.PUBLIC_BASE_URL || 'http://sessions-api.tuhuratech.org.nz';
-
+<script define:vars={{ sessionId, apiBaseUrl }} is:inline>
 	const form = document.getElementById('signup-form');
 	const submitBtn = document.getElementById('submit-btn');
+	const submitText = document.getElementById('submit-text');
 	const errorMsg = document.getElementById('error-message');
 	const errorText = document.getElementById('error-text');
 	const successMsg = document.getElementById('success-message');
@@ -86,84 +140,43 @@ const { sessionId, children } = Astro.props;
 				return;
 			}
 
-			// Disable form
+			// Disable form and show loading state
 			submitBtn.disabled = true;
-			submitBtn.textContent = 'Submitting...';
+			submitBtn.setAttribute('aria-busy', 'true');
+			submitText.textContent = 'Submitting...';
 			errorMsg.classList.add('hidden');
 
 			try {
-				const res = await fetch(`${API_BASE_URL}/api/v1/session/${sessionId}/signup`, {
+				const url = `${apiBaseUrl}/api/v1/signups/${sessionId}`;
+				console.log('Signup URL:', url);
+				const res = await fetch(url, {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ childId }),
+					body: JSON.stringify({ studentId: childId }),
 				});
 
+				console.log('Signup response status:', res.status);
 				if (!res.ok) {
-					throw new Error(`Failed to create signup: ${res.status}`);
+					const data = await res.json().catch(() => ({}));
+					const message = data.detail || `Error ${res.status}`;
+					throw new Error(message);
 				}
 
-				// Success! Show success message without redirecting
-				formContent.classList.add('hidden');
-				successMsg.classList.remove('hidden');
+				console.log('Signup successful, redirecting to donate');
+				// Success! Redirect to donate page
+				window.location.href = '/donate?from=signup';
 			} catch (error) {
-				errorText.textContent = error instanceof Error ? error.message : 'Failed to complete signup. Please try again.';
+				console.error('Signup error:', error);
+				const message =
+					error instanceof Error ? error.message : 'Failed to complete signup. Please try again.';
+				errorText.textContent = message;
 				errorMsg.classList.remove('hidden');
 				submitBtn.disabled = false;
-				submitBtn.textContent = 'Complete signup';
+				submitBtn.setAttribute('aria-busy', 'false');
+				submitText.textContent = 'Complete signup';
+				window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
 			}
 		});
 	}
-</script> -->
-
-<script define:vars={{ sessionId }} is:inline>
-	const form = document.getElementById('signup-form');
-	const submitBtn = document.getElementById('submit-btn');
-	const errorMsg = document.getElementById('error-message');
-	const errorText = document.getElementById('error-text');
-	const successMsg = document.getElementById('success-message');
-	const formContent = document.getElementById('form-content');
-
-	form?.addEventListener('submit', async (e) => {
-		e.preventDefault();
-
-		const formData = new FormData(form);
-		const childId = formData.get('childId');
-
-		if (!childId) {
-			errorText.textContent = 'Please select a child';
-			errorMsg.classList.remove('hidden');
-			return;
-		}
-
-		// Disable form
-		submitBtn.disabled = true;
-		submitBtn.textContent = 'Submitting...';
-
-		try {
-			const res = await fetch(
-				`https://sessions-api.tuhuratech.org.nz/api/v1/session/${sessionId}/signup`,
-				{
-					method: 'POST',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ childId }),
-				},
-			);
-
-			if (!res.ok) {
-				throw new Error(`Failed to create signup: ${res.status}`);
-			}
-
-			// Success! Show success message without redirecting
-			formContent.classList.add('hidden');
-			successMsg.classList.remove('hidden');
-		} catch (error) {
-			errorText.textContent =
-				error instanceof Error ? error.message : 'Failed to complete signup. Please try again.';
-			errorMsg.classList.remove('hidden');
-			submitBtn.disabled = false;
-			submitBtn.textContent = 'Complete signup';
-		}
-	});
 </script>

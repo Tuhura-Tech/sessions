@@ -13,6 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
 	testDir: './tests/e2e',
+	globalSetup: './tests/e2e/global-setup.ts',
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -22,7 +23,7 @@ export default defineConfig({
 	/* Opt out of parallel tests on CI. */
 	...(process.env.CI ? { workers: 1 } : {}),
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
-	reporter: [['list']],
+	reporter: [['list'], ['html', { open: 'never' }]],
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
@@ -75,14 +76,16 @@ export default defineConfig({
 	],
 
 	/* Run your local dev server before starting the tests */
-	// Note: We rely on having the dev server already running
-	// Run: npm run dev in a separate terminal before running tests
-	// webServer: {
-	//   command: 'pnpm dev -- --port 4324',
-	//   url: 'http://localhost:4324',
-	//   reuseExistingServer: !process.env.CI,
-	//   env: {
-	//     PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
-	//   },
-	// },
+	...(process.env.CI
+		? {}
+		: {
+				webServer: {
+					command: 'pnpm dev',
+					url: 'http://localhost:4321',
+					reuseExistingServer: true,
+					env: {
+						PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
+					},
+				},
+			}),
 });

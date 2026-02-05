@@ -1,0 +1,12 @@
+Hi {{ caregiver_name }},
+
+Good news — {{ student_name }} has been confirmed for {{ session_name }}.
+
+Session details:
+- Student: {{ student_name }}
+- Session: {{ session_name }}
+{% if session_venue %}- Location: {{ session_venue }}{% endif %}
+{% if session_address %}
+- Address: {{ session_address }}{% endif %}
+
+If you have questions, contact {{ support_email }}.

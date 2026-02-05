@@ -1,36 +1,79 @@
 import { expect, test } from '@playwright/test';
-import { mockGoogleOAuthSession, navigateTo, waitForApiCalls } from './helpers';
+import {
+	authenticateAsAdmin,
+	ensureAuthenticated,
+	navigateTo,
+	trackPageErrors,
+	waitForApiCalls,
+	waitForAuthReady,
+} from './helpers';
 
 test.describe('Dashboard', () => {
+	let pageErrors: string[] = [];
+
 	test.beforeEach(async ({ page }) => {
+		pageErrors = trackPageErrors(page);
 		// Mock authenticated session for all tests
-		await mockGoogleOAuthSession(page);
+		await authenticateAsAdmin(page);
+		await ensureAuthenticated(page);
+	});
+
+	test.afterEach(async () => {
+		// Filter out calendar errors which are expected when dashboard loads
+		const relevantErrors = pageErrors.filter(
+			(error) => !error.includes('Failed to load calendar data'),
+		);
+		expect(relevantErrors).toEqual([]);
 	});
 
 	test('should display dashboard page', async ({ page }) => {
 		await navigateTo(page, '/dashboard');
+		await waitForAuthReady(page);
 
 		// Wait for page to fully load
 		await waitForApiCalls(page);
 
 		// Check page title
-		await expect(page.locator('text=Dashboard')).toBeVisible();
+		await expect(page.locator('header h1')).toContainText('Dashboard');
 	});
 
 	test('should display statistics', async ({ page }) => {
 		await navigateTo(page, '/dashboard');
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
 
-		// Check for statistics sections
-		const statElements = page.locator('[class*="stat"]');
-		const count = await statElements.count();
+		// Verify page loaded
+		const bodyText = await page.locator('body').innerText();
+		expect(bodyText.trim().length).toBeGreaterThan(0);
 
-		// Should have at least some statistics displayed
-		expect(count).toBeGreaterThan(0);
+		// Verify stat cards for Full and Available Sessions
+		const fullSessionsLabel = page.locator('p:has-text("Full Sessions")');
+		const availableSessionsLabel = page.locator('p:has-text("Available Sessions")');
+
+		// Both stats should be visible
+		await expect(fullSessionsLabel).toBeVisible();
+		await expect(availableSessionsLabel).toBeVisible();
+
+		// Verify that stat values are numbers (0 or greater)
+		const fullSessionsValue = page
+			.locator('p:has-text("Full Sessions")')
+			.locator('..')
+			.locator('p:nth-child(2)');
+		const availableSessionsValue = page
+			.locator('p:has-text("Available Sessions")')
+			.locator('..')
+			.locator('p:nth-child(2)');
+
+		const fullText = await fullSessionsValue.innerText();
+		const availableText = await availableSessionsValue.innerText();
+
+		expect(fullText.match(/^\d+$/)).toBeTruthy(); // Should be numeric
+		expect(availableText.match(/^\d+$/)).toBeTruthy(); // Should be numeric
 	});
 
 	test('should have navigation links to main sections', async ({ page }) => {
 		await navigateTo(page, '/dashboard');
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
 
 		// Check for sidebar navigation
@@ -38,15 +81,14 @@ test.describe('Dashboard', () => {
 		await expect(sidebar).toBeVisible();
 
 		// Check for common navigation items
-		const hasSessionsLink = (await page.locator('a:has-text("Sessions")').count()) > 0;
-		const hasAttendanceLink = (await page.locator('a:has-text("Attendance")').count()) > 0;
-		const hasLocationsLink = (await page.locator('a:has-text("Locations")').count()) > 0;
-
-		expect(hasSessionsLink || hasAttendanceLink || hasLocationsLink).toBeTruthy();
+		await expect(page.locator('nav a:has-text("Sessions")')).toBeVisible();
+		await expect(page.locator('nav a:has-text("Locations")')).toBeVisible();
+		await expect(page.locator('nav a:has-text("Blocks")')).toBeVisible();
 	});
 
 	test('should have logout button', async ({ page }) => {
 		await navigateTo(page, '/dashboard');
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
 
 		// Find logout button (may be in menu or directly visible)
@@ -55,8 +97,7 @@ test.describe('Dashboard', () => {
 		);
 
 		// At least one logout option should exist
-		const count = await logoutButton.count();
-		expect(count).toBeGreaterThan(0);
+		await expect(logoutButton.first()).toBeVisible();
 	});
 
 	test('should be responsive on mobile', async ({ page }) => {
@@ -64,9 +105,10 @@ test.describe('Dashboard', () => {
 		await page.setViewportSize({ width: 375, height: 667 });
 
 		await navigateTo(page, '/dashboard');
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
 
 		// Page should still render
-		await expect(page.locator('text=Dashboard')).toBeVisible();
+		await expect(page.locator('header h1')).toContainText('Dashboard');
 	});
 });

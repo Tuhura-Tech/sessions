@@ -10,6 +10,7 @@ function parseSessions(mapEl: HTMLElement): Session[] {
 	try {
 		const raw = mapEl.getAttribute('data-sessions') || '[]';
 		const parsed = JSON.parse(raw);
+		console.log(parsed);
 		return Array.isArray(parsed) ? (parsed as Session[]) : [];
 	} catch {
 		return [];

@@ -5,33 +5,46 @@ import { expect, type Page, test } from '@playwright/test';
  * The API provides a debug token in response which we use to construct the consume URL.
  * We visit the consume endpoint, which sets the session cookie and redirects to /account.
  */
+
+// Get API base URL from environment or use defaults
+const API_BASE_URL = process.env.PUBLIC_BASE_URL || 'http://localhost:8000';
+const FRONTEND_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4321';
+
 async function authenticateUser(page: Page, email: string): Promise<void> {
 	// First, navigate to the frontend to establish the domain context
-	await page.goto('http://localhost:4324/', { waitUntil: 'domcontentloaded' });
+	await page.goto(`${FRONTEND_BASE_URL}/`, { waitUntil: 'domcontentloaded' });
 
 	// Use Playwright request context to avoid browser CORS issues
-	const resp = await page.request.post('http://localhost:8000/api/v1/auth/magic-link', {
+	const resp = await page.request.post(`${API_BASE_URL}/api/v1/auth/magic-link`, {
 		headers: { 'Content-Type': 'application/json' },
 		data: { email, return_to: '/account' },
 	});
-	const token = (await resp.json()).debugToken as string;
+	const data = await resp.json();
+	const token = (data.debugToken ?? data.debug_token) as string;
 
 	expect(token).toBeDefined();
 
-	// Now navigate directly to the consume endpoint
-	// The backend will set the Set-Cookie header and redirect
-	await page.goto(
-		`http://localhost:8000/api/v1/auth/magic-link/consume?token=${token}&returnTo=/account`,
-		{
-			waitUntil: 'domcontentloaded',
-		},
+	const consumeResponse = await page.request.get(
+		`${API_BASE_URL}/api/v1/auth/magic-link/consume?token=${token}&returnTo=/account`,
 	);
+	const setCookie = consumeResponse.headers()['set-cookie'];
+	const sessionCookie = setCookie?.split(';')[0];
+	const [cookieName, cookieValue] = sessionCookie ? sessionCookie.split('=') : [];
+	if (cookieName && cookieValue) {
+		await page.context().addCookies([
+			{
+				name: cookieName,
+				value: cookieValue,
+				url: FRONTEND_BASE_URL,
+			},
+		]);
+	}
 
 	// Move to account explicitly (less flaky than waiting on redirects)
 	await page.goto('/account', { waitUntil: 'domcontentloaded' });
 
 	// Ensure caregiver profile is complete so child creation passes backend validation
-	await page.request.patch('http://localhost:8000/api/v1/me', {
+	await page.request.patch(`${API_BASE_URL}/api/v1/me`, {
 		headers: { 'Content-Type': 'application/json' },
 		data: { name: 'E2E User', phone: '+64-210-0000' },
 	});
@@ -43,6 +56,42 @@ async function authenticateUser(page: Page, email: string): Promise<void> {
 	if (page.url().includes('/account')) {
 		await page.reload({ waitUntil: 'domcontentloaded' });
 	}
+}
+
+async function fetchFirstSessionId(request: Page['request']): Promise<string> {
+	const response = await request.get(`${API_BASE_URL}/api/v1/sessions`);
+	const payload = (await response.json()) as
+		| { items?: Array<{ id?: string; sessions?: Array<{ id?: string }> }> }
+		| Array<{ id?: string; sessions?: Array<{ id?: string }> }>;
+	const items = Array.isArray(payload) ? payload : (payload.items ?? []);
+	const first = items[0];
+	const sessionId = first?.id ?? first?.sessions?.[0]?.id;
+
+	expect(sessionId).toBeDefined();
+	return sessionId as string;
+}
+
+async function fetchFirstSessionInfo(
+	request: Page['request'],
+): Promise<{ id: string; name: string }> {
+	const response = await request.get(`${API_BASE_URL}/api/v1/sessions`);
+	const payload = (await response.json()) as
+		| {
+				items?: Array<{
+					id?: string;
+					name?: string;
+					sessions?: Array<{ id?: string; name?: string }>;
+				}>;
+		  }
+		| Array<{ id?: string; name?: string; sessions?: Array<{ id?: string; name?: string }> }>;
+	const items = Array.isArray(payload) ? payload : (payload.items ?? []);
+	const first = items[0];
+	const session = first?.sessions?.[0] ?? first;
+
+	expect(session?.id).toBeDefined();
+	expect(session?.name).toBeDefined();
+
+	return { id: String(session?.id), name: String(session?.name) };
 }
 
 /**
@@ -65,9 +114,11 @@ async function createChildViaUI(page: Page, name: string, dateOfBirth: string): 
 	await dobInput.fill(dateOfBirth);
 	await submitBtn.click();
 
-	// Wait for page reload after child creation
-	await page.waitForLoadState('domcontentloaded');
-	await page.waitForTimeout(500); // Brief wait for reload
+	// Wait for page reload after child creation (or a short timeout)
+	await Promise.race([
+		page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+		page.waitForTimeout(1500),
+	]);
 }
 
 /**
@@ -75,7 +126,7 @@ async function createChildViaUI(page: Page, name: string, dateOfBirth: string): 
  */
 // async function getChildIdFromPage(page: Page, childName: string): Promise<string> {
 // 	const childId = await page.evaluate(async (name) => {
-// 		const response = await fetch('http://localhost:8000/api/v1/children', {
+// 		const response = await fetch('http://localhost:8000/api/v1/students', {
 // 			method: 'GET',
 // 			credentials: 'include',
 // 		});
@@ -225,6 +276,67 @@ test.describe('Child Management', () => {
 		await expect(childList).toContainText('Child One', { timeout: 5000 });
 		await expect(childList).toContainText('Child Two', { timeout: 5000 });
 	});
+
+	test('should allow editing a child', async ({ page }) => {
+		await authenticateUser(page, `edit-child-${testEmail}`);
+
+		// Create a child first
+		await createChildViaUI(page, 'Editable Child', '2015-04-12');
+
+		// Open edit modal
+		const editBtn = page.locator('button[data-child-id]').first();
+		await editBtn.click();
+
+		const editModal = page.locator('#edit-child-modal');
+		await editModal.waitFor({ state: 'visible', timeout: 5000 });
+
+		const nameInput = editModal.locator('input[name="name"]');
+		const submitBtn = editModal.locator('button[type="submit"]');
+		await nameInput.fill('Updated Child Name');
+		await submitBtn.click();
+
+		await Promise.race([
+			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+			page.waitForTimeout(1500),
+		]);
+
+		const childList = page.locator('#children-list');
+		await expect(childList).toContainText('Updated Child Name', { timeout: 5000 });
+	});
+
+	test('should show view session link for signed up child', async ({ page }) => {
+		await authenticateUser(page, `signup-link-${testEmail}`);
+
+		const { id: sessionId, name: sessionName } = await fetchFirstSessionInfo(page.request);
+		const childName = `Signup Child ${Date.now()}`;
+		const createChildResponse = await page.request.post(`${API_BASE_URL}/api/v1/students`, {
+			headers: { 'Content-Type': 'application/json' },
+			data: {
+				name: childName,
+				date_of_birth: '2015-05-15',
+			},
+		});
+		expect(createChildResponse.ok()).toBe(true);
+		const createdChild = (await createChildResponse.json()) as { id?: string };
+		const childId = String(createdChild.id);
+		expect(childId).not.toBe('undefined');
+
+		const signupResponse = await page.request.post(`${API_BASE_URL}/api/v1/signups/${sessionId}`, {
+			headers: { 'Content-Type': 'application/json' },
+			data: { studentId: childId },
+		});
+		expect(signupResponse.ok()).toBe(true);
+
+		await page.goto('/account', { waitUntil: 'domcontentloaded' });
+		await page.waitForTimeout(1000);
+
+		const childCard = page.locator('#children-list > div', { hasText: childName });
+		await expect(childCard).toBeVisible();
+		await expect(childCard).toContainText(sessionName);
+
+		const sessionLink = childCard.locator('a', { hasText: 'View session' });
+		await expect(sessionLink).toHaveAttribute('href', `/sessions/${sessionId}`);
+	});
 });
 
 test.describe('Session Signup Flow', () => {
@@ -233,10 +345,7 @@ test.describe('Session Signup Flow', () => {
 
 	test.beforeAll(async ({ request }) => {
 		// Get available sessions
-		const response = await request.get('http://localhost:8000/api/v1/sessions');
-		const locations = await response.json();
-		// Get first session from first location
-		sessionId = locations[0].sessions[0].id;
+		sessionId = await fetchFirstSessionId(request);
 	});
 
 	// test('should allow signup with existing child', async ({ page }) => {
@@ -292,7 +401,7 @@ test.describe('Session Signup Flow', () => {
 		});
 
 		// Wait for form to appear
-		await page.locator('#signup-form').waitFor({ state: 'visible', timeout: 10000 });
+		await page.locator('#signup-form').waitFor({ state: 'visible', timeout: 15000 });
 
 		// Verify child appears in form
 		await expect(page.locator('input[name="childId"]').first()).toBeVisible();
@@ -495,5 +604,176 @@ test.describe('Navigation and Redirects', () => {
 		// returnTo may be encoded; accept either
 		const currentUrl = page.url();
 		expect(decodeURIComponent(currentUrl)).toContain(`session=${sessionId}`);
+	});
+});
+
+test.describe('Complete Caregiver Journey', () => {
+	test('full flow: authenticate → add child → navigate to signup → form submission', async ({
+		page,
+	}) => {
+		const email = `journey-${Date.now()}@example.com`;
+
+		// Step 1: Authenticate and complete profile
+		await authenticateUser(page, email);
+		await expect(page.locator('main h1')).toContainText('My Account');
+
+		// Step 2: Get first session info from API
+		const { id: sessionId, name: sessionName } = await fetchFirstSessionInfo(page.request);
+
+		// Step 3: Add a child
+		await createChildViaUI(page, 'Journey Test Child', '2016-03-20');
+
+		// Verify child was added
+		const childList = page.locator('#children-list');
+		await expect(childList).toContainText('Journey Test Child', { timeout: 5000 });
+
+		// Step 4: Navigate to signup page with session
+		await page.goto(`/signup?session=${sessionId}`, {
+			waitUntil: 'domcontentloaded',
+			timeout: 20000,
+		});
+
+		// Step 5: Verify signup form is displayed and accessible
+		await expect(page.locator('#signup-form')).toBeVisible({ timeout: 10000 });
+		await expect(page.locator('#form-content')).toBeVisible({ timeout: 5000 });
+
+		// Step 6: Select child
+		const childRadio = page.locator('input[name="childId"]').first();
+		await expect(childRadio).toBeVisible({ timeout: 5000 });
+		await childRadio.check();
+		await expect(childRadio).toBeChecked();
+
+		// Step 7: Submit form
+		const submitBtn = page.locator('#signup-form button[type="submit"]');
+		await expect(submitBtn).toBeVisible();
+		await submitBtn.click();
+
+		// Step 8: Verify submission succeeded
+		// The form should either show a success message or navigate away from the signup page
+		// Give it time to process the API request
+		await page.waitForTimeout(3000);
+
+		// Check if we navigated away from signup or if there's a success message
+		const currentUrl = page.url();
+		const isSignupPage = currentUrl.includes('/signup');
+
+		if (isSignupPage) {
+			// If still on signup page, check for success message
+			const successMsg = page.locator('#success-message');
+			await expect(successMsg).toBeVisible({ timeout: 5000 });
+		} else {
+			// If navigated away, verify we're at a success page (donate or account)
+			expect(currentUrl).not.toContain('/signup');
+		}
+
+		// Step 9: Navigate to account page to verify signup was created
+		await page.goto('/account', { waitUntil: 'domcontentloaded', timeout: 15000 });
+		await expect(page.locator('main h1')).toContainText('My Account');
+
+		// Step 10: Verify the session appears in the child's signup list
+		const childSection = page.locator('text=Journey Test Child').first();
+		await expect(childSection).toBeVisible();
+
+		// Look for the session name in the signup list
+		const signupSection = childSection.locator('..').locator('text=Signed up for:');
+		await expect(signupSection).toBeVisible({ timeout: 5000 });
+
+		// Verify the specific session appears
+		await expect(childSection.locator('..').locator(`text=${sessionName}`)).toBeVisible({
+			timeout: 5000,
+		});
+	});
+
+	test('caregiver can add multiple children and select for signup', async ({ page }) => {
+		const email = `multi-child-${Date.now()}@example.com`;
+
+		// Authenticate
+		await authenticateUser(page, email);
+
+		// Get session ID
+		const sessionId = await fetchFirstSessionId(page.request);
+
+		// Add two children
+		await createChildViaUI(page, 'Browse Child One', '2014-05-10');
+		await createChildViaUI(page, 'Browse Child Two', '2016-09-22');
+
+		// Verify both children appear in account
+		const childList = page.locator('#children-list');
+		await expect(childList).toContainText('Browse Child One', { timeout: 5000 });
+		await expect(childList).toContainText('Browse Child Two', { timeout: 5000 });
+
+		// Navigate to signup page
+		await page.goto(`/signup?session=${sessionId}`, {
+			waitUntil: 'domcontentloaded',
+			timeout: 20000,
+		});
+
+		// Verify form is displayed
+		await expect(page.locator('#signup-form')).toBeVisible({ timeout: 10000 });
+
+		// Verify both children available for selection
+		const childRadios = page.locator('input[name="childId"]');
+		const count = await childRadios.count();
+		expect(count).toBeGreaterThanOrEqual(2);
+
+		// Verify we can select either child
+		const firstRadio = childRadios.first();
+		const secondRadio = childRadios.nth(1);
+
+		await firstRadio.check();
+		await expect(firstRadio).toBeChecked();
+
+		await secondRadio.check();
+		await expect(secondRadio).toBeChecked();
+		await expect(firstRadio).not.toBeChecked();
+	});
+
+	test('caregiver authentication flow with profile completion', async ({ page }) => {
+		const email = `auth-flow-${Date.now()}@example.com`;
+
+		// Step 1: Navigate to login page (simulating fresh user)
+		await page.goto('/auth/login', { waitUntil: 'domcontentloaded', timeout: 15000 });
+		await expect(page.locator('main h1')).toContainText('Sign in');
+
+		// Step 2: Authenticate via magic link
+		await authenticateUser(page, email);
+
+		// Step 3: Verify we're on account page with profile form
+		await expect(page.locator('main h1')).toContainText('My Account', { timeout: 10000 });
+
+		// Step 4: Verify we can see the add child button (profile is complete)
+		const addChildBtn = page.locator('#add-child-btn');
+		await expect(addChildBtn).toBeVisible({ timeout: 5000 });
+
+		// Step 5: Verify email is displayed correctly
+		const emailInput = page.locator('#email');
+		await expect(emailInput).toHaveValue(email);
+		await expect(emailInput).toBeDisabled();
+	});
+
+	test('caregiver logout and re-authentication', async ({ page }) => {
+		const email = `logout-auth-${Date.now()}@example.com`;
+
+		// Authenticate
+		await authenticateUser(page, email);
+		await expect(page.locator('main h1')).toContainText('My Account');
+
+		// Logout
+		const logoutBtn = page.locator('#logout-btn');
+		await expect(logoutBtn).toBeVisible();
+		await logoutBtn.click();
+
+		// Verify redirect to home
+		await expect(page).toHaveURL('/', { timeout: 10000 });
+
+		// Try to access account - should redirect to login
+		await page.goto('/account', { waitUntil: 'domcontentloaded' });
+		await expect(page).toHaveURL(/\/auth\/login/);
+
+		// Re-authenticate with same email
+		await authenticateUser(page, email);
+
+		// Should be back on account page
+		await expect(page.locator('main h1')).toContainText('My Account');
 	});
 });

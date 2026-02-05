@@ -1,4 +1,14 @@
-import { BookOpen, Calendar, Clock, Home, LogOut, MapPin, XCircle } from 'lucide-react';
+import {
+	BookOpen,
+	Calendar,
+	Grid,
+	Home,
+	LogOut,
+	MapPin,
+	UserCircle,
+	Users,
+	XCircle,
+} from 'lucide-react';
 import type React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -10,8 +20,11 @@ const Sidebar: React.FC = () => {
 		{ to: '/dashboard', icon: Home, label: 'Dashboard' },
 		{ to: '/sessions', icon: Calendar, label: 'Sessions' },
 		{ to: '/locations', icon: MapPin, label: 'Locations' },
-		{ to: '/terms', icon: Clock, label: 'Terms' },
+		{ to: '/blocks', icon: Grid, label: 'Blocks' },
+		{ to: '/caregivers', icon: UserCircle, label: 'Parents' },
 		{ to: '/students', icon: BookOpen, label: 'Students' },
+		{ to: '/staff', icon: Users, label: 'Staff' },
+		{ to: '/staff/schedule', icon: Calendar, label: 'Staff Schedule' },
 		{ to: '/exclusions', icon: XCircle, label: 'Exclusions' },
 	];
 
@@ -42,6 +55,7 @@ const Sidebar: React.FC = () => {
 
 			<div className="p-4">
 				<button
+					type="button"
 					onClick={logout}
 					className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
 				>

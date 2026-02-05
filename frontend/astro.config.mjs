@@ -3,6 +3,18 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+	'https://sessions.tuhuratech.org.nz',
+	'https://admin.tuhuratech.org.nz',
+	'https://www.tuhuratech.org.nz',
+];
+
+// Allow localhost in development
+if (process.env.NODE_ENV === 'development') {
+	ALLOWED_ORIGINS.push('http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174');
+}
+
 // https://astro.build/config
 export default defineConfig({
 	output: 'server',
@@ -20,14 +32,14 @@ export default defineConfig({
 		plugins: [tailwindcss()],
 		optimizeDeps: { include: ['leaflet'] },
 		cors: {
-			origin: '*', // could be stricter
+			origin: ALLOWED_ORIGINS,
 			methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-			// preflightContinue: true, rely on cors middleware
+			credentials: true,
 			preflightContinue: true,
 			optionsSuccessStatus: 204,
 		},
 	},
 	security: {
-		checkOrigin: false,
+		checkOrigin: true,
 	},
 });

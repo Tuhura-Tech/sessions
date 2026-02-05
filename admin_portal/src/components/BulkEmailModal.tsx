@@ -35,8 +35,11 @@ const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ isOpen, onClose, onSend
 		<Modal isOpen={isOpen} title="Send Bulk Email" onClose={onClose}>
 			<div className="space-y-4">
 				<div>
-					<label className="mb-2 block text-sm font-medium text-gray-700">Recipient Status</label>
+					<label htmlFor="status" className="mb-2 block text-sm font-medium text-gray-700">
+						Recipient Status
+					</label>
 					<select
+						id="status"
 						value={selectedStatus}
 						onChange={(e) => setSelectedStatus(e.target.value)}
 						className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -48,8 +51,11 @@ const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ isOpen, onClose, onSend
 				</div>
 
 				<div>
-					<label className="mb-2 block text-sm font-medium text-gray-700">Email Content</label>
+					<label htmlFor="content" className="mb-2 block text-sm font-medium text-gray-700">
+						Email Content
+					</label>
 					<textarea
+						id="content"
 						value={content}
 						onChange={(e) => setContent(e.target.value)}
 						rows={8}
@@ -60,6 +66,7 @@ const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ isOpen, onClose, onSend
 
 				<div className="flex justify-end gap-3">
 					<button
+						type="button"
 						onClick={onClose}
 						disabled={isSending}
 						className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
@@ -67,6 +74,7 @@ const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ isOpen, onClose, onSend
 						Cancel
 					</button>
 					<button
+						type="button"
 						onClick={handleSend}
 						disabled={isSending || !content.trim()}
 						className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"

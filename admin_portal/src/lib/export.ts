@@ -2,7 +2,7 @@
  * Data export utilities for CSV and other formats
  */
 
-export const exportToCSV = (data: any[], filename: string) => {
+export const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
 	if (data.length === 0) {
 		alert('No data to export');
 		return;
@@ -12,7 +12,7 @@ export const exportToCSV = (data: any[], filename: string) => {
 	const headers = Object.keys(data[0]);
 
 	// Create CSV content
-	let csv = headers.join(',') + '\n';
+	let csv = `${headers.join(',')}\n`;
 	data.forEach((row) => {
 		const values = headers.map((header) => {
 			const value = row[header];
@@ -22,7 +22,7 @@ export const exportToCSV = (data: any[], filename: string) => {
 			}
 			return value || '';
 		});
-		csv += values.join(',') + '\n';
+		csv += `${values.join(',')}\n`;
 	});
 
 	// Create blob and download
@@ -39,7 +39,7 @@ export const exportToCSV = (data: any[], filename: string) => {
 	document.body.removeChild(link);
 };
 
-export const exportToJSON = (data: any[], filename: string) => {
+export const exportToJSON = (data: Record<string, unknown>[], filename: string) => {
 	const json = JSON.stringify(data, null, 2);
 	const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
 	const link = document.createElement('a');

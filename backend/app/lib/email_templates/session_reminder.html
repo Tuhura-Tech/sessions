@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Reminder</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #6aa469 0%, #175b98 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 20px;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .countdown {
+            background: linear-gradient(135deg, #6aa469 0%, #175b98 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 25px 0;
+            font-size: 36px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .countdown-label {
+            font-size: 14px;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        .info-box {
+            background-color: #f4f7fa;
+            border-left: 4px solid #6aa469;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #175b98;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            font-size: 15px;
+            color: #333;
+        }
+        .button {
+            display: inline-block;
+            background-color: #6aa469;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .button:hover {
+            background-color: #5a944d;
+        }
+        .checklist {
+            background-color: #f4f7fa;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            color: #175b98;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 15px 0;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .checklist-item::before {
+            content: '✓';
+            color: #6aa469;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        .footer {
+            background-color: #f4f7fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #6aa469;
+            text-decoration: none;
+        }
+        .footer-divider {
+            margin: 10px 0;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📆 Session Reminder</h1>
+        </div>
+
+        <div class="content">
+            <div class="greeting">
+                <p>Hi {{ caregiver_name }},</p>
+                <p>Just a friendly reminder that <strong>{{ student_name }}</strong>'s session is coming up soon!</p>
+            </div>
+
+            <div class="countdown">
+                {% if days_until == 1 %}
+                    Tomorrow!
+                    <div class="countdown-label">{{ occurrence_date }}</div>
+                {% else %}
+                    {{ days_until }} Days Away
+                    <div class="countdown-label">{{ occurrence_date }}</div>
+                {% endif %}
+            </div>
+
+            <div class="info-box">
+                <h3>Session Details</h3>
+                <p><strong>Student:</strong> {{ student_name }}</p>
+                <p><strong>Session:</strong> {{ session_name }}</p>
+                <p><strong>Date:</strong> {{ occurrence_date }}</p>
+            </div>
+
+            <div class="checklist">
+                <h3>Before You Arrive</h3>
+                <div class="checklist-item">Check the date and time in your calendar</div>
+                <div class="checklist-item">Confirm {{ student_name }} will be attending</div>
+                <div class="checklist-item">Plan your arrival with time to spare</div>
+                <div class="checklist-item">Check the session location and address</div>
+            </div>
+
+            <a href="{{ portal_url }}" class="button">View Full Details</a>
+
+            <div class="divider"></div>
+
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">If your plans change and you need to withdraw from this session, you can do so from your account portal at any time.</p>
+
+            <p style="color: #666; font-size: 14px;">If you have any questions or need more information, please don't hesitate to reach out to our support team.</p>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0;">© 2025 Tuhura. All rights reserved.</p>
+            <div class="footer-divider">|</div>
+            <p style="margin: 0;"><a href="{{ support_email }}">Contact Support</a></p>
+        </div>
+    </div>
+</body>
+</html>

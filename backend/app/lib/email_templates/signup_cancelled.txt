@@ -1,0 +1,6 @@
+Hi {{ caregiver_name }},
+
+The signup for {{ student_name }} in {{ session_name }} has been cancelled.
+{% if cancellation_reason %}Reason: {{ cancellation_reason }}{% endif %}
+
+If you have questions, contact {{ support_email }}.

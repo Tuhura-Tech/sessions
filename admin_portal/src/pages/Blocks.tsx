@@ -1,22 +1,16 @@
 import { Edit2, Plus } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ErrorMessage, LoadingSpinner, SuccessMessage } from '../components/Alert';
 import { FormInput, FormSelect } from '../components/FormComponents';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import Sidebar from '../components/Sidebar';
+import { formatDate } from '../lib/utils';
 import { adminApi } from '../services/api';
+import type { SessionBlock } from '../types';
 
-interface Block {
-	id: string;
-	year: number;
-	blockType: 'term_1' | 'term_2' | 'term_3' | 'term_4' | 'special';
-	name: string;
-	startDate: string;
-	endDate: string;
-	timezone?: string;
-}
+type Block = SessionBlock;
 
 const Blocks: React.FC = () => {
 	const [blocks, setBlocks] = useState<Block[]>([]);
@@ -30,23 +24,14 @@ const Blocks: React.FC = () => {
 
 	const [formData, setFormData] = useState({
 		year: new Date().getFullYear(),
-		blockType: 'term_1' as Block['blockType'],
+		block_type: 'term_1' as Block['block_type'],
 		name: '',
-		startDate: '',
-		endDate: '',
+		start_date: '',
+		end_date: '',
 		timezone: 'Pacific/Auckland',
 	});
 
-	useEffect(() => {
-		loadBlocks();
-	}, [selectedYear]);
-
-	useEffect(() => {
-		const filtered = blocks.filter((block) => block.year === selectedYear);
-		setFilteredBlocks(filtered);
-	}, [blocks, selectedYear]);
-
-	const loadBlocks = async () => {
+	const loadBlocks = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			setError(null);
@@ -58,16 +43,25 @@ const Blocks: React.FC = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [selectedYear]);
+
+	useEffect(() => {
+		loadBlocks();
+	}, [loadBlocks]);
+
+	useEffect(() => {
+		const filtered = blocks.filter((block) => block.year === selectedYear);
+		setFilteredBlocks(filtered);
+	}, [blocks, selectedYear]);
 
 	const handleCreate = () => {
 		setEditingBlock(null);
 		setFormData({
 			year: selectedYear,
-			blockType: 'term_1',
+			block_type: 'term_1',
 			name: '',
-			startDate: '',
-			endDate: '',
+			start_date: '',
+			end_date: '',
 			timezone: 'Pacific/Auckland',
 		});
 		setShowModal(true);
@@ -77,10 +71,10 @@ const Blocks: React.FC = () => {
 		setEditingBlock(block);
 		setFormData({
 			year: block.year,
-			blockType: block.blockType,
+			block_type: block.block_type,
 			name: block.name,
-			startDate: block.startDate,
-			endDate: block.endDate,
+			start_date: block.start_date ?? '',
+			end_date: block.end_date ?? '',
 			timezone: block.timezone || 'Pacific/Auckland',
 		});
 		setShowModal(true);
@@ -102,8 +96,9 @@ const Blocks: React.FC = () => {
 
 			setShowModal(false);
 			loadBlocks();
-		} catch (err: any) {
-			setError(err.response?.data?.detail || 'Failed to save block');
+		} catch (err) {
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to save block');
 		}
 	};
 
@@ -137,6 +132,7 @@ const Blocks: React.FC = () => {
 					title="Session Blocks"
 					actions={
 						<button
+							type="button"
 							onClick={handleCreate}
 							className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
 						>
@@ -190,27 +186,20 @@ const Blocks: React.FC = () => {
 								{filteredBlocks.map((block) => (
 									<tr key={block.id}>
 										<td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-											{blockTypeLabels[block.blockType]}
+											{block.block_type ? blockTypeLabels[block.block_type] : '—'}
 										</td>
 										<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
 											{block.name}
 										</td>
 										<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-											{new Date(block.startDate).toLocaleDateString('en-NZ', {
-												day: '2-digit',
-												month: '2-digit',
-												year: 'numeric',
-											})}
+											{block.start_date ? formatDate(block.start_date) : '—'}
 										</td>
 										<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-											{new Date(block.endDate).toLocaleDateString('en-NZ', {
-												day: '2-digit',
-												month: '2-digit',
-												year: 'numeric',
-											})}
+											{block.end_date ? formatDate(block.end_date) : '—'}
 										</td>
 										<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
 											<button
+												type="button"
 												onClick={() => handleEdit(block)}
 												className="mr-4 text-blue-600 hover:text-blue-900"
 											>
@@ -254,11 +243,11 @@ const Blocks: React.FC = () => {
 
 						<FormSelect
 							label="Block Type"
-							value={formData.blockType}
+							value={formData.block_type}
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									blockType: e.target.value as Block['blockType'],
+									block_type: e.target.value as Block['block_type'],
 								})
 							}
 							required
@@ -282,16 +271,16 @@ const Blocks: React.FC = () => {
 						<FormInput
 							label="Start Date"
 							type="date"
-							value={formData.startDate}
-							onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+							value={formData.start_date}
+							onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
 							required
 						/>
 
 						<FormInput
 							label="End Date"
 							type="date"
-							value={formData.endDate}
-							onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+							value={formData.end_date}
+							onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
 							required
 						/>
 

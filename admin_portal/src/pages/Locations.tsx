@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
@@ -26,11 +26,7 @@ const Locations: React.FC = () => {
 		internalNotes: '',
 	});
 
-	useEffect(() => {
-		loadLocations();
-	}, []);
-
-	const loadLocations = async () => {
+	const loadLocations = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const data = await adminApi.getLocations();
@@ -40,7 +36,11 @@ const Locations: React.FC = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
+
+	useEffect(() => {
+		loadLocations();
+	}, [loadLocations]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -80,11 +80,11 @@ const Locations: React.FC = () => {
 			region: location.region || '',
 			lat: location.lat || 0,
 			lng: location.lng || 0,
-			contactName: location.contactName || '',
-			contactEmail: location.contactEmail || '',
-			contactPhone: location.contactPhone || '',
+			contactName: location.contact_name || '',
+			contactEmail: location.contact_email || '',
+			contactPhone: location.contact_phone || '',
 			instructions: location.instructions || '',
-			internalNotes: location.internalNotes || '',
+			internalNotes: location.internal_notes || '',
 		});
 		setEditingId(location.id);
 		setShowForm(true);
@@ -117,6 +117,7 @@ const Locations: React.FC = () => {
 					actions={
 						!showForm && (
 							<button
+								type="button"
 								onClick={() => setShowForm(true)}
 								className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
 							>
@@ -336,19 +337,21 @@ const Locations: React.FC = () => {
 													{location.address || '-'}
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-													{location.contactName || '-'}
-													{location.contactEmail && (
-														<div className="text-xs text-gray-400">{location.contactEmail}</div>
+													{location.contact_name || '-'}
+													{location.contact_email && (
+														<div className="text-xs text-gray-400">{location.contact_email}</div>
 													)}
 												</td>
 												<td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
 													<button
+														type="button"
 														onClick={() => navigate(`/locations/${location.id}`)}
 														className="mr-4 text-blue-600 hover:text-blue-900"
 													>
 														View
 													</button>
 													<button
+														type="button"
 														onClick={() => handleEdit(location)}
 														className="text-blue-600 hover:text-blue-900"
 													>

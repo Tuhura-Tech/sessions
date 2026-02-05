@@ -1,0 +1,5 @@
+Hi {{ caregiver_name }},
+
+{{ message }}
+
+If you have questions, contact us at {{ support_email }}.

@@ -1,7 +1,0 @@
-Sign in to Tūhura Tech Sessions
-
-Use this link to sign in. It expires in {{ ttl_minutes }} minutes:
-
-{{ magic_link_url }}
-
-If you didn’t request this, you can ignore this email.

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Date Cancelled</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #6aa469 0%, #175b98 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 20px;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .info-box {
+            background-color: #f4f7fa;
+            border-left: 4px solid #ff6b6b;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #175b98;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            font-size: 15px;
+            color: #333;
+        }
+        .notice {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 14px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #6aa469;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .button:hover {
+            background-color: #5a944d;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        .footer {
+            background-color: #f4f7fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer a {
+            color: #6aa469;
+            text-decoration: none;
+        }
+        .footer-divider {
+            margin: 10px 0;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Session Date Cancelled</h1>
+        </div>
+
+        <div class="content">
+            <div class="greeting">
+                <p>Hi {{ caregiver_name }},</p>
+                <p>We regret to inform you that a session date has been cancelled for <strong>{{ session_name }}</strong>.</p>
+            </div>
+
+            <div class="info-box">
+                <h3>Cancellation Details</h3>
+                <p><strong>Session:</strong> {{ session_name }}</p>
+                <p><strong>Date:</strong> {{ occurrence_date }}</p>
+                <p><strong>Reason:</strong> {{ cancellation_reason }}</p>
+            </div>
+
+            <div class="notice">
+                <strong>Important:</strong><br>
+                Your student's signup for this session remains active. If other dates are available, your student can still attend on those dates. Check your account for available options.
+            </div>
+
+            <p>We apologize for any inconvenience this may cause. Our team is working to ensure alternative dates are available whenever possible.</p>
+
+            <a href="{{ portal_url }}" class="button">View Upcoming Dates</a>
+
+            <div class="divider"></div>
+
+            <p><strong>What happens now?</strong></p>
+            <ul style="color: #555; font-size: 14px; margin: 10px 0;">
+                <li>Your signup remains valid for other session dates</li>
+                <li>You'll be notified if rescheduled dates are available</li>
+                <li>You can withdraw your signup anytime if needed</li>
+            </ul>
+
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">If you have any questions about this cancellation or need more information, please don't hesitate to reach out to our support team.</p>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0;">© 2025 Tuhura. All rights reserved.</p>
+            <div class="footer-divider">|</div>
+            <p style="margin: 0;"><a href="{{ support_email }}">Contact Support</a></p>
+        </div>
+    </div>
+</body>
+</html>

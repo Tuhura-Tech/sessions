@@ -1,0 +1,4402 @@
+{
+	"info": {
+		"title": "Tūhura Tech Sessions API",
+		"version": "latest",
+		"description": "Backend API for the Tūhura Tech Sessions site.\n\n"
+	},
+	"openapi": "3.1.0",
+	"servers": [{ "url": "/" }],
+	"paths": {
+		"/api/v1/health": {
+			"get": {
+				"tags": ["Public"],
+				"summary": "Health check",
+				"operationId": "ApiV1HealthHealthCheck",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HealthCheckResponse" }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/health/live": {
+			"get": {
+				"tags": ["Public"],
+				"summary": "Liveness check",
+				"operationId": "ApiV1HealthLiveLivenessCheck",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/LivenessCheckResponse" }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/health/ready": {
+			"get": {
+				"tags": ["Public"],
+				"summary": "Readiness check",
+				"operationId": "ApiV1HealthReadyReadinessCheck",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ReadinessCheckResponse" }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/blocks": {
+			"get": {
+				"tags": ["Public"],
+				"summary": "List blocks",
+				"operationId": "ApiV1BlocksListBlocks",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/public_schemas_block_Block" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/sessions/{session_id}": {
+			"get": {
+				"tags": ["Public"],
+				"summary": "Get session",
+				"operationId": "ApiV1SessionsSessionIdGetSession",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/SessionDetail" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/sessions": {
+			"get": {
+				"tags": ["Public"],
+				"summary": "List sessions",
+				"operationId": "ApiV1SessionsListSessions",
+				"parameters": [
+					{
+						"name": "limit",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": { "items": {}, "type": "array" },
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/auth/magic-link/consume": {
+			"get": {
+				"tags": ["Caregiver Auth"],
+				"summary": "Consume magic link",
+				"operationId": "ApiV1AuthMagicLinkConsumeConsumeMagicLink",
+				"parameters": [
+					{
+						"name": "token",
+						"in": "query",
+						"schema": { "type": "string" },
+						"required": true,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					},
+					{
+						"name": "returnTo",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/auth/logout": {
+			"post": {
+				"tags": ["Caregiver Auth"],
+				"summary": "Log out",
+				"operationId": "ApiV1AuthLogoutLogout",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/auth/magic-link": {
+			"post": {
+				"tags": ["Caregiver Auth"],
+				"summary": "Request magic link",
+				"operationId": "ApiV1AuthMagicLinkRequestMagicLink",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/MagicLinkRequest" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/MagicLinkRequestResponse" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/me": {
+			"get": {
+				"tags": ["Caregiver"],
+				"summary": "Get current caregiver",
+				"operationId": "ApiV1MeMe",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CaregiverMe" } }
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Caregiver"],
+				"summary": "Update caregiver profile",
+				"operationId": "ApiV1MeUpdateMe",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/caregiver_schemas_caregiver_CaregiverUpdate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CaregiverMe" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/signups/{session_id}": {
+			"post": {
+				"tags": ["Caregiver Signups"],
+				"summary": "Signup to session",
+				"operationId": "ApiV1SignupsSessionIdCreateSignup",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SignupCreateRequest" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/SignupCreateResponse" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/signups": {
+			"get": {
+				"tags": ["Caregiver Signups"],
+				"summary": "List caregiver signups",
+				"operationId": "ApiV1SignupsListSignups",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/SignupFull" },
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/signups/{signup_id}": {
+			"delete": {
+				"tags": ["Caregiver Signups"],
+				"summary": "Withdraw signup",
+				"operationId": "ApiV1SignupsSignupIdWithdrawSignup",
+				"parameters": [
+					{
+						"name": "signup_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/students": {
+			"get": {
+				"tags": ["Caregiver Students"],
+				"summary": "List students",
+				"operationId": "ApiV1StudentsListStudents",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/caregiver_schemas_student_Student" },
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Caregiver Students"],
+				"summary": "Create student",
+				"operationId": "ApiV1StudentsCreateStudent",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/caregiver_schemas_student_StudentCreate" }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/caregiver_schemas_student_Student" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/students/{student_id}": {
+			"get": {
+				"tags": ["Caregiver Students"],
+				"summary": "Get student",
+				"operationId": "ApiV1StudentsStudentIdGetStudent",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/caregiver_schemas_student_Student" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"delete": {
+				"tags": ["Caregiver Students"],
+				"summary": "Delete student",
+				"operationId": "ApiV1StudentsStudentIdDeleteStudent",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Caregiver Students"],
+				"summary": "Update student",
+				"operationId": "ApiV1StudentsStudentIdUpdateStudent",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/caregiver_schemas_student_StudentUpdate" }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/caregiver_schemas_student_Student" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/occurrences/{occurrence_id}/attendance-history": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetAttendanceHistory",
+				"operationId": "ApiV1AdminOccurrencesOccurrenceIdAttendanceHistoryGetAttendanceHistory",
+				"parameters": [
+					{
+						"name": "occurrence_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/AttendanceRecord" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/occurrences/{occurrence_id}/roll": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetAttendanceRoll",
+				"operationId": "ApiV1AdminOccurrencesOccurrenceIdRollGetAttendanceRoll",
+				"parameters": [
+					{
+						"name": "occurrence_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AttendanceRoll" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/occurrences/{occurrence_id}/attendance": {
+			"post": {
+				"tags": ["Admin"],
+				"summary": "UpsertAttendance",
+				"operationId": "ApiV1AdminOccurrencesOccurrenceIdAttendanceUpsertAttendance",
+				"parameters": [
+					{
+						"name": "occurrence_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"items": { "$ref": "#/components/schemas/AttendanceUpsert" },
+								"type": "array"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/AttendanceRecord" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/attendance/at-risk": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetAtRiskStudents",
+				"operationId": "ApiV1AdminSessionsSessionIdAttendanceAtRiskGetAtRiskStudents",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					},
+					{
+						"name": "threshold",
+						"in": "query",
+						"schema": { "type": "number", "default": 0.7 },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/StudentAttendanceSummary" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/attendance/stats": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetAttendanceStats",
+				"operationId": "ApiV1AdminSessionsSessionIdAttendanceStatsGetAttendanceStats",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AttendanceStats" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/auth/google/callback": {
+			"get": {
+				"tags": ["Admin Auth"],
+				"summary": "GoogleCallback",
+				"operationId": "ApiV1AdminAuthGoogleCallbackGoogleCallback",
+				"parameters": [
+					{
+						"name": "code",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					},
+					{
+						"name": "error",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/auth/google/start": {
+			"get": {
+				"tags": ["Admin Auth"],
+				"summary": "GoogleStart",
+				"operationId": "ApiV1AdminAuthGoogleStartGoogleStart",
+				"parameters": [
+					{
+						"name": "returnTo",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/auth/logout": {
+			"post": {
+				"tags": ["Admin Auth"],
+				"summary": "Logout",
+				"operationId": "ApiV1AdminAuthLogoutLogout",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/auth/me": {
+			"get": {
+				"tags": ["Admin Auth"],
+				"summary": "Me",
+				"operationId": "ApiV1AdminAuthMeMe",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "additionalProperties": {}, "type": "object" } }
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/blocks": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "List blocks",
+				"operationId": "ApiV1AdminBlocksListBlocks",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/admin_schemas_block_Block" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateBlock",
+				"operationId": "ApiV1AdminBlocksCreateBlock",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/BlockCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_block_Block" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/blocks/{block_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "Get block by ID",
+				"operationId": "ApiV1AdminBlocksBlockIdGetBlock",
+				"parameters": [
+					{
+						"name": "block_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_block_Block" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "Update block",
+				"operationId": "ApiV1AdminBlocksBlockIdUpdateBlock",
+				"parameters": [
+					{
+						"name": "block_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/BlockUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_block_Block" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/caregivers": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ListCaregivers",
+				"operationId": "ApiV1AdminCaregiversListCaregivers",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/Caregiver" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateCaregiver",
+				"operationId": "ApiV1AdminCaregiversCreateCaregiver",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/CaregiverCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Caregiver" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/caregivers/{caregiver_id}/email": {
+			"post": {
+				"tags": ["Admin"],
+				"summary": "EmailCaregiver",
+				"operationId": "ApiV1AdminCaregiversCaregiverIdEmailEmailCaregiver",
+				"parameters": [
+					{
+						"name": "caregiver_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/CaregiverMessage" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": { "application/json": { "schema": { "type": "object" } } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/caregivers/{caregiver_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetCaregiver",
+				"operationId": "ApiV1AdminCaregiversCaregiverIdGetCaregiver",
+				"parameters": [
+					{
+						"name": "caregiver_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Caregiver" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateCaregiver",
+				"operationId": "ApiV1AdminCaregiversCaregiverIdUpdateCaregiver",
+				"parameters": [
+					{
+						"name": "caregiver_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/admin_schemas_caregiver_CaregiverUpdate" }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Caregiver" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/caregivers/{caregiver_id}/students": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ListCaregiverStudents",
+				"operationId": "ApiV1AdminCaregiversCaregiverIdStudentsListCaregiverStudents",
+				"parameters": [
+					{
+						"name": "caregiver_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/admin_schemas_student_Student" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/exclusions": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "List exclusions",
+				"operationId": "ApiV1AdminExclusionsListExclusions",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/ExclusionDate" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateExclusion",
+				"operationId": "ApiV1AdminExclusionsCreateExclusion",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/ExclusionDateCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ExclusionDate" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/exclusions/{exclusion_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "Get exclusion date by ID",
+				"operationId": "ApiV1AdminExclusionsExclusionIdGetExclusion",
+				"parameters": [
+					{
+						"name": "exclusion_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ExclusionDate" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"delete": {
+				"tags": ["Admin"],
+				"summary": "Delete exclusion date",
+				"operationId": "ApiV1AdminExclusionsExclusionIdDeleteExclusion",
+				"parameters": [
+					{
+						"name": "exclusion_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"204": { "description": "Request fulfilled, nothing follows", "headers": {} },
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "Update exclusion date",
+				"operationId": "ApiV1AdminExclusionsExclusionIdUpdateExclusion",
+				"parameters": [
+					{
+						"name": "exclusion_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/ExclusionDateUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ExclusionDate" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/locations": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "List locations",
+				"operationId": "ApiV1AdminLocationsListLocations",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/admin_schemas_location_Location" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateLocation",
+				"operationId": "ApiV1AdminLocationsCreateLocation",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/LocationCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_location_Location" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/locations/{location_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "Get location by ID",
+				"operationId": "ApiV1AdminLocationsLocationIdGetLocation",
+				"parameters": [
+					{
+						"name": "location_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_location_Location" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "Update location",
+				"operationId": "ApiV1AdminLocationsLocationIdUpdateLocation",
+				"parameters": [
+					{
+						"name": "location_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/LocationUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_location_Location" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/occurrences": {
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateOccurrence",
+				"operationId": "ApiV1AdminOccurrencesCreateOccurrence",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/OccurrenceCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_occurrence_Occurrence" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/occurrences/{occurrence_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetOccurrence",
+				"operationId": "ApiV1AdminOccurrencesOccurrenceIdGetOccurrence",
+				"parameters": [
+					{
+						"name": "occurrence_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_occurrence_Occurrence" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateOccurrence",
+				"operationId": "ApiV1AdminOccurrencesOccurrenceIdUpdateOccurrence",
+				"parameters": [
+					{
+						"name": "occurrence_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/OccurrenceUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_occurrence_Occurrence" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/occurrences/{occurrence_id}/cancel": {
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "ToggleCancelOccurrence",
+				"operationId": "ApiV1AdminOccurrencesOccurrenceIdCancelToggleCancelOccurrence",
+				"parameters": [
+					{
+						"name": "occurrence_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					},
+					{
+						"name": "cancelled",
+						"in": "query",
+						"schema": { "type": "boolean", "default": false },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					},
+					{
+						"name": "cancellation_reason",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_occurrence_Occurrence" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ListSessions",
+				"operationId": "ApiV1AdminSessionsListSessions",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": { "items": {}, "type": "array" },
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateSession",
+				"operationId": "ApiV1AdminSessionsCreateSession",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SessionCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": { "application/json": { "schema": {} } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/email": {
+			"post": {
+				"tags": ["Admin"],
+				"summary": "EmailSession",
+				"operationId": "ApiV1AdminSessionsSessionIdEmailEmailSession",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SessionEmail" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": { "description": "Request fulfilled, document follows", "headers": {} },
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/export/attendance.csv": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ExportAttendanceCsv",
+				"operationId": "ApiV1AdminSessionsSessionIdExportAttendanceCsvExportAttendanceCsv",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Stream Response",
+						"headers": {},
+						"content": { "application/json": { "schema": {} } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/export/signups.csv": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ExportSignupsCsv",
+				"operationId": "ApiV1AdminSessionsSessionIdExportSignupsCsvExportSignupsCsv",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Stream Response",
+						"headers": {},
+						"content": { "application/json": { "schema": {} } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/occurrences": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetOccurrences",
+				"operationId": "ApiV1AdminSessionsSessionIdOccurrencesGetOccurrences",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/admin_schemas_occurrence_Occurrence"
+											},
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetSession",
+				"operationId": "ApiV1AdminSessionsSessionIdGetSession",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": {} } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateSession",
+				"operationId": "ApiV1AdminSessionsSessionIdUpdateSession",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SessionUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": { "application/json": { "schema": {} } }
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/signups": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetSignups",
+				"operationId": "ApiV1AdminSessionsSessionIdSignupsGetSignups",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/Signup" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/signups": {
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateSignup",
+				"operationId": "ApiV1AdminSignupsCreateSignup",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SignupCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Signup" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/signups/{signup_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetSignup",
+				"operationId": "ApiV1AdminSignupsSignupIdGetSignup",
+				"parameters": [
+					{
+						"name": "signup_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/SignupStudent" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateSignup",
+				"operationId": "ApiV1AdminSignupsSignupIdUpdateSignup",
+				"parameters": [
+					{
+						"name": "signup_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SignupUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/SignupStudent" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/signups/{signup_id}/status": {
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateSignupStatus",
+				"operationId": "ApiV1AdminSignupsSignupIdStatusUpdateSignupStatus",
+				"parameters": [
+					{
+						"name": "signup_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/SignupStatusUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/SignupStudent" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/staff": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetSessionStaff",
+				"operationId": "ApiV1AdminSessionsSessionIdStaffGetSessionStaff",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/StaffPublic" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "AssignStaff",
+				"operationId": "ApiV1AdminSessionsSessionIdStaffAssignStaff",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					},
+					{
+						"name": "staff_id",
+						"in": "query",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/SessionStaffAssignment" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/staff/bulk": {
+			"post": {
+				"tags": ["Admin"],
+				"summary": "BulkAssignStaff",
+				"operationId": "ApiV1AdminSessionsSessionIdStaffBulkBulkAssignStaff",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/BulkStaffAssignment" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/SessionStaffAssignment" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/sessions/{session_id}/staff/{staff_id}": {
+			"delete": {
+				"tags": ["Admin"],
+				"summary": "RemoveStaff",
+				"operationId": "ApiV1AdminSessionsSessionIdStaffStaffIdRemoveStaff",
+				"parameters": [
+					{
+						"name": "session_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					},
+					{
+						"name": "staff_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"204": { "description": "Request fulfilled, nothing follows", "headers": {} },
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/staff": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ListStaff",
+				"operationId": "ApiV1AdminStaffListStaff",
+				"parameters": [
+					{
+						"name": "active_only",
+						"in": "query",
+						"schema": { "type": "boolean", "default": true },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/StaffPublic" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateStaff",
+				"operationId": "ApiV1AdminStaffCreateStaff",
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/StaffCreate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Staff" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/staff/{staff_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetStaff",
+				"operationId": "ApiV1AdminStaffStaffIdGetStaff",
+				"parameters": [
+					{
+						"name": "staff_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Staff" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateStaff",
+				"operationId": "ApiV1AdminStaffStaffIdUpdateStaff",
+				"parameters": [
+					{
+						"name": "staff_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/StaffUpdate" } }
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/Staff" } }
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/staff/availability": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetStaffAvailability",
+				"operationId": "ApiV1AdminStaffAvailabilityGetStaffAvailability",
+				"parameters": [
+					{
+						"name": "year",
+						"in": "query",
+						"schema": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					},
+					{
+						"name": "active_only",
+						"in": "query",
+						"schema": { "type": "boolean", "default": true },
+						"required": false,
+						"deprecated": false,
+						"allowEmptyValue": false,
+						"allowReserved": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/StaffAvailability" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/staff/{staff_id}/sessions": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetStaffSessions",
+				"operationId": "ApiV1AdminStaffStaffIdSessionsGetStaffSessions",
+				"parameters": [
+					{
+						"name": "staff_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": { "$ref": "#/components/schemas/StaffSessionSummary" },
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/students": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "ListStudents",
+				"operationId": "ApiV1AdminStudentsListStudents",
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/admin_schemas_student_Student" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"post": {
+				"tags": ["Admin"],
+				"summary": "CreateStudent",
+				"operationId": "ApiV1AdminStudentsCreateStudent",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/admin_schemas_student_StudentCreate" }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"description": "Document created, URL follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_student_Student" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/students/{student_id}": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetStudent",
+				"operationId": "ApiV1AdminStudentsStudentIdGetStudent",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_student_Student" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"delete": {
+				"tags": ["Admin"],
+				"summary": "DeleteStudent",
+				"operationId": "ApiV1AdminStudentsStudentIdDeleteStudent",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": { "description": "Request fulfilled, document follows", "headers": {} },
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			},
+			"patch": {
+				"tags": ["Admin"],
+				"summary": "UpdateStudent",
+				"operationId": "ApiV1AdminStudentsStudentIdUpdateStudent",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/admin_schemas_student_StudentUpdate" }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/admin_schemas_student_Student" }
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/api/v1/admin/students/{student_id}/signups": {
+			"get": {
+				"tags": ["Admin"],
+				"summary": "GetStudentSignups",
+				"operationId": "ApiV1AdminStudentsStudentIdSignupsGetStudentSignups",
+				"parameters": [
+					{
+						"name": "student_id",
+						"in": "path",
+						"schema": { "type": "string", "format": "uuid" },
+						"required": true,
+						"deprecated": false
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Request fulfilled, document follows",
+						"headers": {},
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"items": {
+											"items": { "$ref": "#/components/schemas/Signup" },
+											"type": "array"
+										},
+										"limit": {
+											"type": "integer",
+											"description": "Maximal number of items to send."
+										},
+										"offset": {
+											"type": "integer",
+											"description": "Offset from the beginning of the query."
+										},
+										"total": { "type": "integer", "description": "Total number of items." }
+									},
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request syntax or unsupported method",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status_code": { "type": "integer" },
+										"detail": { "type": "string" },
+										"extra": { "additionalProperties": {}, "type": ["null", "object", "array"] }
+									},
+									"type": "object",
+									"required": ["detail", "status_code"],
+									"description": "Validation Exception",
+									"examples": [{ "status_code": 400, "detail": "Bad Request", "extra": {} }]
+								}
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"AttendanceRecord": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"occurrence_id": { "type": "string", "format": "uuid" },
+					"student_id": { "type": "string", "format": "uuid" },
+					"status": { "type": "string", "enum": ["present", "absent_known", "absent_unknown"] },
+					"reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"created_at": { "type": "string", "format": "date-time" },
+					"updated_at": { "type": "string", "format": "date-time" }
+				},
+				"type": "object",
+				"required": ["created_at", "id", "occurrence_id", "status", "student_id", "updated_at"],
+				"title": "AttendanceRecord"
+			},
+			"AttendanceRoll": {
+				"properties": {
+					"occurrence_id": { "type": "string", "format": "uuid" },
+					"session_id": { "type": "string", "format": "uuid" },
+					"starts_at": { "type": "string", "format": "date-time" },
+					"ends_at": { "type": "string", "format": "date-time" },
+					"cancelled": { "type": "boolean" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/AttendanceRollItem" },
+						"type": "array"
+					}
+				},
+				"type": "object",
+				"required": ["cancelled", "ends_at", "items", "occurrence_id", "session_id", "starts_at"],
+				"title": "AttendanceRoll"
+			},
+			"AttendanceRollItem": {
+				"properties": {
+					"signup_id": { "type": "string", "format": "uuid" },
+					"student_id": { "type": "string", "format": "uuid" },
+					"student_name": { "type": "string" },
+					"caregiver_name": { "type": "string" },
+					"attendance": {
+						"oneOf": [{ "$ref": "#/components/schemas/AttendanceRecord" }, { "type": "null" }]
+					}
+				},
+				"type": "object",
+				"required": ["caregiver_name", "signup_id", "student_id", "student_name"],
+				"title": "AttendanceRollItem"
+			},
+			"AttendanceStats": {
+				"properties": {
+					"session_id": { "type": "string", "format": "uuid" },
+					"total_occurrences": { "type": "integer" },
+					"total_students": { "type": "integer" },
+					"average_attendance_rate": { "type": "number" },
+					"students_with_perfect_attendance": { "type": "integer" },
+					"students_with_good_attendance": { "type": "integer" },
+					"students_with_poor_attendance": { "type": "integer" },
+					"best_attended_occurrence": {},
+					"worst_attended_occurrence": {}
+				},
+				"type": "object",
+				"required": [
+					"average_attendance_rate",
+					"best_attended_occurrence",
+					"session_id",
+					"students_with_good_attendance",
+					"students_with_perfect_attendance",
+					"students_with_poor_attendance",
+					"total_occurrences",
+					"total_students",
+					"worst_attended_occurrence"
+				],
+				"title": "AttendanceStats"
+			},
+			"AttendanceUpsert": {
+				"properties": {
+					"studentId": { "type": "string", "format": "uuid" },
+					"status": { "type": "string", "enum": ["present", "absent_known", "absent_unknown"] },
+					"reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["status", "studentId"],
+				"title": "AttendanceUpsert"
+			},
+			"BlockCreate": {
+				"properties": {
+					"year": { "type": "integer" },
+					"name": { "type": "string" },
+					"blockType": { "type": "string" },
+					"startDate": { "type": "string", "format": "date" },
+					"endDate": { "type": "string", "format": "date" }
+				},
+				"type": "object",
+				"required": ["blockType", "endDate", "name", "startDate", "year"],
+				"title": "BlockCreate"
+			},
+			"BlockOccurrences": {
+				"properties": {
+					"block_id": { "type": "string", "format": "uuid" },
+					"block_name": { "type": "string" },
+					"block_type": { "type": "string" },
+					"occurrences": {
+						"items": { "$ref": "#/components/schemas/public_schemas_occurrence_Occurrence" },
+						"type": "array"
+					}
+				},
+				"type": "object",
+				"required": ["block_id", "block_name", "block_type", "occurrences"],
+				"title": "BlockOccurrences"
+			},
+			"BlockUpdate": {
+				"properties": {
+					"startDate": { "oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+					"endDate": { "oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+					"year": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"blockType": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "BlockUpdate"
+			},
+			"BulkStaffAssignment": {
+				"properties": {
+					"staffIds": { "items": { "type": "string", "format": "uuid" }, "type": "array" },
+					"replace": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["staffIds"],
+				"title": "BulkStaffAssignment"
+			},
+			"Caregiver": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"email": { "type": "string" },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"email_verified": { "type": "boolean" },
+					"profile_complete": { "type": "boolean", "default": false },
+					"referral_source": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"students": {
+						"items": { "$ref": "#/components/schemas/StudentBase" },
+						"type": "array",
+						"default": []
+					}
+				},
+				"type": "object",
+				"required": ["email", "email_verified", "id"],
+				"title": "Caregiver"
+			},
+			"CaregiverCreate": {
+				"properties": {
+					"email": { "type": "string" },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"emailVerified": { "type": "boolean", "default": false },
+					"referralSource": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"subscribeNewsletter": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["email"],
+				"title": "CaregiverCreate"
+			},
+			"CaregiverMe": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"email": { "type": "string" },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"email_verified": { "type": "boolean", "default": false },
+					"profile_complete": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["email", "id"],
+				"title": "CaregiverMe"
+			},
+			"CaregiverMessage": {
+				"properties": { "subject": { "type": "string" }, "message": { "type": "string" } },
+				"type": "object",
+				"required": ["message", "subject"],
+				"title": "CaregiverMessage"
+			},
+			"ExclusionDate": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"year": { "type": "integer" },
+					"date": { "type": "string", "format": "date" },
+					"reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["date", "id", "year"],
+				"title": "ExclusionDate"
+			},
+			"ExclusionDateCreate": {
+				"properties": {
+					"year": { "type": "integer" },
+					"date": { "type": "string", "format": "date" },
+					"reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["date", "year"],
+				"title": "ExclusionDateCreate"
+			},
+			"ExclusionDateUpdate": {
+				"properties": {
+					"year": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"date": { "oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+					"reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "ExclusionDateUpdate"
+			},
+			"HealthCheckResponse": {
+				"properties": {
+					"status": { "type": "boolean", "description": "Health status of the application" },
+					"timestamp": { "type": "string", "description": "Timestamp of the health check" },
+					"version": { "type": "string", "description": "Version of the application" },
+					"service": { "type": "string", "description": "Name of the service" },
+					"debug": { "type": "boolean", "description": "Debug mode status" }
+				},
+				"type": "object",
+				"required": ["debug", "service", "status", "timestamp", "version"],
+				"title": "HealthCheckResponse"
+			},
+			"LivenessCheckResponse": {
+				"properties": {
+					"alive": { "type": "boolean", "description": "Liveness status of the application" },
+					"timestamp": { "type": "string", "description": "Timestamp of the liveness check" }
+				},
+				"type": "object",
+				"required": ["alive", "timestamp"],
+				"title": "LivenessCheckResponse"
+			},
+			"LocationCreate": {
+				"properties": {
+					"name": { "type": "string", "minLength": 1 },
+					"address": { "type": "string", "minLength": 1 },
+					"region": { "type": "string", "minLength": 1 },
+					"lat": { "type": "number" },
+					"lng": { "type": "number" },
+					"instructions": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"contactName": { "type": "string", "minLength": 1 },
+					"contactEmail": { "type": "string", "format": "email" },
+					"contactPhone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"internalNotes": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["address", "contactEmail", "contactName", "lat", "lng", "name", "region"],
+				"title": "LocationCreate"
+			},
+			"LocationUpdate": {
+				"properties": {
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"address": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"region": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"lat": { "oneOf": [{ "type": "number" }, { "type": "null" }] },
+					"lng": { "oneOf": [{ "type": "number" }, { "type": "null" }] },
+					"instructions": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"contactName": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"contactEmail": {
+						"oneOf": [{ "type": "string", "format": "email" }, { "type": "null" }]
+					},
+					"contactPhone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"internalNotes": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "LocationUpdate"
+			},
+			"MagicLinkRequest": {
+				"properties": {
+					"email": { "type": "string", "format": "email" },
+					"returnTo": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["email"],
+				"title": "MagicLinkRequest"
+			},
+			"MagicLinkRequestResponse": {
+				"properties": {
+					"ok": { "type": "boolean", "default": true },
+					"debug_token": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "MagicLinkRequestResponse"
+			},
+			"OccurrenceCreate": {
+				"properties": {
+					"startsAt": { "type": "string", "format": "date-time" },
+					"endsAt": { "type": "string", "format": "date-time" },
+					"sessionId": { "type": "string", "format": "uuid" },
+					"blockId": { "type": "string", "format": "uuid" }
+				},
+				"type": "object",
+				"required": ["blockId", "endsAt", "sessionId", "startsAt"],
+				"title": "OccurrenceCreate"
+			},
+			"OccurrenceUpdate": {
+				"properties": {
+					"startsAt": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"endsAt": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+					"cancelled": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"cancellationReason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "OccurrenceUpdate"
+			},
+			"ReadinessCheckResponse": {
+				"properties": {
+					"ready": { "type": "boolean", "description": "Readiness status of the application" },
+					"timestamp": { "type": "string", "description": "Timestamp of the readiness check" }
+				},
+				"type": "object",
+				"required": ["ready", "timestamp"],
+				"title": "ReadinessCheckResponse"
+			},
+			"SessionCreate": {
+				"properties": {
+					"year": { "type": "integer" },
+					"sessionType": { "type": "string", "enum": ["term", "special"] },
+					"name": { "type": "string" },
+					"ageLower": { "type": "integer" },
+					"ageUpper": { "type": "integer" },
+					"startTime": { "type": "string", "format": "duration" },
+					"endTime": { "type": "string", "format": "duration" },
+					"dayOfWeek": { "type": "integer" },
+					"capacity": { "type": "integer" },
+					"whatToBring": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"prerequisites": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"photoAlbumUrl": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"internalNotes": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "type": "boolean", "default": false },
+					"locationId": { "type": "string", "format": "uuid" },
+					"blocks": { "items": { "type": "string", "format": "uuid" }, "type": "array" }
+				},
+				"type": "object",
+				"required": [
+					"ageLower",
+					"ageUpper",
+					"blocks",
+					"capacity",
+					"dayOfWeek",
+					"endTime",
+					"locationId",
+					"name",
+					"sessionType",
+					"startTime",
+					"year"
+				],
+				"title": "SessionCreate"
+			},
+			"SessionDetail": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"year": { "type": "integer" },
+					"age_lower": { "type": "integer" },
+					"age_upper": { "type": "integer" },
+					"day_of_week": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"start_time": { "type": "string", "format": "duration" },
+					"end_time": { "type": "string", "format": "duration" },
+					"what_to_bring": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"prerequisites": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"blocks": { "items": { "type": "string" }, "type": "array", "default": [] },
+					"location": { "$ref": "#/components/schemas/public_schemas_session_Location" },
+					"occurrences": {
+						"items": { "$ref": "#/components/schemas/public_schemas_occurrence_Occurrence" },
+						"type": "array",
+						"default": []
+					},
+					"occurrences_by_block": {
+						"items": { "$ref": "#/components/schemas/BlockOccurrences" },
+						"type": "array",
+						"default": []
+					}
+				},
+				"type": "object",
+				"required": [
+					"age_lower",
+					"age_upper",
+					"end_time",
+					"id",
+					"location",
+					"name",
+					"start_time",
+					"year"
+				],
+				"title": "SessionDetail"
+			},
+			"SessionEmail": {
+				"properties": { "title": { "type": "string" }, "body": { "type": "string" } },
+				"type": "object",
+				"required": ["body", "title"],
+				"title": "SessionEmail"
+			},
+			"SessionStaffAssignment": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"staff_id": { "type": "string", "format": "uuid" },
+					"session_id": { "type": "string", "format": "uuid" },
+					"assigned_at": { "type": "string", "format": "date-time" }
+				},
+				"type": "object",
+				"required": ["assigned_at", "id", "session_id", "staff_id"],
+				"title": "SessionStaffAssignment"
+			},
+			"SessionUpdate": {
+				"properties": {
+					"year": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"sessionType": { "type": ["null", "string"], "enum": ["term", "special", null] },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"ageLower": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"ageUpper": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"startTime": {
+						"oneOf": [{ "type": "string", "format": "duration" }, { "type": "null" }]
+					},
+					"endTime": { "oneOf": [{ "type": "string", "format": "duration" }, { "type": "null" }] },
+					"dayOfWeek": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"capacity": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+					"whatToBring": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"prerequisites": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"photoAlbumUrl": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"internalNotes": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"locationId": { "oneOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "SessionUpdate"
+			},
+			"Signup": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"student_id": { "type": "string", "format": "uuid" },
+					"session_id": { "type": "string", "format": "uuid" },
+					"status": { "$ref": "#/components/schemas/SignupStatus" },
+					"withdrawn_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"pickup_dropoff": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"created_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"needs_devices": { "type": "boolean", "default": false },
+					"student_name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"guardian_name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"email": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"date_of_birth": {
+						"oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }]
+					},
+					"media_consent": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["id", "session_id", "status", "student_id"],
+				"title": "Signup"
+			},
+			"SignupCreate": {
+				"properties": {
+					"status": { "$ref": "#/components/schemas/SignupStatus" },
+					"pickupDropoff": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"studentId": { "type": "string", "format": "uuid" },
+					"sessionId": { "type": "string", "format": "uuid" }
+				},
+				"type": "object",
+				"required": ["sessionId", "studentId"],
+				"title": "SignupCreate"
+			},
+			"SignupCreateRequest": {
+				"properties": {
+					"studentId": { "type": "string" },
+					"pickupDropoff": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"needsDevices": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["studentId"],
+				"title": "SignupCreateRequest"
+			},
+			"SignupCreateResponse": {
+				"properties": {
+					"id": { "type": "string" },
+					"status": {
+						"type": "string",
+						"enum": ["pending", "confirmed", "waitlisted", "withdrawn"]
+					}
+				},
+				"type": "object",
+				"required": ["id", "status"],
+				"title": "SignupCreateResponse"
+			},
+			"SignupFull": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"status": {
+						"type": "string",
+						"enum": ["pending", "confirmed", "waitlisted", "withdrawn"]
+					},
+					"created_at": { "type": "string", "format": "date-time" },
+					"withdrawn_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"pickup_dropoff": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"needs_devices": { "type": "boolean", "default": false },
+					"session_id": { "type": "string", "format": "uuid" },
+					"session_name": { "type": "string" },
+					"student_id": { "type": "string", "format": "uuid" },
+					"student_name": { "type": "string" }
+				},
+				"type": "object",
+				"required": [
+					"created_at",
+					"id",
+					"session_id",
+					"session_name",
+					"status",
+					"student_id",
+					"student_name"
+				],
+				"title": "SignupFull"
+			},
+			"SignupStatus": {
+				"type": "string",
+				"enum": ["pending", "confirmed", "waitlisted", "withdrawn"],
+				"title": "SignupStatus",
+				"default": "waitlisted"
+			},
+			"SignupStatusUpdate": {
+				"properties": {
+					"status": { "$ref": "#/components/schemas/SignupStatus" },
+					"reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"notifyCaregiver": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["status"],
+				"title": "SignupStatusUpdate"
+			},
+			"SignupStudent": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"student_id": { "type": "string", "format": "uuid" },
+					"session_id": { "type": "string", "format": "uuid" },
+					"status": { "$ref": "#/components/schemas/SignupStatus" },
+					"withdrawn_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"pickup_dropoff": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"created_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"needs_devices": { "type": "boolean", "default": false },
+					"student_name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"guardian_name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"email": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"date_of_birth": {
+						"oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }]
+					},
+					"media_consent": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"student": { "$ref": "#/components/schemas/StudentBase" }
+				},
+				"type": "object",
+				"required": ["id", "session_id", "status", "student", "student_id"],
+				"title": "SignupStudent"
+			},
+			"SignupUpdate": {
+				"properties": {
+					"status": {
+						"oneOf": [{ "$ref": "#/components/schemas/SignupStatus" }, { "type": "null" }]
+					},
+					"pickupDropoff": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "SignupUpdate"
+			},
+			"Staff": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"email": { "type": "string", "format": "email" },
+					"sso_id": { "type": "string" },
+					"active": { "type": "boolean" },
+					"last_login_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					},
+					"deactivated_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					}
+				},
+				"type": "object",
+				"required": ["active", "email", "id", "name", "sso_id"],
+				"title": "Staff"
+			},
+			"StaffAvailability": {
+				"properties": {
+					"staff_id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"email": { "type": "string", "format": "email" },
+					"active": { "type": "boolean" },
+					"assigned_session_count": { "type": "integer" },
+					"session_ids": { "items": { "type": "string", "format": "uuid" }, "type": "array" }
+				},
+				"type": "object",
+				"required": [
+					"active",
+					"assigned_session_count",
+					"email",
+					"name",
+					"session_ids",
+					"staff_id"
+				],
+				"title": "StaffAvailability"
+			},
+			"StaffCreate": {
+				"properties": {
+					"name": { "type": "string" },
+					"email": { "type": "string", "format": "email" },
+					"ssoId": { "type": "string" }
+				},
+				"type": "object",
+				"required": ["email", "name", "ssoId"],
+				"title": "StaffCreate"
+			},
+			"StaffPublic": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"email": { "type": "string", "format": "email" },
+					"active": { "type": "boolean" },
+					"last_login_at": {
+						"oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+					}
+				},
+				"type": "object",
+				"required": ["active", "email", "id", "name"],
+				"title": "StaffPublic"
+			},
+			"StaffSessionSummary": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"year": { "type": "integer" },
+					"session_type": { "type": "string" }
+				},
+				"type": "object",
+				"required": ["id", "name", "session_type", "year"],
+				"title": "StaffSessionSummary"
+			},
+			"StaffUpdate": {
+				"properties": {
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"email": { "oneOf": [{ "type": "string", "format": "email" }, { "type": "null" }] },
+					"active": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "StaffUpdate"
+			},
+			"StudentAttendanceSummary": {
+				"properties": {
+					"student_id": { "type": "string", "format": "uuid" },
+					"student_name": { "type": "string" },
+					"total_occurrences": { "type": "integer" },
+					"present_count": { "type": "integer" },
+					"absent_known_count": { "type": "integer" },
+					"absent_unknown_count": { "type": "integer" },
+					"attendance_rate": { "type": "number" },
+					"is_at_risk": { "type": "boolean" }
+				},
+				"type": "object",
+				"required": [
+					"absent_known_count",
+					"absent_unknown_count",
+					"attendance_rate",
+					"is_at_risk",
+					"present_count",
+					"student_id",
+					"student_name",
+					"total_occurrences"
+				],
+				"title": "StudentAttendanceSummary"
+			},
+			"StudentBase": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"date_of_birth": {
+						"oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }]
+					},
+					"media_consent": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"medical_info": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"other_info": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["id"],
+				"title": "StudentBase"
+			},
+			"admin_schemas_block_Block": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"year": { "type": "integer" },
+					"name": { "type": "string" },
+					"block_type": { "type": "string" },
+					"start_date": { "type": "string", "format": "date" },
+					"end_date": { "type": "string", "format": "date" }
+				},
+				"type": "object",
+				"required": ["block_type", "end_date", "id", "name", "start_date", "year"],
+				"title": "Block"
+			},
+			"admin_schemas_caregiver_CaregiverUpdate": {
+				"properties": {
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"email": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "CaregiverUpdate"
+			},
+			"admin_schemas_location_Location": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"address": { "type": "string" },
+					"region": { "type": "string" },
+					"lat": { "type": "number" },
+					"lng": { "type": "number" },
+					"instructions": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"contact_name": { "type": "string" },
+					"contact_email": { "type": "string", "format": "email" },
+					"contact_phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"internal_notes": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [
+					"address",
+					"contact_email",
+					"contact_name",
+					"id",
+					"lat",
+					"lng",
+					"name",
+					"region"
+				],
+				"title": "Location"
+			},
+			"admin_schemas_occurrence_Occurrence": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"starts_at": { "type": "string", "format": "date-time" },
+					"ends_at": { "type": "string", "format": "date-time" },
+					"cancelled": { "type": "boolean" },
+					"block_id": { "type": "string", "format": "uuid" },
+					"session_id": { "type": "string", "format": "uuid" },
+					"cancellation_reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["block_id", "cancelled", "ends_at", "id", "session_id", "starts_at"],
+				"title": "Occurrence"
+			},
+			"admin_schemas_student_Student": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"date_of_birth": {
+						"oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }]
+					},
+					"media_consent": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"medical_info": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"other_info": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "type": "boolean", "default": false },
+					"caregiver": { "$ref": "#/components/schemas/Caregiver" }
+				},
+				"type": "object",
+				"required": ["caregiver", "id"],
+				"title": "Student"
+			},
+			"admin_schemas_student_StudentCreate": {
+				"properties": {
+					"caregiverId": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"dateOfBirth": { "type": "string", "format": "date" },
+					"mediaConsent": { "type": "boolean" },
+					"medicalInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"otherInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"region": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"ethnicity": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"schoolName": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"gender": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["caregiverId", "dateOfBirth", "mediaConsent", "name"],
+				"title": "StudentCreate"
+			},
+			"admin_schemas_student_StudentUpdate": {
+				"properties": {
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"dateOfBirth": { "oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+					"mediaConsent": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"medicalInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"otherInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "StudentUpdate"
+			},
+			"caregiver_schemas_caregiver_CaregiverUpdate": {
+				"properties": {
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"phone": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"subscribeNewsletter": { "type": "boolean", "default": false },
+					"referralSource": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "CaregiverUpdate"
+			},
+			"caregiver_schemas_student_Student": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"name": { "type": "string" },
+					"date_of_birth": { "type": "string", "format": "date" },
+					"media_consent": { "type": "boolean" },
+					"medical_info": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"needs_devices": { "type": "boolean", "default": false },
+					"other_info": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "type": "boolean", "default": false }
+				},
+				"type": "object",
+				"required": ["date_of_birth", "id", "media_consent", "name"],
+				"title": "Student"
+			},
+			"caregiver_schemas_student_StudentCreate": {
+				"properties": {
+					"name": { "type": "string", "minLength": 1 },
+					"dateOfBirth": { "type": "string", "format": "date" },
+					"mediaConsent": { "type": "boolean", "default": false },
+					"medicalInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"needsDevices": { "type": "boolean", "default": false },
+					"otherInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"region": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"ethnicity": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"schoolName": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["dateOfBirth", "name"],
+				"title": "StudentCreate"
+			},
+			"caregiver_schemas_student_StudentUpdate": {
+				"properties": {
+					"name": { "oneOf": [{ "type": "string" }, { "type": "null" }], "minLength": 1 },
+					"dateOfBirth": { "oneOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+					"mediaConsent": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"medicalInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"otherInfo": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"archived": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] },
+					"region": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"ethnicity": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"schoolName": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+					"gender": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": [],
+				"title": "StudentUpdate"
+			},
+			"public_schemas_block_Block": {
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"year": { "type": "integer" },
+					"name": { "type": "string" },
+					"start_date": { "type": "string", "format": "date" },
+					"end_date": { "type": "string", "format": "date" },
+					"block_type": { "type": "string" }
+				},
+				"type": "object",
+				"required": ["block_type", "end_date", "id", "name", "start_date", "year"],
+				"title": "Block"
+			},
+			"public_schemas_occurrence_Occurrence": {
+				"properties": {
+					"starts_at": { "type": "string", "format": "date-time" },
+					"ends_at": { "type": "string", "format": "date-time" },
+					"cancelled": { "type": "boolean" },
+					"block_id": { "type": "string", "format": "uuid" },
+					"session_id": { "type": "string", "format": "uuid" },
+					"cancellation_reason": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+				},
+				"type": "object",
+				"required": ["block_id", "cancelled", "ends_at", "session_id", "starts_at"],
+				"title": "Occurrence"
+			},
+			"public_schemas_session_Location": {
+				"properties": {
+					"name": { "type": "string" },
+					"address": { "type": "string" },
+					"region": { "type": "string" },
+					"lat": { "type": "number" },
+					"lng": { "type": "number" }
+				},
+				"type": "object",
+				"required": ["address", "lat", "lng", "name", "region"],
+				"title": "Location"
+			}
+		}
+	}
+}

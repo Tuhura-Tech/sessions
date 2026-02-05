@@ -3,19 +3,29 @@ import type {
 	AttendanceRecord,
 	AttendanceRoll,
 	AttendanceUpsert,
+	Caregiver,
+	CaregiverCreate,
+	CaregiverUpdate,
 	ChildDetails,
-	ChildNote,
 	ExclusionDate,
 	Occurrence,
-	SchoolTerm,
 	Session,
 	SessionBlock,
+	SessionCreate,
 	SessionLocation,
+	SessionUpdate,
 	Signup,
 	Staff,
+	StaffAvailability,
 	StaffListItem,
+	StaffPublic,
 	StaffSessionSummary,
 } from '../types';
+
+const unwrapList = <T>(data: unknown): T[] => {
+	if (Array.isArray(data)) return data;
+	return ((data as { items?: T[] })?.items || []) as T[];
+};
 
 export const adminApi = {
 	// Auth
@@ -34,7 +44,7 @@ export const adminApi = {
 		if (year) params.append('year', year.toString());
 		if (includeArchived) params.append('include_archived', 'true');
 		const { data } = await api.get(`/admin/sessions?${params}`);
-		return data;
+		return unwrapList<Session>(data);
 	},
 
 	getSession: async (id: string): Promise<Session> => {
@@ -42,12 +52,12 @@ export const adminApi = {
 		return data;
 	},
 
-	createSession: async (session: any): Promise<Session> => {
+	createSession: async (session: SessionCreate): Promise<Session> => {
 		const { data } = await api.post('/admin/sessions', session);
 		return data;
 	},
 
-	updateSession: async (id: string, session: any): Promise<Session> => {
+	updateSession: async (id: string, session: SessionUpdate): Promise<Session> => {
 		const { data } = await api.patch(`/admin/sessions/${id}`, session);
 		return data;
 	},
@@ -56,15 +66,10 @@ export const adminApi = {
 		await api.delete(`/admin/sessions/${id}`);
 	},
 
-	duplicateSession: async (id: string): Promise<Session> => {
-		const { data } = await api.post(`/admin/sessions/${id}/duplicate`);
-		return data;
-	},
-
 	// Locations
 	getLocations: async (): Promise<SessionLocation[]> => {
 		const { data } = await api.get('/admin/locations');
-		return data;
+		return unwrapList<SessionLocation>(data);
 	},
 
 	getLocation: async (id: string): Promise<SessionLocation> => {
@@ -75,15 +80,14 @@ export const adminApi = {
 	getLocationSessions: async (
 		id: string,
 		year?: number,
-		includeArchived = false,
+		includeArchived: boolean = false,
 	): Promise<Session[]> => {
 		const params = new URLSearchParams();
-		if (year) params.append('year', year.toString());
+		if (year !== undefined) params.append('year', String(year));
 		if (includeArchived) params.append('include_archived', 'true');
-		const qs = params.toString();
-		const url = qs ? `/admin/locations/${id}/sessions?${qs}` : `/admin/locations/${id}/sessions`;
-		const { data } = await api.get(url);
-		return data;
+		const query = params.toString();
+		const { data } = await api.get(`/admin/locations/${id}/sessions${query ? `?${query}` : ''}`);
+		return unwrapList<Session>(data);
 	},
 
 	createLocation: async (location: Partial<SessionLocation>): Promise<SessionLocation> => {
@@ -103,7 +107,7 @@ export const adminApi = {
 	getBlocks: async (year?: number): Promise<SessionBlock[]> => {
 		const params = year ? `?year=${year}` : '';
 		const { data } = await api.get(`/admin/blocks${params}`);
-		return data;
+		return unwrapList<SessionBlock>(data);
 	},
 
 	createBlock: async (block: Partial<SessionBlock>): Promise<SessionBlock> => {
@@ -116,28 +120,11 @@ export const adminApi = {
 		return data;
 	},
 
-	// Terms
-	getTerms: async (year?: number): Promise<SchoolTerm[]> => {
-		const params = year ? `?year=${year}` : '';
-		const { data } = await api.get(`/admin/terms${params}`);
-		return data;
-	},
-
-	createTerm: async (term: Partial<SchoolTerm>): Promise<SchoolTerm> => {
-		const { data } = await api.post('/admin/terms', term);
-		return data;
-	},
-
-	updateTerm: async (id: string, term: Partial<SchoolTerm>): Promise<SchoolTerm> => {
-		const { data } = await api.patch(`/admin/terms/${id}`, term);
-		return data;
-	},
-
 	// Exclusions
 	getExclusions: async (year?: number): Promise<ExclusionDate[]> => {
 		const params = year ? `?year=${year}` : '';
 		const { data } = await api.get(`/admin/exclusions${params}`);
-		return data;
+		return unwrapList<ExclusionDate>(data);
 	},
 
 	createExclusion: async (exclusion: {
@@ -161,15 +148,41 @@ export const adminApi = {
 	},
 
 	// Signups
+	getStudentSignups: async (studentId: string): Promise<Signup[]> => {
+		const { data } = await api.get(`/admin/students/${studentId}/signups`);
+		return unwrapList<Signup>(data);
+	},
+
 	getSessionSignups: async (sessionId: string, status?: string): Promise<Signup[]> => {
 		const params = status ? `?status=${status}` : '';
 		const { data } = await api.get(`/admin/sessions/${sessionId}/signups${params}`);
+		return unwrapList<Signup>(data);
+	},
+
+	updateSignupStatus: async (
+		signupId: string,
+		status: string,
+		options?: { reason?: string | null; notifyCaregiver?: boolean },
+	): Promise<Signup> => {
+		const { data } = await api.patch(`/admin/signups/${signupId}/status`, {
+			status,
+			reason: options?.reason ?? null,
+			notify_caregiver: options?.notifyCaregiver ?? false,
+		});
 		return data;
 	},
 
-	updateSignupStatus: async (signupId: string, status: string): Promise<Signup> => {
-		const { data } = await api.patch(`/admin/signups/${signupId}/status`, {
-			status,
+	createSignup: async (payload: {
+		sessionId: string;
+		studentId: string;
+		status?: string;
+		pickupDropoff?: string | null;
+	}): Promise<Signup> => {
+		const { data } = await api.post('/admin/signups', {
+			session_id: payload.sessionId,
+			student_id: payload.studentId,
+			status: payload.status,
+			pickup_dropoff: payload.pickupDropoff ?? null,
 		});
 		return data;
 	},
@@ -177,14 +190,7 @@ export const adminApi = {
 	// Occurrences
 	getSessionOccurrences: async (sessionId: string): Promise<Occurrence[]> => {
 		const { data } = await api.get(`/admin/sessions/${sessionId}/occurrences`);
-		return data;
-	},
-
-	generateOccurrences: async (
-		sessionId: string,
-	): Promise<{ created: number; skippedExisting: number }> => {
-		const { data } = await api.post(`/admin/sessions/${sessionId}/occurrences/generate`);
-		return data;
+		return unwrapList<Occurrence>(data);
 	},
 
 	cancelOccurrence: async (occurrenceId: string, reason?: string): Promise<Occurrence> => {
@@ -236,7 +242,7 @@ export const adminApi = {
 	getStaff: async (activeOnly = true): Promise<StaffListItem[]> => {
 		const params = activeOnly ? '?active_only=true' : '?active_only=false';
 		const { data } = await api.get(`/admin/staff/${params}`);
-		return data;
+		return unwrapList<StaffListItem>(data);
 	},
 
 	getStaffMember: async (staffId: string): Promise<Staff> => {
@@ -263,53 +269,129 @@ export const adminApi = {
 
 	getStaffSessions: async (staffId: string): Promise<StaffSessionSummary[]> => {
 		const { data } = await api.get(`/admin/staff/${staffId}/sessions`);
-		return data;
+		return unwrapList<Record<string, unknown>>(data).map((item) => {
+			const sessionType = (item.sessionType ?? item.session_type) as
+				| string
+				| undefined;
+			const dayOfWeek = (item.dayOfWeek ?? item.day_of_week) as
+				| number
+				| null
+				| undefined;
+			const startTime = (item.startTime ?? item.start_time) as
+				| string
+				| null
+				| undefined;
+			const endTime = (item.endTime ?? item.end_time) as
+				| string
+				| null
+				| undefined;
+			const locationName = (item.locationName ?? item.location_name) as
+				| string
+				| null
+				| undefined;
+			const location = (item.location ?? item.location_name ?? item.locationName) as
+				| string
+				| null
+				| undefined;
+
+			return {
+				id: item.id as string,
+				name: item.name as string,
+				year: item.year as number,
+				location,
+				sessionType,
+				dayOfWeek,
+				startTime,
+				endTime,
+				locationName,
+			};
+		});
 	},
 
-	getSessionStaff: async (sessionId: string): Promise<StaffListItem[]> => {
+	getStaffAvailability: async (
+		year?: number,
+		activeOnly = true,
+	): Promise<StaffAvailability[]> => {
+		const params = new URLSearchParams();
+		if (year !== undefined) params.append('year', year.toString());
+		params.append('active_only', activeOnly.toString());
+		const { data } = await api.get(`/admin/staff/availability?${params.toString()}`);
+		return unwrapList<StaffAvailability>(data);
+	},
+
+	// Session Staff Assignments
+	getSessionStaff: async (sessionId: string): Promise<StaffPublic[]> => {
 		const { data } = await api.get(`/admin/sessions/${sessionId}/staff`);
-		return data;
+		return unwrapList<StaffPublic>(data);
 	},
 
-	assignSessionStaff: async (
+	assignStaffToSession: async (sessionId: string, staffId: string): Promise<void> => {
+		await api.post(`/admin/sessions/${sessionId}/staff`, { staff_id: staffId });
+	},
+
+	removeStaffFromSession: async (sessionId: string, staffId: string): Promise<void> => {
+		await api.delete(`/admin/sessions/${sessionId}/staff/${staffId}`);
+	},
+
+	bulkAssignStaff: async (
 		sessionId: string,
 		staffIds: string[],
-	): Promise<{ message: string }> => {
-		const { data } = await api.post(`/admin/sessions/${sessionId}/staff`, {
+		replace = false,
+	): Promise<void> => {
+		await api.post(`/admin/sessions/${sessionId}/staff/bulk`, {
 			staff_ids: staffIds,
+			replace,
 		});
-		return data;
-	},
-
-	removeSessionStaff: async (sessionId: string, staffId: string): Promise<void> => {
-		await api.delete(`/admin/sessions/${sessionId}/staff/${staffId}`);
 	},
 
 	// Children / Notes
 	getChild: async (childId: string): Promise<ChildDetails> => {
-		const { data } = await api.get(`/admin/children/${childId}`);
-		return data;
-	},
-
-	getChildNotes: async (childId: string): Promise<ChildNote[]> => {
-		const { data } = await api.get(`/admin/children/${childId}/notes`);
-		return data;
-	},
-
-	addChildNote: async (
-		childId: string,
-		payload: { note: string; author?: string | null },
-	): Promise<ChildNote> => {
-		const { data } = await api.post(`/admin/children/${childId}/notes`, {
-			note: payload.note,
-			author: payload.author ?? null,
-		});
+		const { data } = await api.get(`/admin/students/${childId}`);
 		return data;
 	},
 
 	// Children list
 	listChildren: async (): Promise<ChildDetails[]> => {
-		const { data } = await api.get('/admin/children');
+		const { data } = await api.get('/admin/students');
+		return unwrapList<ChildDetails>(data);
+	},
+
+	// Caregivers
+	listCaregivers: async (limit?: number, offset?: number): Promise<Caregiver[]> => {
+		const params = new URLSearchParams();
+		if (limit !== undefined) params.append('limit', limit.toString());
+		if (offset !== undefined) params.append('offset', offset.toString());
+		const qs = params.toString();
+		const url = qs ? `/admin/caregivers?${qs}` : '/admin/caregivers';
+		const { data } = await api.get(url);
+		return unwrapList<Caregiver>(data);
+	},
+
+	getCaregiver: async (id: string): Promise<Caregiver> => {
+		const { data } = await api.get(`/admin/caregivers/${id}`);
+		return data;
+	},
+
+	createCaregiver: async (caregiver: CaregiverCreate): Promise<Caregiver> => {
+		const { data } = await api.post('/admin/caregivers', caregiver);
+		return data;
+	},
+
+	updateCaregiver: async (id: string, caregiver: CaregiverUpdate): Promise<Caregiver> => {
+		const { data } = await api.patch(`/admin/caregivers/${id}`, caregiver);
+		return data;
+	},
+
+	getCaregiverStudents: async (id: string): Promise<ChildDetails[]> => {
+		const { data } = await api.get(`/admin/caregivers/${id}/students`);
+		return unwrapList<ChildDetails>(data);
+	},
+
+	sendCaregiverEmail: async (
+		id: string,
+		payload: { subject: string; message: string },
+	): Promise<{ ok: boolean }> => {
+		const { data } = await api.post(`/admin/caregivers/${id}/email`, payload);
 		return data;
 	},
 
@@ -322,7 +404,7 @@ export const adminApi = {
 		const { data } = await api.get(
 			`/admin/occurrences/${occurrenceId}/attendance-history${params}`,
 		);
-		return data;
+		return unwrapList<AttendanceRecord>(data);
 	},
 
 	// Communications
@@ -331,19 +413,6 @@ export const adminApi = {
 		payload: { subject: string; message: string; actor?: string | null },
 	): Promise<{ enqueued: number }> => {
 		const { data } = await api.post(`/admin/sessions/${sessionId}/email`, payload);
-		return data;
-	},
-
-	notifySession: async (
-		sessionId: string,
-		payload: {
-			updateTitle: string;
-			updateMessage?: string | null;
-			affectedDate?: string | null;
-			actor?: string | null;
-		},
-	): Promise<{ enqueued: number }> => {
-		const { data } = await api.post(`/admin/sessions/${sessionId}/notify`, payload);
 		return data;
 	},
 };

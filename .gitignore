@@ -33,7 +33,7 @@ test-results/
 # OS
 .DS_Store
 
-.coverage
+.coverage*
 
 .direnv
 
@@ -42,3 +42,16 @@ test-results/
 .ruff_cache/
 
 .pytest_cache/
+
+coverage*
+htmlcov/
+
+# IDE
+.idea/
+
+# Database backups and sensitive data
+*.sql
+*.dump
+*.backup
+backup.sql
+*.bak

@@ -1,40 +1,43 @@
 import { expect, test } from '@playwright/test';
 
+// Get API base URL from environment or use defaults
+const API_BASE_URL = process.env.PUBLIC_BASE_URL || 'http://localhost:8000';
+const FRONTEND_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4321';
+
 test('Simple authentication test', async ({ page, context }) => {
 	console.log('🔵 Starting simple auth test');
 
 	// Step 1: Navigate to frontend
 	// console.log('🟢 Navigating to frontend...');
-	await page.goto('http://localhost:4324/', { waitUntil: 'domcontentloaded' });
+	await page.goto(`${FRONTEND_BASE_URL}/`, { waitUntil: 'domcontentloaded' });
 	// console.log('✅ Frontend loaded');
 
-	// Step 2: Request magic link
-	// console.log('🟢 Requesting magic link...');
-	const response = await page.evaluate(async () => {
-		const resp = await fetch('http://localhost:8000/api/v1/auth/magic-link', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			credentials: 'include',
-			body: JSON.stringify({ email: 'test@example.com', return_to: '/account' }),
-		});
-		// console.log('Response status:', resp.status);
-		const data = await resp.json();
-		// console.log('Response data:', data);
-		return {
-			status: resp.status,
-			data: data,
-		};
+	const response = await page.request.post(`${API_BASE_URL}/api/v1/auth/magic-link`, {
+		headers: { 'Content-Type': 'application/json' },
+		data: { email: 'test@example.com', return_to: '/account' },
 	});
 
-	// console.log('Magic link response:', response);
-	const token = response.data.debugToken;
+	const data = await response.json();
+	const token = data.debugToken ?? data.debug_token;
 	expect(token).toBeDefined();
-	// console.log('✅ Got token:', token);
 
-	// Step 3: Try to consume the token
-	// console.log('🟢 Consuming token...');
-	const consumeUrl = `http://localhost:8000/api/v1/auth/magic-link/consume?token=${token}&returnTo=/account`;
-	await page.goto(consumeUrl, { waitUntil: 'load', timeout: 10000 });
+	const consumeResponse = await page.request.get(
+		`${API_BASE_URL}/api/v1/auth/magic-link/consume?token=${token}&returnTo=/account`,
+	);
+	const setCookie = consumeResponse.headers()['set-cookie'];
+	const sessionCookie = setCookie?.split(';')[0];
+	const [cookieName, cookieValue] = sessionCookie ? sessionCookie.split('=') : [];
+	if (cookieName && cookieValue) {
+		await context.addCookies([
+			{
+				name: cookieName,
+				value: cookieValue,
+				url: FRONTEND_BASE_URL,
+			},
+		]);
+	}
+
+	await page.goto('/account', { waitUntil: 'load', timeout: 10000 });
 
 	// Step 4: Check where we ended up
 	// console.log('🟢 Checking current URL...');

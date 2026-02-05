@@ -1,11 +1,12 @@
 with import <nixpkgs> {};
 mkShell {
   buildInputs = [
-    python3
+    python313
     uv
     nodejs
     pnpm
     playwright-driver.browsers
+    act
   ];
 
   NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [

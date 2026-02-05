@@ -1,6 +1,7 @@
 ---
+import ChildSignupStatus from '../components/ChildSignupStatus.astro';
 import Layout from '../layouts/Layout.astro';
-import { fetchMe, listChildren } from '../lib/api';
+import { fetchMe, listChildren, listMySignups } from '../lib/api';
 
 export const prerender = false;
 
@@ -8,11 +9,20 @@ export const prerender = false;
 const cookieHeader = Astro.request.headers.get('cookie') ?? undefined;
 let user = null;
 let children: Array<{ id: string; name: string; dateOfBirth?: string | null }> = [];
+let signups: Array<{
+	id: string;
+	status: string;
+	sessionId: string;
+	sessionName: string;
+	childId: string;
+	childName: string;
+}> = [];
 
 try {
 	user = await fetchMe(cookieHeader);
 	if (user) {
 		children = await listChildren(cookieHeader);
+		signups = await listMySignups(cookieHeader);
 	}
 } catch (e) {
 	// Not logged in, redirect to login
@@ -184,26 +194,7 @@ const profileIncomplete = !user.name || !user.phone;
 									No children added yet. Click "Add child" to get started.
 								</p>
 							) : (
-								children.map((child) => (
-									<div class="rounded-lg border border-gray-200 p-4">
-										<div class="flex items-start justify-between">
-											<div>
-												<p class="font-semibold text-gray-900">{child.name}</p>
-												{child.dateOfBirth && (
-													<p class="text-sm text-gray-600">
-														Born: {new Date(child.dateOfBirth).toLocaleDateString('en-NZ')}
-													</p>
-												)}
-											</div>
-											<button
-												class="text-sm text-tuhura-green hover:text-tuhura-green/80"
-												data-child-id={child.id}
-											>
-												Edit
-											</button>
-										</div>
-									</div>
-								))
+								children.map((child) => <ChildSignupStatus child={child} signups={signups} />)
 							)
 						}
 					</div>
@@ -356,12 +347,61 @@ const profileIncomplete = !user.name || !user.phone;
 					</div>
 				</div>
 			</div>
+
+			<!-- Edit Child Modal -->
+			<div
+				id="edit-child-modal"
+				class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+			>
+				<div
+					class="my-auto max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-xl"
+				>
+					<div class="sticky top-0 rounded-t-2xl border-b border-gray-200 bg-white px-6 py-4">
+						<h3 class="text-xl font-semibold text-gray-900">Edit child</h3>
+					</div>
+					<form id="edit-child-form" class="space-y-4 p-6">
+						<div>
+							<label for="edit-child-name" class="block text-sm font-semibold text-gray-700"
+								>Name <span class="text-red-600">*</span></label
+							>
+							<input
+								type="text"
+								id="edit-child-name"
+								name="name"
+								required
+								class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-tuhura-green focus:ring-2 focus:ring-tuhura-green/20 focus:outline-none"
+							/>
+						</div>
+
+						<div>
+							<label for="edit-child-dob" class="block text-sm font-semibold text-gray-700"
+								>Date of Birth <span class="text-red-600">*</span></label
+							>
+							<input
+								type="date"
+								id="edit-child-dob"
+								name="dateOfBirth"
+								required
+								class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-tuhura-green focus:ring-2 focus:ring-tuhura-green/20 focus:outline-none"
+							/>
+						</div>
+
+						<div class="flex gap-3">
+							<button type="submit" class="btn btn-primary flex-1"> Save changes </button>
+							<button type="button" id="cancel-edit-child" class="btn btn-secondary flex-1">
+								Cancel
+							</button>
+						</div>
+						<p id="edit-child-message" class="hidden text-sm"></p>
+					</form>
+				</div>
+			</div>
 		</div>
 	</main>
 </Layout>
 
 <script>
-	import { updateMe, logout, createChild } from '../lib/api';
+	import { updateMe, logout, createChild, updateChild } from '../lib/api';
 
 	// Profile form
 	const profileForm = document.getElementById('profile-form') as HTMLFormElement;
@@ -460,13 +500,76 @@ const profileIncomplete = !user.name || !user.phone;
 				addChildMessage.className = 'text-sm text-emerald-600';
 				addChildMessage.classList.remove('hidden');
 			}
-			// Reload page to show new child
-			setTimeout(() => window.location.reload(), 1000);
+			// Check if we came from a signup page - if so, redirect back
+			const urlParams = new URLSearchParams(window.location.search);
+			const returnTo = urlParams.get('returnTo');
+			if (returnTo) {
+				// Show success message briefly before redirecting
+				setTimeout(() => {
+					window.location.href = returnTo;
+				}, 1000);
+			} else {
+				// Reload page to show new child
+				setTimeout(() => window.location.reload(), 1000);
+			}
 		} catch (error) {
 			if (addChildMessage) {
 				addChildMessage.textContent = 'Failed to add child';
 				addChildMessage.className = 'text-sm text-red-600';
 				addChildMessage.classList.remove('hidden');
+			}
+		}
+	});
+
+	// Edit child modal
+	const editChildModal = document.getElementById('edit-child-modal');
+	const editChildForm = document.getElementById('edit-child-form') as HTMLFormElement;
+	const editChildName = document.getElementById('edit-child-name') as HTMLInputElement;
+	const editChildDob = document.getElementById('edit-child-dob') as HTMLInputElement;
+	const editChildMessage = document.getElementById('edit-child-message');
+	const cancelEditChild = document.getElementById('cancel-edit-child');
+	let editingChildId: string | null = null;
+
+	const editButtons = document.querySelectorAll<HTMLButtonElement>('button[data-child-id]');
+	editButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			editingChildId = button.dataset.childId || null;
+			if (!editingChildId) return;
+			editChildName.value = button.dataset.childName || '';
+			const [dob] = (button.dataset.childDob || '').split('T');
+			editChildDob.value = dob ?? '';
+			editChildMessage?.classList.add('hidden');
+			editChildModal?.classList.remove('hidden');
+		});
+	});
+
+	cancelEditChild?.addEventListener('click', () => {
+		editChildModal?.classList.add('hidden');
+		editChildForm?.reset();
+		editingChildId = null;
+	});
+
+	editChildForm?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		if (!editingChildId) return;
+
+		const formData = new FormData(editChildForm);
+		const name = formData.get('name') as string;
+		const dateOfBirth = formData.get('dateOfBirth') as string;
+
+		try {
+			await updateChild(editingChildId, { name, dateOfBirth });
+			if (editChildMessage) {
+				editChildMessage.textContent = 'Child updated successfully!';
+				editChildMessage.className = 'text-sm text-emerald-600';
+				editChildMessage.classList.remove('hidden');
+			}
+			setTimeout(() => window.location.reload(), 800);
+		} catch (error) {
+			if (editChildMessage) {
+				editChildMessage.textContent = 'Failed to update child';
+				editChildMessage.className = 'text-sm text-red-600';
+				editChildMessage.classList.remove('hidden');
 			}
 		}
 	});

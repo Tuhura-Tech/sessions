@@ -7,24 +7,28 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
-	({ label, required, error, className, ...props }, ref) => (
-		<div className="flex flex-col gap-1">
-			{label && (
-				<label className="block text-sm font-medium text-gray-700">
-					{label}
-					{required && <span className="text-red-500"> *</span>}
-				</label>
-			)}
-			<input
-				ref={ref}
-				className={`rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-					error ? 'border-red-500' : ''
-				} ${className || ''}`}
-				{...props}
-			/>
-			{error && <span className="text-sm text-red-600">{error}</span>}
-		</div>
-	),
+	({ label, required, error, className, id, ...props }, ref) => {
+		const inputId = id || `input-${label?.replace(/\s+/g, '-').toLowerCase()}`;
+		return (
+			<div className="flex flex-col gap-1">
+				{label && (
+					<label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+						{label}
+						{required && <span className="text-red-500"> *</span>}
+					</label>
+				)}
+				<input
+					ref={ref}
+					id={inputId}
+					className={`rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+						error ? 'border-red-500' : ''
+					} ${className || ''}`}
+					{...props}
+				/>
+				{error && <span className="text-sm text-red-600">{error}</span>}
+			</div>
+		);
+	},
 );
 
 FormInput.displayName = 'FormInput';
@@ -37,30 +41,34 @@ interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
 }
 
 export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
-	({ label, required, error, options, className, ...props }, ref) => (
-		<div className="flex flex-col gap-1">
-			{label && (
-				<label className="block text-sm font-medium text-gray-700">
-					{label}
-					{required && <span className="text-red-500"> *</span>}
-				</label>
-			)}
-			<select
-				ref={ref}
-				className={`rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-					error ? 'border-red-500' : ''
-				} ${className || ''}`}
-				{...props}
-			>
-				{options?.map((opt) => (
-					<option key={opt.value} value={opt.value}>
-						{opt.label}
-					</option>
-				))}
-			</select>
-			{error && <span className="text-sm text-red-600">{error}</span>}
-		</div>
-	),
+	({ label, required, error, options, className, id, ...props }, ref) => {
+		const selectId = id || `select-${label?.replace(/\s+/g, '-').toLowerCase()}`;
+		return (
+			<div className="flex flex-col gap-1">
+				{label && (
+					<label htmlFor={selectId} className="block text-sm font-medium text-gray-700">
+						{label}
+						{required && <span className="text-red-500"> *</span>}
+					</label>
+				)}
+				<select
+					ref={ref}
+					id={selectId}
+					className={`rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+						error ? 'border-red-500' : ''
+					} ${className || ''}`}
+					{...props}
+				>
+					{options?.map((opt) => (
+						<option key={opt.value} value={opt.value}>
+							{opt.label}
+						</option>
+					))}
+				</select>
+				{error && <span className="text-sm text-red-600">{error}</span>}
+			</div>
+		);
+	},
 );
 
 FormSelect.displayName = 'FormSelect';
@@ -72,24 +80,28 @@ interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaEle
 }
 
 export const FormTextarea = React.forwardRef<HTMLTextAreaElement, FormTextareaProps>(
-	({ label, required, error, className, ...props }, ref) => (
-		<div className="flex flex-col gap-1">
-			{label && (
-				<label className="block text-sm font-medium text-gray-700">
-					{label}
-					{required && <span className="text-red-500"> *</span>}
-				</label>
-			)}
-			<textarea
-				ref={ref}
-				className={`rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-					error ? 'border-red-500' : ''
-				} ${className || ''}`}
-				{...props}
-			/>
-			{error && <span className="text-sm text-red-600">{error}</span>}
-		</div>
-	),
+	({ label, required, error, className, id, ...props }, ref) => {
+		const textareaId = id || `textarea-${label?.replace(/\s+/g, '-').toLowerCase()}`;
+		return (
+			<div className="flex flex-col gap-1">
+				{label && (
+					<label htmlFor={textareaId} className="block text-sm font-medium text-gray-700">
+						{label}
+						{required && <span className="text-red-500"> *</span>}
+					</label>
+				)}
+				<textarea
+					ref={ref}
+					id={textareaId}
+					className={`rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+						error ? 'border-red-500' : ''
+					} ${className || ''}`}
+					{...props}
+				/>
+				{error && <span className="text-sm text-red-600">{error}</span>}
+			</div>
+		);
+	},
 );
 
 FormTextarea.displayName = 'FormTextarea';

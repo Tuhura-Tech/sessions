@@ -1,34 +1,163 @@
-import { expect, test } from '@playwright/test';
-import { mockGoogleOAuthSession, navigateTo, waitForApiCalls } from './helpers';
+import { expect, type Page, test } from '@playwright/test';
+import {
+	ADMIN_API_BASE_URL,
+	authenticateAsAdmin,
+	createAdminSessionToken,
+	ensureAuthenticated,
+	navigateTo,
+	trackPageErrors,
+	waitForApiCalls,
+	waitForAuthReady,
+} from './helpers';
+
+async function getFirstOccurrenceId(page: Page): Promise<string | null> {
+	const token = createAdminSessionToken();
+	const sessionsResponse = await page.request.get(
+		`${ADMIN_API_BASE_URL}/admin/sessions?year=${new Date().getFullYear()}`,
+		{ headers: { cookie: `admin_session=${token}` } },
+	);
+
+	if (!sessionsResponse.ok()) return null;
+	const sessionsData = await sessionsResponse.json();
+	const sessions = Array.isArray(sessionsData) ? sessionsData : sessionsData?.items || [];
+	if (!Array.isArray(sessions) || sessions.length === 0) return null;
+
+	let targetSessionId = sessions[0].id;
+	for (const sessionItem of sessions) {
+		const signupsResponse = await page.request.get(
+			`${ADMIN_API_BASE_URL}/admin/sessions/${sessionItem.id}/signups`,
+			{ headers: { cookie: `admin_session=${token}` } },
+		);
+
+		if (signupsResponse.ok()) {
+			const signupsData = await signupsResponse.json();
+			const signups = Array.isArray(signupsData) ? signupsData : signupsData?.items || [];
+			if (Array.isArray(signups) && signups.length > 0) {
+				targetSessionId = sessionItem.id;
+				break;
+			}
+		}
+	}
+
+	const occurrencesResponse = await page.request.get(
+		`${ADMIN_API_BASE_URL}/admin/sessions/${targetSessionId}/occurrences`,
+		{ headers: { cookie: `admin_session=${token}` } },
+	);
+
+	if (!occurrencesResponse.ok()) return null;
+	const occurrencesData = await occurrencesResponse.json();
+	const occurrences = Array.isArray(occurrencesData)
+		? occurrencesData
+		: occurrencesData?.items || [];
+	if (!Array.isArray(occurrences) || occurrences.length === 0) return null;
+
+	return occurrences[0].id || null;
+}
 
 test.describe('Attendance Tracking', () => {
+	let pageErrors: string[] = [];
+
 	test.beforeEach(async ({ page }) => {
-		await mockGoogleOAuthSession(page);
+		pageErrors = trackPageErrors(page);
+		await authenticateAsAdmin(page);
+		await ensureAuthenticated(page);
+	});
+
+	test.afterEach(async () => {
+		expect(pageErrors).toEqual([]);
 	});
 
 	test('should display attendance roll page', async ({ page }) => {
-		await navigateTo(page, '/attendance');
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
+
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
+		const spinner = page.locator('.animate-spin');
+		if ((await spinner.count()) > 0) {
+			await expect(spinner).toBeHidden();
+		}
 
 		// Check page title
 		const title = page.locator('h1, h2');
 		await expect(title.first()).toBeVisible();
+
+		// Validate attendance roll has proper structure
+		const table = page.locator('table');
+		if ((await table.count()) > 0) {
+			// Check for attendance table headers
+			const headers = table.locator('thead th');
+			const headerCount = await headers.count();
+			expect(headerCount).toBeGreaterThan(0);
+
+			const rows = table.locator('tbody tr');
+			if ((await rows.count()) > 0) {
+				// First row should have student name and status fields
+				const firstRow = rows.first();
+				const cells = firstRow.locator('td');
+				const cellCount = await cells.count();
+				expect(cellCount).toBeGreaterThan(0);
+
+				// Student name should be in first cell
+				const nameCell = cells.first();
+				const nameText = await nameCell.innerText();
+				expect(nameText.trim().length).toBeGreaterThan(0);
+			}
+		}
 	});
 
 	test('should have attendance marking options', async ({ page }) => {
-		await navigateTo(page, '/attendance');
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
+
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
+		const spinner = page.locator('.animate-spin');
+		if ((await spinner.count()) > 0) {
+			await expect(spinner).toBeHidden();
+		}
 
-		// Look for attendance status options (Present, Absent, Excused)
-		const hasPresent = (await page.locator('text=/present/i').count()) > 0;
-		const hasAbsent = (await page.locator('text=/absent/i').count()) > 0;
+		const notFound = page.locator('text=Occurrence Not Found');
+		if ((await notFound.count()) > 0) {
+			test.skip(true, 'Occurrence data unavailable');
+			return;
+		}
 
-		expect(hasPresent || hasAbsent).toBeTruthy();
+		const rowCount = await page.locator('table tbody tr').count();
+		if (rowCount === 0) {
+			await expect(page.locator('text=No students enrolled in this session')).toBeVisible();
+		} else {
+			// Verify attendance status buttons exist
+			await expect(page.locator('button:has-text("Present")').first()).toBeVisible();
+			await expect(page.locator('button:has-text("Absent")').first()).toBeVisible();
+
+			// Verify first row has student name
+			const firstRow = page.locator('table tbody tr').first();
+			const nameCell = firstRow.locator('td').first();
+			const nameText = await nameCell.innerText();
+			expect(nameText.trim().length).toBeGreaterThan(0);
+		}
 	});
 
 	test('should allow selecting attendance status', async ({ page }) => {
-		await navigateTo(page, '/attendance');
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
+
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
+		const spinner = page.locator('.animate-spin');
+		if ((await spinner.count()) > 0) {
+			await expect(spinner).toBeHidden();
+		}
 
 		// Find first radio/checkbox for attendance
 		const radioButtons = page.locator('input[type="radio"], input[type="checkbox"]');
@@ -43,45 +172,75 @@ test.describe('Attendance Tracking', () => {
 	});
 
 	test('should have save/submit button', async ({ page }) => {
-		await navigateTo(page, '/attendance');
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
+
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
+		const spinner = page.locator('.animate-spin');
+		if ((await spinner.count()) > 0) {
+			await expect(spinner).toBeHidden();
+		}
+
+		const notFound = page.locator('text=Occurrence Not Found');
+		if ((await notFound.count()) > 0) {
+			test.skip(true, 'Occurrence data unavailable');
+			return;
+		}
 
 		// Look for save/submit button
 		const saveButton = page.locator(
 			'button:has-text("Save"), button:has-text("Submit"), button:has-text("Mark")',
 		);
 
-		// Should have at least one save option
-		const count = await saveButton.count();
-		expect(count).toBeGreaterThan(0);
+		// Save button appears only when changes are made
+		const rowCount = await page.locator('table tbody tr').count();
+		if (rowCount === 0) {
+			// Skip test if no students - we can't test the save button
+			test.skip(true, 'No students enrolled to test attendance marking');
+		} else {
+			const presentButton = page.locator('button:has-text("Present")').first();
+			await presentButton.scrollIntoViewIfNeeded();
+			await presentButton.click({ force: true });
+			await expect(saveButton.first()).toBeVisible();
+		}
 	});
 
 	test('should handle form submission', async ({ page }) => {
-		// Mock attendance API
-		await page.route('**/api/v1/admin/attendance', async (route) => {
-			if (route.request().method() === 'POST') {
-				await route.abort('failed');
-			} else {
-				await route.continue();
-			}
-		});
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
 
-		await navigateTo(page, '/attendance');
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
+		const spinner = page.locator('.animate-spin');
+		if ((await spinner.count()) > 0) {
+			await expect(spinner).toBeHidden();
+		}
 
 		// Try to mark attendance and save
 		const saveButton = page.locator('button:has-text("Save"), button:has-text("Submit")');
 
-		if ((await saveButton.count()) > 0) {
+		const hasEmptyState = (await page.locator('text=No students enrolled').count()) > 0;
+		if (!hasEmptyState && (await saveButton.count()) > 0) {
 			await saveButton.first().click();
-
-			// Wait for request (even if it fails)
 			await page.waitForLoadState('networkidle');
 		}
 	});
 
 	test('should export attendance data', async ({ page }) => {
-		await navigateTo(page, '/attendance');
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
+
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
 		await waitForApiCalls(page);
 
 		// Look for export button

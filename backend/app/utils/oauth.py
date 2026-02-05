@@ -1,3 +1,4 @@
+# pylint: disable=[invalid-name,import-outside-toplevel]
 from __future__ import annotations
 
 import time
@@ -68,7 +69,9 @@ def verify_oauth_state(
         Tuple of (is_valid, payload, error_message)
     """
     try:
-        payload = cast("dict[str, Any]", jwt.decode(state, secret_key, algorithms=["HS256"]))
+        payload = cast(
+            "dict[str, Any]", jwt.decode(state, secret_key, algorithms=["HS256"])
+        )
         if payload.get("provider") != expected_provider:
             return False, {}, "Invalid OAuth provider"
     except jwt.ExpiredSignatureError:
@@ -159,9 +162,9 @@ class OAuth2AuthorizeCallback:
         route_name: Name of the callback route, as defined in the `name` parameter of the route decorator.
         redirect_url: Full URL to the callback route.
         """
-        assert (route_name is not None and redirect_url is None) or (route_name is None and redirect_url is not None), (
-            "You should either set route_name or redirect_url"
-        )
+        assert (route_name is not None and redirect_url is None) or (  # noqa: S101
+            route_name is None and redirect_url is not None
+        ), "You should either set route_name or redirect_url"
         self.client = client
         self.route_name = route_name
         self.redirect_url = redirect_url
@@ -195,7 +198,11 @@ class OAuth2AuthorizeCallback:
                 detail=error,
             )
 
-        redirect_url = str(request.url_for(self.route_name)) if self.route_name else self.redirect_url
+        redirect_url = (
+            str(request.url_for(self.route_name))
+            if self.route_name
+            else self.redirect_url
+        )
         try:
             access_token = await self.client.get_access_token(
                 code,
@@ -225,6 +232,7 @@ class OAuth2ProviderPlugin(InitPluginProtocol):
         Returns:
             AppConfig: The configured :class:`AppConfig <.config.app.AppConfig>` instance.
         """
+
         app_config.signature_namespace.update(
             {
                 "OAuth2AuthorizeCallback": OAuth2AuthorizeCallback,

@@ -1,18 +1,23 @@
 ---
 import SessionsMap from '@components/Map.astro';
 import Layout from '../../layouts/Layout.astro';
-import { fetchSessionById } from '../../lib/api';
+import { fetchBlocks, fetchSessionById } from '../../lib/api';
 
 export const prerender = false;
 
-// Term dates for 2026
-const TERM_DATES = {
-	special: { name: 'Special', start: '2026-01-19', end: '2026-01-23' },
-	term_1: { name: 'Term 1', start: '2026-02-09', end: '2026-04-02' },
-	term_2: { name: 'Term 2', start: '2026-04-20', end: '2026-07-03' },
-	term_3: { name: 'Term 3', start: '2026-07-20', end: '2026-09-25' },
-	term_4: { name: 'Term 4', start: '2026-10-12', end: '2026-12-18' },
-};
+// Fetch blocks dynamically from the API
+const allBlocks = await fetchBlocks();
+
+// Build a map of block_type to term dates
+const TERM_DATES: Record<string, { name: string; start: string; end: string }> = {};
+
+for (const block of allBlocks) {
+	TERM_DATES[block.blockType] = {
+		name: block.name,
+		start: block.startDate,
+		end: block.endDate,
+	};
+}
 
 // Determine current or next active term (keeping for future use)
 // function getCurrentOrNextTerm() {

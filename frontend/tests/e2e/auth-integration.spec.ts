@@ -15,39 +15,56 @@ import { expect, type Page, test } from '@playwright/test';
  * They use unique emails to avoid conflicts between test runs.
  */
 
+// Get API base URL from environment or use defaults
+const API_BASE_URL = process.env.PUBLIC_BASE_URL || 'http://localhost:8000';
+const FRONTEND_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4321';
+
 // Utility to generate unique test data
-const generateTestData = () => ({
-	email: `test-${Date.now()}-${Math.random().toString(36).substring(2, 11)}@example.com`,
-	childName: `Test Child ${Date.now()}`,
-	childDob: '2015-01-15',
-	parentName: `Test Parent ${Date.now()}`,
-	parentPhone: '+64-200-123-456',
-});
+const generateTestData = () => {
+	const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+	return {
+		email: `test-${uniqueSuffix}@example.com`,
+		childName: `Test Child ${uniqueSuffix}`,
+		childDob: '2015-01-15',
+		parentName: `Test Parent ${uniqueSuffix}`,
+		parentPhone: '+64-200-123-456',
+	};
+};
 
 /**
  * Helper to authenticate a user via magic link
  */
 async function authenticateUser(page: Page, email: string): Promise<void> {
-	await page.goto('http://localhost:4324/', { waitUntil: 'domcontentloaded' });
+	await page.goto(`${FRONTEND_BASE_URL}/`, { waitUntil: 'domcontentloaded' });
 
-	const resp = await page.request.post('http://localhost:8000/api/v1/auth/magic-link', {
+	const resp = await page.request.post(`${API_BASE_URL}/api/v1/auth/magic-link`, {
 		headers: { 'Content-Type': 'application/json' },
 		data: { email, return_to: '/account' },
 	});
-	const token = (await resp.json()).debugToken as string;
+	const data = await resp.json();
+	const token = (data.debugToken ?? data.debug_token) as string;
 
 	expect(token).toBeDefined();
 
-	await page.goto(
-		`http://localhost:8000/api/v1/auth/magic-link/consume?token=${token}&returnTo=/account`,
-		{
-			waitUntil: 'domcontentloaded',
-		},
+	const consumeResponse = await page.request.get(
+		`${API_BASE_URL}/api/v1/auth/magic-link/consume?token=${token}&returnTo=/account`,
 	);
+	const setCookie = consumeResponse.headers()['set-cookie'];
+	const sessionCookie = setCookie?.split(';')[0];
+	const [cookieName, cookieValue] = sessionCookie ? sessionCookie.split('=') : [];
+	if (cookieName && cookieValue) {
+		await page.context().addCookies([
+			{
+				name: cookieName,
+				value: cookieValue,
+				url: FRONTEND_BASE_URL,
+			},
+		]);
+	}
 
 	await page.goto('/account', { waitUntil: 'domcontentloaded' });
 
-	await page.request.patch('http://localhost:8000/api/v1/me', {
+	await page.request.patch(`${API_BASE_URL}/api/v1/me`, {
 		headers: { 'Content-Type': 'application/json' },
 		data: { name: 'E2E User', phone: '+64-210-0000' },
 	});
@@ -57,6 +74,19 @@ async function authenticateUser(page: Page, email: string): Promise<void> {
 	if (page.url().includes('/account')) {
 		await page.reload({ waitUntil: 'domcontentloaded' });
 	}
+}
+
+async function fetchFirstSessionId(request: Page['request']): Promise<string> {
+	const response = await request.get(`${API_BASE_URL}/api/v1/sessions`);
+	const payload = (await response.json()) as
+		| { items?: Array<{ id?: string; sessions?: Array<{ id?: string }> }> }
+		| Array<{ id?: string; sessions?: Array<{ id?: string }> }>;
+	const items = Array.isArray(payload) ? payload : (payload.items ?? []);
+	const first = items[0];
+	const sessionId = first?.id ?? first?.sessions?.[0]?.id;
+
+	expect(sessionId).toBeDefined();
+	return sessionId as string;
 }
 
 /**
@@ -77,8 +107,10 @@ async function createChildViaUI(page: Page, name: string, dateOfBirth: string): 
 	await dobInput.fill(dateOfBirth);
 	await submitBtn.click();
 
-	await page.waitForLoadState('domcontentloaded');
-	await page.waitForTimeout(500);
+	await Promise.race([
+		page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+		page.waitForTimeout(1500),
+	]);
 }
 
 /**
@@ -86,7 +118,7 @@ async function createChildViaUI(page: Page, name: string, dateOfBirth: string): 
  */
 // async function getChildIdFromPage(page: Page, childName: string): Promise<string> {
 // 	const childId = await page.evaluate(async (name) => {
-// 		const response = await fetch('http://localhost:8000/api/v1/children', {
+// 		const response = await fetch('http://localhost:8000/api/v1/students', {
 // 			method: 'GET',
 // 			credentials: 'include',
 // 		});
@@ -346,9 +378,7 @@ test.describe('Account Page - Children Management', () => {
 	let sessionId: string;
 
 	test.beforeAll(async ({ request }) => {
-		const response = await request.get('http://localhost:8000/api/v1/sessions');
-		const locations = await response.json();
-		sessionId = locations[0].sessions[0].id;
+		sessionId = await fetchFirstSessionId(request);
 	});
 
 	test('should display "add child first" message when no children exist', async ({ page }) => {
@@ -365,7 +395,7 @@ test.describe('Account Page - Children Management', () => {
 		await expect(page.locator('text=You need to add at least one child')).toBeVisible();
 
 		// Verify link to account page (use more specific selector)
-		const accountLink = page.locator('a.btn.btn-primary', { hasText: 'Go to account settings' });
+		const accountLink = page.locator('a.btn.btn-primary', { hasText: 'Add a child and continue' });
 		await expect(accountLink).toBeVisible();
 	});
 
@@ -395,6 +425,71 @@ test.describe('Account Page - Children Management', () => {
 		await expect(page.locator(`text=${child1.childName}`)).toBeVisible();
 		await expect(page.locator(`text=${child2.childName}`)).toBeVisible();
 	});
+
+	test('should allow editing a child', async ({ page }) => {
+		await authenticateUser(page, `edit-child-${testEmail}`);
+
+		// Create a child first
+		const { childName, childDob } = generateTestData();
+		await createChildViaUI(page, childName, childDob);
+
+		// Click edit button for the child
+		const editBtn = page.locator('button[data-child-id]').first();
+		await editBtn.click();
+
+		// Wait for edit modal
+		const editModal = page.locator('#edit-child-modal');
+		await editModal.waitFor({ state: 'visible', timeout: 5000 });
+
+		// Update child name
+		const updatedName = `Updated ${childName}`;
+		const nameInput = editModal.locator('input[name="name"]');
+		await nameInput.fill(updatedName);
+
+		// Submit the form
+		const submitBtn = editModal.locator('button[type="submit"]');
+		await submitBtn.click();
+
+		// Wait for page reload
+		await Promise.race([
+			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+			page.waitForTimeout(1500),
+		]);
+
+		// Verify updated name is displayed
+		await expect(page.locator(`text=${updatedName}`)).toBeVisible();
+	});
+
+	test('should cancel child editing without saving', async ({ page }) => {
+		await authenticateUser(page, `cancel-edit-${testEmail}`);
+
+		// Create a child first
+		const { childName, childDob } = generateTestData();
+		await createChildViaUI(page, childName, childDob);
+
+		// Click edit button
+		const editBtn = page.locator('button[data-child-id]').first();
+		await editBtn.click();
+
+		// Wait for edit modal
+		const editModal = page.locator('#edit-child-modal');
+		await editModal.waitFor({ state: 'visible', timeout: 5000 });
+
+		// Update name but don't save
+		const nameInput = editModal.locator('input[name="name"]');
+		await nameInput.fill('Should Not Appear');
+
+		// Cancel the edit
+		const cancelBtn = editModal.locator('button', { hasText: 'Cancel' });
+		await cancelBtn.click();
+
+		// Modal should be hidden
+		await expect(editModal).toHaveClass(/hidden/);
+
+		// Original name should still be visible
+		await expect(page.locator(`text=${childName}`)).toBeVisible();
+		await expect(page.locator('text=Should Not Appear')).not.toBeVisible();
+	});
 });
 
 test.describe('Signup Flow - Session Selection and Submission', () => {
@@ -402,9 +497,7 @@ test.describe('Signup Flow - Session Selection and Submission', () => {
 	let sessionId: string;
 
 	test.beforeAll(async ({ request }) => {
-		const response = await request.get('http://localhost:8000/api/v1/sessions');
-		const locations = await response.json();
-		sessionId = locations[0].sessions[0].id;
+		sessionId = await fetchFirstSessionId(request);
 	});
 
 	test('should display session details on signup page', async ({ page }) => {

@@ -1,9 +1,10 @@
 import { Users } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
+import { formatDate } from '../lib/utils';
 import { adminApi } from '../services/api';
 import type { ChildDetails } from '../types';
 
@@ -13,11 +14,7 @@ const Students: React.FC = () => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		loadChildren();
-	}, []);
-
-	const loadChildren = async () => {
+	const loadChildren = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const data = await adminApi.listChildren();
@@ -27,7 +24,11 @@ const Students: React.FC = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
+
+	useEffect(() => {
+		loadChildren();
+	}, [loadChildren]);
 
 	const filteredChildren = children.filter((child) =>
 		child.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -84,16 +85,10 @@ const Students: React.FC = () => {
 													{child.name}
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-													{child.dateOfBirth
-														? new Date(child.dateOfBirth).toLocaleDateString('en-NZ', {
-																day: '2-digit',
-																month: '2-digit',
-																year: 'numeric',
-															})
-														: '—'}
+													{child.date_of_birth ? formatDate(child.date_of_birth) : '—'}
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-													{child.mediaConsent ? (
+													{child.media_consent ? (
 														<span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
 															Yes
 														</span>
@@ -105,7 +100,8 @@ const Students: React.FC = () => {
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap">
 													<button
-														onClick={() => navigate(`/children/${child.id}`)}
+														type="button"
+														onClick={() => navigate(`/students/${child.id}`)}
 														className="font-medium text-blue-600 hover:text-blue-900"
 													>
 														View Details

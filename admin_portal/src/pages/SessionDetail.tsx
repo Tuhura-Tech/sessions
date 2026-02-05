@@ -1,13 +1,20 @@
-import { ArrowLeft, Copy, Download, Edit, Mail, Megaphone, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Mail, Trash2, UserPlus, Users, X } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
+import Modal from '../components/Modal';
 import Sidebar from '../components/Sidebar';
 import { downloadBlob } from '../lib/export';
-import { getStatusColor } from '../lib/utils';
+import { calculateAge, getStatusColor } from '../lib/utils';
 import { adminApi } from '../services/api';
-import type { Occurrence, Session, Signup, StaffListItem } from '../types';
+import type { Occurrence, Session, Signup, Staff, StaffPublic } from '../types';
+
+function dayOfWeekAsString(dayIndex: number | null): string {
+	if (dayIndex === null || dayIndex === undefined) return 'Not set';
+	const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+	return days[dayIndex] || 'Unknown';
+}
 
 const SessionDetail: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
@@ -15,62 +22,46 @@ const SessionDetail: React.FC = () => {
 	const [session, setSession] = useState<Session | null>(null);
 	const [signups, setSignups] = useState<Signup[]>([]);
 	const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+	const [assignedStaff, setAssignedStaff] = useState<StaffPublic[]>([]);
+	const [availableStaff, setAvailableStaff] = useState<Staff[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState<'signups' | 'occurrences' | 'staff' | 'comms'>(
 		'signups',
 	);
 	const [statusFilter, setStatusFilter] = useState<string>('');
-
-	const [sessionStaff, setSessionStaff] = useState<StaffListItem[]>([]);
-	const [allStaff, setAllStaff] = useState<StaffListItem[]>([]);
-	const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
-	const [isSavingStaff, setIsSavingStaff] = useState(false);
+	const [showStaffModal, setShowStaffModal] = useState(false);
 
 	const [bulkSubject, setBulkSubject] = useState('');
 	const [bulkMessage, setBulkMessage] = useState('');
-	const [notifyTitle, setNotifyTitle] = useState('');
-	const [notifyMessage, setNotifyMessage] = useState('');
-	const [notifyDate, setNotifyDate] = useState('');
 	const [commsStatus, setCommsStatus] = useState<string | null>(null);
 
-	useEffect(() => {
-		if (id) {
-			loadSessionData(id);
-		}
-	}, [id]);
-
-	const loadSessionData = async (sessionId: string) => {
+	const loadSessionData = useCallback(async (sessionId: string) => {
 		try {
 			setIsLoading(true);
-			const [sessionData, signupsData, occurrencesData] = await Promise.all([
+			const [sessionData, signupsData, occurrencesData, staffData, allStaff] = await Promise.all([
 				adminApi.getSession(sessionId),
 				adminApi.getSessionSignups(sessionId),
 				adminApi.getSessionOccurrences(sessionId),
+				adminApi.getSessionStaff(sessionId),
+				adminApi.getStaff(true),
 			]);
 			setSession(sessionData);
 			setSignups(signupsData);
 			setOccurrences(occurrencesData);
-			await loadStaffData(sessionId);
+			setAssignedStaff(staffData);
+			setAvailableStaff(allStaff);
 		} catch (error) {
 			console.error('Failed to load session data:', error);
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
 
-	const loadStaffData = async (sessionId: string) => {
-		try {
-			const [assigned, staffList] = await Promise.all([
-				adminApi.getSessionStaff(sessionId),
-				adminApi.getStaff(false),
-			]);
-			setSessionStaff(assigned);
-			setAllStaff(staffList);
-			setSelectedStaffIds(assigned.map((s) => s.id));
-		} catch (error) {
-			console.error('Failed to load staff data:', error);
+	useEffect(() => {
+		if (id) {
+			loadSessionData(id);
 		}
-	};
+	}, [id, loadSessionData]);
 
 	const handleStatusChange = async (signupId: string, newStatus: string) => {
 		try {
@@ -93,35 +84,6 @@ const SessionDetail: React.FC = () => {
 		} catch (error) {
 			console.error('Failed to export signups:', error);
 			alert('Failed to export signups');
-		}
-	};
-
-	const handleGenerateOccurrences = async () => {
-		if (!id) return;
-		if (!confirm('This will generate occurrences based on the session schedule. Continue?')) return;
-
-		try {
-			const result = await adminApi.generateOccurrences(id);
-			alert(`Generated ${result.created} occurrences`);
-			const updatedOccurrences = await adminApi.getSessionOccurrences(id);
-			setOccurrences(updatedOccurrences);
-		} catch (error) {
-			console.error('Failed to generate occurrences:', error);
-			alert('Failed to generate occurrences');
-		}
-	};
-
-	const handleSaveStaff = async () => {
-		if (!id) return;
-		try {
-			setIsSavingStaff(true);
-			await adminApi.assignSessionStaff(id, selectedStaffIds);
-			await loadStaffData(id);
-		} catch (error) {
-			console.error('Failed to update staff assignments:', error);
-			alert('Failed to update staff assignments');
-		} finally {
-			setIsSavingStaff(false);
 		}
 	};
 
@@ -177,29 +139,6 @@ const SessionDetail: React.FC = () => {
 		}
 	};
 
-	const handleNotify = async () => {
-		if (!id) return;
-		if (!notifyTitle.trim()) {
-			alert('Update title is required');
-			return;
-		}
-		try {
-			setCommsStatus('Sending notification...');
-			const res = await adminApi.notifySession(id, {
-				updateTitle: notifyTitle,
-				updateMessage: notifyMessage || null,
-				affectedDate: notifyDate || null,
-			});
-			setCommsStatus(`Enqueued ${res.enqueued} notifications`);
-			setNotifyTitle('');
-			setNotifyMessage('');
-			setNotifyDate('');
-		} catch (error) {
-			console.error('Failed to send notification:', error);
-			setCommsStatus('Failed to send notification');
-		}
-	};
-
 	const handleDeleteSession = async () => {
 		if (!id) return;
 		if (!confirm('Are you sure you want to delete this session? This cannot be undone.')) return;
@@ -214,17 +153,29 @@ const SessionDetail: React.FC = () => {
 		}
 	};
 
-	const handleDuplicateSession = async () => {
+	const handleAssignStaff = async (staffId: string) => {
 		if (!id) return;
-		if (!confirm('This will create a copy of this session. Continue?')) return;
-
 		try {
-			const duplicated = await adminApi.duplicateSession(id);
-			alert('Session duplicated successfully');
-			navigate(`/sessions/${duplicated.id}`);
+			await adminApi.assignStaffToSession(id, staffId);
+			const updatedStaff = await adminApi.getSessionStaff(id);
+			setAssignedStaff(updatedStaff);
+			setShowStaffModal(false);
 		} catch (error) {
-			console.error('Failed to duplicate session:', error);
-			alert('Failed to duplicate session');
+			console.error('Failed to assign staff:', error);
+			alert('Failed to assign staff');
+		}
+	};
+
+	const handleRemoveStaff = async (staffId: string) => {
+		if (!id) return;
+		if (!confirm('Remove this staff member from the session?')) return;
+		try {
+			await adminApi.removeStaffFromSession(id, staffId);
+			const updatedStaff = await adminApi.getSessionStaff(id);
+			setAssignedStaff(updatedStaff);
+		} catch (error) {
+			console.error('Failed to remove staff:', error);
+			alert('Failed to remove staff');
 		}
 	};
 
@@ -250,6 +201,7 @@ const SessionDetail: React.FC = () => {
 						<div className="py-12 text-center">
 							<p className="text-gray-500">Session not found</p>
 							<button
+								type="button"
 								onClick={() => navigate('/sessions')}
 								className="mt-4 inline-block text-blue-600 hover:text-blue-700"
 							>
@@ -271,6 +223,7 @@ const SessionDetail: React.FC = () => {
 					{/* Header */}
 					<div className="mb-6">
 						<button
+							type="button"
 							onClick={() => navigate('/sessions')}
 							className="mb-4 flex items-center text-gray-600 hover:text-gray-900"
 						>
@@ -281,17 +234,13 @@ const SessionDetail: React.FC = () => {
 						<div className="flex items-start justify-between">
 							<div>
 								<h1 className="text-3xl font-bold text-gray-900">{session.name}</h1>
-								{session.description && <p className="mt-2 text-gray-600">{session.description}</p>}
+								{session.internal_notes && (
+									<p className="mt-2 text-gray-600">{session.internal_notes}</p>
+								)}
 							</div>
 							<div className="flex gap-2">
 								<button
-									onClick={handleDuplicateSession}
-									className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-								>
-									<Copy className="mr-2 h-4 w-4" />
-									Duplicate
-								</button>
-								<button
+									type="button"
 									onClick={() => navigate(`/sessions/${id}/edit`)}
 									className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
 								>
@@ -299,6 +248,7 @@ const SessionDetail: React.FC = () => {
 									Edit
 								</button>
 								<button
+									type="button"
 									onClick={handleDeleteSession}
 									className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700"
 								>
@@ -317,7 +267,8 @@ const SessionDetail: React.FC = () => {
 								<div>
 									<p className="text-sm font-medium text-gray-500">Schedule</p>
 									<p className="mt-1 text-sm text-gray-900">
-										{session.dayOfWeek} {session.startTime} - {session.endTime}
+										{dayOfWeekAsString(session.day_of_week)} {session.start_time} -{' '}
+										{session.end_time}
 									</p>
 								</div>
 							</div>
@@ -326,9 +277,16 @@ const SessionDetail: React.FC = () => {
 								<div className="mt-0.5 mr-3 text-gray-400">📍</div>
 								<div>
 									<p className="text-sm font-medium text-gray-500">Location</p>
-									<p className="mt-1 text-sm text-gray-900">
-										{session.location?.name || 'No location set'}
-									</p>
+									{session.location ? (
+										<Link
+											to={`/locations/${session.location.id}`}
+											className="mt-1 text-sm text-blue-600 hover:text-blue-800"
+										>
+											{session.location.name}
+										</Link>
+									) : (
+										<p className="mt-1 text-sm text-gray-900">No location set</p>
+									)}
 								</div>
 							</div>
 
@@ -349,6 +307,7 @@ const SessionDetail: React.FC = () => {
 					<div className="mb-6 border-b border-gray-200">
 						<nav className="-mb-px flex space-x-8">
 							<button
+								type="button"
 								onClick={() => setActiveTab('signups')}
 								className={`border-b-2 px-1 py-4 text-sm font-medium ${
 									activeTab === 'signups'
@@ -356,9 +315,10 @@ const SessionDetail: React.FC = () => {
 										: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
 								}`}
 							>
-								Signups ({signups.length})
+								Signups ({signups.filter((s) => s.status === 'confirmed').length})
 							</button>
 							<button
+								type="button"
 								onClick={() => setActiveTab('occurrences')}
 								className={`border-b-2 px-1 py-4 text-sm font-medium ${
 									activeTab === 'occurrences'
@@ -369,6 +329,7 @@ const SessionDetail: React.FC = () => {
 								Occurrences ({occurrences.length})
 							</button>
 							<button
+								type="button"
 								onClick={() => setActiveTab('staff')}
 								className={`border-b-2 px-1 py-4 text-sm font-medium ${
 									activeTab === 'staff'
@@ -376,9 +337,10 @@ const SessionDetail: React.FC = () => {
 										: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
 								}`}
 							>
-								Staff ({sessionStaff.length})
+								Staff ({assignedStaff.length})
 							</button>
 							<button
+								type="button"
 								onClick={() => setActiveTab('comms')}
 								className={`border-b-2 px-1 py-4 text-sm font-medium ${
 									activeTab === 'comms'
@@ -410,6 +372,7 @@ const SessionDetail: React.FC = () => {
 									</select>
 								</div>
 								<button
+									type="button"
 									onClick={handleExportSignups}
 									className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 								>
@@ -435,6 +398,9 @@ const SessionDetail: React.FC = () => {
 												Email
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+												Media Consent
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
 												Status
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -447,17 +413,28 @@ const SessionDetail: React.FC = () => {
 											<tr key={signup.id}>
 												<td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
 													<button
-														onClick={() => navigate(`/children/${signup.childId}`)}
+														type="button"
+														onClick={() => navigate(`/students/${signup.student_id}`)}
 														className="text-blue-600 hover:text-blue-800"
 													>
-														{signup.studentName}
+														{signup.student_name}
 													</button>
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-													\n {signup.guardianName}\n{' '}
+													{calculateAge(signup.date_of_birth ?? null) ?? '—'}
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-													{signup.email}
+													{signup.guardian_name || '—'}
+												</td>
+												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+													{signup.email || '—'}
+												</td>
+												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+													{signup.media_consent === null || signup.media_consent === undefined
+														? '—'
+														: signup.media_consent
+															? 'Yes'
+															: 'No'}
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<span
@@ -496,12 +473,6 @@ const SessionDetail: React.FC = () => {
 						<div className="rounded-lg bg-white shadow">
 							<div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
 								<h2 className="text-lg font-semibold text-gray-900">Occurrences</h2>
-								<button
-									onClick={handleGenerateOccurrences}
-									className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-								>
-									Generate Occurrences
-								</button>
 							</div>
 
 							<div className="overflow-x-auto">
@@ -523,7 +494,7 @@ const SessionDetail: React.FC = () => {
 										{occurrences.map((occurrence) => (
 											<tr key={occurrence.id}>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-													{new Date(occurrence.startsAt).toLocaleDateString('en-NZ', {
+													{new Date(occurrence.starts_at).toLocaleDateString('en-NZ', {
 														day: '2-digit',
 														month: '2-digit',
 														year: 'numeric',
@@ -542,6 +513,7 @@ const SessionDetail: React.FC = () => {
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap">
 													<button
+														type="button"
 														onClick={() => navigate(`/attendance/${occurrence.id}`)}
 														className="mr-4 text-blue-600 hover:text-blue-900"
 													>
@@ -549,6 +521,7 @@ const SessionDetail: React.FC = () => {
 													</button>
 													{occurrence.cancelled ? (
 														<button
+															type="button"
 															onClick={() => handleReinstateOccurrence(occurrence.id)}
 															className="text-green-600 hover:text-green-900"
 														>
@@ -556,6 +529,7 @@ const SessionDetail: React.FC = () => {
 														</button>
 													) : (
 														<button
+															type="button"
 															onClick={() => handleCancelOccurrence(occurrence.id)}
 															className="text-red-600 hover:text-red-900"
 														>
@@ -568,9 +542,7 @@ const SessionDetail: React.FC = () => {
 									</tbody>
 								</table>
 								{occurrences.length === 0 && (
-									<div className="py-12 text-center text-gray-500">
-										No occurrences yet. Generate occurrences to get started.
-									</div>
+									<div className="py-12 text-center text-gray-500">No occurrences available.</div>
 								)}
 							</div>
 						</div>
@@ -580,100 +552,67 @@ const SessionDetail: React.FC = () => {
 					{activeTab === 'staff' && (
 						<div className="rounded-lg bg-white shadow">
 							<div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-								<div className="flex items-center gap-2">
-									<Users className="h-5 w-5 text-gray-600" />
-									<h2 className="text-lg font-semibold text-gray-900">Staff assignments</h2>
+								<div>
+									<h2 className="text-lg font-semibold text-gray-900">Assigned Staff</h2>
+									<p className="text-sm text-gray-500">
+										{assignedStaff.length} staff member{assignedStaff.length !== 1 ? 's' : ''}{' '}
+										assigned
+									</p>
 								</div>
 								<button
-									onClick={handleSaveStaff}
-									disabled={isSavingStaff}
-									className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+									type="button"
+									onClick={() => setShowStaffModal(true)}
+									className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 								>
-									{isSavingStaff ? 'Saving...' : 'Save assignments'}
+									<UserPlus className="mr-2 h-4 w-4" />
+									Assign Staff
 								</button>
 							</div>
-							<div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-								<div>
-									<h3 className="mb-3 text-sm font-semibold text-gray-700">All staff</h3>
-									<div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
-										{allStaff.length === 0 && (
-											<p className="text-sm text-gray-500">No staff found</p>
-										)}
-										{allStaff.map((staffMember) => {
-											const checked = selectedStaffIds.includes(staffMember.id);
-											return (
-												<label
-													key={staffMember.id}
-													className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 hover:bg-gray-50"
-												>
-													<div className="flex items-center gap-2">
-														<input
-															type="checkbox"
-															checked={checked}
-															onChange={(e) => {
-																const isChecked = e.target.checked;
-																setSelectedStaffIds((prev) =>
-																	isChecked
-																		? [...prev, staffMember.id]
-																		: prev.filter((id) => id !== staffMember.id),
-																);
-															}}
-															className="h-4 w-4 rounded border-gray-300 text-blue-600"
-														/>
-														<div>
-															<p className="text-sm font-medium text-gray-900">
-																{staffMember.name}
-															</p>
-															<p className="text-xs text-gray-500">{staffMember.email}</p>
-														</div>
-													</div>
-													<span
-														className={`rounded-full px-2 py-1 text-xs font-semibold ${
-															staffMember.active
-																? 'bg-green-100 text-green-800'
-																: 'bg-gray-200 text-gray-700'
-														}`}
-													>
-														{staffMember.active ? 'Active' : 'Inactive'}
-													</span>
-												</label>
-											);
-										})}
-									</div>
-								</div>
 
-								<div>
-									<h3 className="mb-3 text-sm font-semibold text-gray-700">
-										Assigned to this session
-									</h3>
-									<div className="space-y-3">
-										{sessionStaff.length === 0 && (
-											<p className="text-sm text-gray-500">No staff assigned</p>
-										)}
-										{sessionStaff.map((staffMember) => (
+							<div className="p-6">
+								{assignedStaff.length === 0 ? (
+									<div className="py-12 text-center text-gray-500">
+										<Users className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+										<p>No staff assigned to this session yet.</p>
+										<button
+											type="button"
+											onClick={() => setShowStaffModal(true)}
+											className="mt-3 text-sm text-blue-600 hover:text-blue-800"
+										>
+											Assign your first staff member
+										</button>
+									</div>
+								) : (
+									<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+										{assignedStaff.map((staff) => (
 											<div
-												key={staffMember.id}
-												className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3"
+												key={staff.id}
+												className="rounded-lg border border-gray-200 bg-gray-50 p-4"
 											>
-												<div>
-													<p className="text-sm font-semibold text-gray-900">{staffMember.name}</p>
-													<p className="text-xs text-gray-500">{staffMember.email}</p>
+												<div className="flex items-start justify-between">
+													<div className="flex-1">
+														<h3 className="font-medium text-gray-900">{staff.name}</h3>
+														<p className="mt-1 text-sm text-gray-600">{staff.email}</p>
+														{staff.last_login_at && (
+															<p className="mt-2 text-xs text-gray-500">
+																Last login:{' '}
+																{new Date(staff.last_login_at).toLocaleDateString()}
+															</p>
+														)}
+													</div>
+													<button
+														type="button"
+														onClick={() => handleRemoveStaff(staff.id)}
+														className="ml-2 text-gray-400 hover:text-red-600"
+														title="Remove staff"
+													>
+														<X className="h-5 w-5" />
+													</button>
 												</div>
-												<button
-													onClick={() => {
-														setSelectedStaffIds((prev) =>
-															prev.filter((id) => id !== staffMember.id),
-														);
-														setSessionStaff((prev) => prev.filter((s) => s.id !== staffMember.id));
-													}}
-													className="text-sm text-red-600 hover:text-red-800"
-												>
-													Remove
-												</button>
 											</div>
 										))}
 									</div>
-								</div>
+								)}
 							</div>
 						</div>
 					)}
@@ -707,52 +646,11 @@ const SessionDetail: React.FC = () => {
 											className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 										/>
 										<button
+											type="button"
 											onClick={handleBulkEmail}
 											className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 										>
 											Send bulk email
-										</button>
-									</div>
-								</div>
-
-								<div className="rounded-lg border border-gray-200 p-4">
-									<div className="mb-3 flex items-center gap-2">
-										<Megaphone className="h-4 w-4 text-gray-600" />
-										<h3 className="text-base font-semibold text-gray-900">
-											Notify confirmed signups
-										</h3>
-									</div>
-									<div className="space-y-3">
-										<input
-											type="text"
-											value={notifyTitle}
-											onChange={(e) => setNotifyTitle(e.target.value)}
-											placeholder="Update title"
-											className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-										/>
-										<textarea
-											rows={4}
-											value={notifyMessage}
-											onChange={(e) => setNotifyMessage(e.target.value)}
-											placeholder="Optional message"
-											className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-										/>
-										<div>
-											<label className="mb-1 block text-sm font-medium text-gray-700">
-												Affected date (optional)
-											</label>
-											<input
-												type="date"
-												value={notifyDate}
-												onChange={(e) => setNotifyDate(e.target.value)}
-												className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-											/>
-										</div>
-										<button
-											onClick={handleNotify}
-											className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-										>
-											Send notification
 										</button>
 									</div>
 								</div>
@@ -761,6 +659,55 @@ const SessionDetail: React.FC = () => {
 					)}
 				</Layout>
 			</div>
+
+			{/* Assign Staff Modal */}
+			<Modal
+				isOpen={showStaffModal}
+				onClose={() => setShowStaffModal(false)}
+				title="Assign Staff to Session"
+			>
+				<div className="space-y-4">
+					<p className="text-sm text-gray-600">
+						Select staff members to assign to this session. Already assigned staff are excluded.
+					</p>
+
+					<div className="max-h-96 space-y-2 overflow-y-auto">
+						{availableStaff
+							.filter((staff) => !assignedStaff.some((assigned) => assigned.id === staff.id))
+							.map((staff) => (
+								<button
+									key={staff.id}
+									type="button"
+									onClick={() => handleAssignStaff(staff.id)}
+									className="w-full rounded-lg border border-gray-300 bg-white p-4 text-left transition-colors hover:border-blue-500 hover:bg-blue-50"
+								>
+									<div className="font-medium text-gray-900">{staff.name}</div>
+									<div className="text-sm text-gray-600">{staff.email}</div>
+									{!staff.active && (
+										<div className="mt-1 text-xs text-gray-500">(Inactive)</div>
+									)}
+								</button>
+							))}
+						{availableStaff.filter(
+							(staff) => !assignedStaff.some((assigned) => assigned.id === staff.id),
+						).length === 0 && (
+							<div className="py-8 text-center text-gray-500">
+								All staff members are already assigned to this session.
+							</div>
+						)}
+					</div>
+
+					<div className="flex justify-end pt-4">
+						<button
+							type="button"
+							onClick={() => setShowStaffModal(false)}
+							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+						>
+							Close
+						</button>
+					</div>
+				</div>
+			</Modal>
 		</div>
 	);
 };

@@ -1,6 +1,6 @@
 import { Plus, Search } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
@@ -22,18 +22,7 @@ const Sessions: React.FC = () => {
 	const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 	const [showArchived, setShowArchived] = useState(false);
 
-	useEffect(() => {
-		loadSessions();
-	}, [selectedYear, showArchived]);
-
-	useEffect(() => {
-		const filtered = sessions.filter((session) =>
-			session.name.toLowerCase().includes(searchTerm.toLowerCase()),
-		);
-		setFilteredSessions(filtered);
-	}, [searchTerm, sessions]);
-
-	const loadSessions = async () => {
+	const loadSessions = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const data = await adminApi.getSessions(selectedYear, showArchived);
@@ -44,7 +33,18 @@ const Sessions: React.FC = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [selectedYear, showArchived]);
+
+	useEffect(() => {
+		loadSessions();
+	}, [loadSessions]);
+
+	useEffect(() => {
+		const filtered = sessions.filter((session) =>
+			session.name.toLowerCase().includes(searchTerm.toLowerCase()),
+		);
+		setFilteredSessions(filtered);
+	}, [searchTerm, sessions]);
 
 	const years = [2024, 2025, 2026];
 
@@ -120,10 +120,16 @@ const Sessions: React.FC = () => {
 												Name
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+												Location
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
 												Schedule
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
 												Capacity
+											</th>
+											<th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+												Signups
 											</th>
 											<th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
 												Status
@@ -145,11 +151,35 @@ const Sessions: React.FC = () => {
 													</Link>
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-													{dayOfWeekAsString(session.dayOfWeek)} {session.startTime}-
-													{session.endTime}
+													{session.location ? (
+														<Link
+															to={`/locations/${session.location.id}`}
+															className="text-blue-600 hover:text-blue-900"
+														>
+															{session.location.name}
+														</Link>
+													) : (
+														<span className="text-gray-400">No location</span>
+													)}
+												</td>
+												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+													{dayOfWeekAsString(session.day_of_week)} {session.start_time}-
+													{session.end_time}
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
 													{session.capacity || 'N/A'}
+												</td>
+												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+													<div className="flex items-center gap-2">
+														<span>
+															{session.confirmed_count || 0}/{session.capacity || '?'}
+														</span>
+														{session.pending_count ? (
+															<span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs leading-4 font-semibold text-amber-800">
+																+{session.pending_count} pending
+															</span>
+														) : null}
+													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<span

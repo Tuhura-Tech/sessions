@@ -1,15 +1,17 @@
-import { BadgeCheck, Ban, Plus, RefreshCcw, Users } from 'lucide-react';
+import { BadgeCheck, Ban, Calendar, Clock, MapPin, Plus, RefreshCcw, Users } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FormCheckbox, FormInput } from '../components/FormComponents';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import Sidebar from '../components/Sidebar';
 import { adminApi } from '../services/api';
-import type { Staff, StaffListItem, StaffSessionSummary } from '../types';
+import type { Staff, StaffAvailability, StaffListItem, StaffSessionSummary } from '../types';
 
 const StaffPage: React.FC = () => {
 	const [staff, setStaff] = useState<StaffListItem[]>([]);
+	const [availability, setAvailability] = useState<StaffAvailability[]>([]);
 	const [activeOnly, setActiveOnly] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -28,23 +30,27 @@ const StaffPage: React.FC = () => {
 	});
 	const [editForm, setEditForm] = useState<Partial<Staff>>({});
 
-	useEffect(() => {
-		loadStaff();
-	}, [activeOnly]);
-
-	const loadStaff = async () => {
+	const loadStaff = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			setError(null);
-			const data = await adminApi.getStaff(activeOnly);
-			setStaff(data);
+			const [staffData, availData] = await Promise.all([
+				adminApi.getStaff(activeOnly),
+				adminApi.getStaffAvailability(new Date().getFullYear(), activeOnly),
+			]);
+			setStaff(staffData);
+			setAvailability(availData);
 		} catch (err) {
 			console.error(err);
 			setError('Failed to load staff list');
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [activeOnly]);
+
+	useEffect(() => {
+		loadStaff();
+	}, [loadStaff]);
 
 	const loadStaffDetails = async (staffId: string) => {
 		try {
@@ -102,6 +108,16 @@ const StaffPage: React.FC = () => {
 
 	const activeCount = useMemo(() => staff.filter((s) => s.active).length, [staff]);
 
+	const workloadSummary = useMemo(() => {
+		const maxSessions = Math.max(...availability.map((a) => a.assigned_session_count), 0);
+		const avgSessions =
+			availability.length > 0
+				? availability.reduce((sum, a) => sum + a.assigned_session_count, 0) /
+					availability.length
+				: 0;
+		return { maxSessions, avgSessions: Math.round(avgSessions * 10) / 10 };
+	}, [availability]);
+
 	return (
 		<div className="flex min-h-screen">
 			<Sidebar />
@@ -117,7 +133,15 @@ const StaffPage: React.FC = () => {
 								/>
 								<span className="ml-2">Show active only</span>
 							</label>
+							<Link
+								to="/staff/schedule"
+								className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+							>
+								<Calendar className="mr-2 h-4 w-4" />
+								View Schedule
+							</Link>
 							<button
+								type="button"
 								onClick={() => setShowCreateModal(true)}
 								className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 							>
@@ -125,6 +149,7 @@ const StaffPage: React.FC = () => {
 								New Staff
 							</button>
 							<button
+								type="button"
 								onClick={loadStaff}
 								className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 							>
@@ -137,6 +162,25 @@ const StaffPage: React.FC = () => {
 					{error && (
 						<div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
 					)}
+
+					<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+						<div className="rounded-lg bg-blue-50 p-4">
+							<div className="text-sm font-medium text-blue-900">Total Active Staff</div>
+							<div className="mt-1 text-3xl font-bold text-blue-600">{activeCount}</div>
+						</div>
+						<div className="rounded-lg bg-green-50 p-4">
+							<div className="text-sm font-medium text-green-900">Average Sessions/Staff</div>
+							<div className="mt-1 text-3xl font-bold text-green-600">
+								{workloadSummary.avgSessions}
+							</div>
+						</div>
+						<div className="rounded-lg bg-purple-50 p-4">
+							<div className="text-sm font-medium text-purple-900">Max Sessions/Staff</div>
+							<div className="mt-1 text-3xl font-bold text-purple-600">
+								{workloadSummary.maxSessions}
+							</div>
+						</div>
+					</div>
 
 					<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 						<div className="rounded-lg bg-white shadow lg:col-span-2">
@@ -203,6 +247,7 @@ const StaffPage: React.FC = () => {
 													</td>
 													<td className="px-6 py-4 text-sm whitespace-nowrap">
 														<button
+															type="button"
 															onClick={() => loadStaffDetails(s.id)}
 															className="text-blue-600 hover:text-blue-800"
 														>
@@ -247,12 +292,14 @@ const StaffPage: React.FC = () => {
 
 									<div className="flex gap-3">
 										<button
+											type="button"
 											onClick={() => setShowEditModal(true)}
 											className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
 										>
 											Edit
 										</button>
 										<button
+											type="button"
 											onClick={() => loadStaffDetails(selectedStaff.id)}
 											className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 										>
@@ -265,11 +312,51 @@ const StaffPage: React.FC = () => {
 										{staffSessions.length === 0 ? (
 											<p className="text-sm text-gray-500">No assignments</p>
 										) : (
-											<ul className="space-y-2">
+											<ul className="space-y-3">
 												{staffSessions.map((sess) => (
-													<li key={sess.id} className="text-sm text-gray-800">
-														<span className="font-medium">{sess.name}</span> · {sess.year}
-														{sess.location ? ` · ${sess.location}` : ''}
+													<li
+														key={sess.id}
+														className="rounded-md border border-gray-200 bg-gray-50 p-3"
+													>
+														<div className="mb-2 font-medium text-gray-900">{sess.name}</div>
+														<div className="space-y-1 text-sm text-gray-600">
+															{sess.dayOfWeek !== null &&
+															sess.dayOfWeek !== undefined &&
+															sess.startTime &&
+															sess.endTime ? (
+																<div className="flex items-center gap-1">
+																	<Calendar className="h-4 w-4" />
+																	<span>
+																		{
+																			[
+																				'Sunday',
+																				'Monday',
+																				'Tuesday',
+																				'Wednesday',
+																				'Thursday',
+																				'Friday',
+																				'Saturday',
+																			][sess.dayOfWeek]
+																		}
+																	</span>
+																</div>
+															) : null}
+															{sess.startTime && sess.endTime ? (
+																<div className="flex items-center gap-1">
+																	<Clock className="h-4 w-4" />
+																	<span>
+																		{sess.startTime} - {sess.endTime}
+																	</span>
+																</div>
+															) : null}
+															{sess.locationName ? (
+																<div className="flex items-center gap-1">
+																	<MapPin className="h-4 w-4" />
+																	<span>{sess.locationName}</span>
+																</div>
+															) : null}
+															<div className="text-xs text-gray-500">Year: {sess.year}</div>
+														</div>
 													</li>
 												))}
 											</ul>
@@ -310,12 +397,14 @@ const StaffPage: React.FC = () => {
 					/>
 					<div className="flex justify-end gap-3 pt-2">
 						<button
+							type="button"
 							onClick={() => setShowCreateModal(false)}
 							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 						>
 							Cancel
 						</button>
 						<button
+							type="button"
 							onClick={handleCreate}
 							className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 						>
@@ -349,12 +438,14 @@ const StaffPage: React.FC = () => {
 					/>
 					<div className="flex justify-end gap-3 pt-2">
 						<button
+							type="button"
 							onClick={() => setShowEditModal(false)}
 							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 						>
 							Cancel
 						</button>
 						<button
+							type="button"
 							onClick={handleUpdate}
 							className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 						>

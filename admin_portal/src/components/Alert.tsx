@@ -38,7 +38,7 @@ export const Alert: React.FC<AlertProps> = ({
 				<p className={title ? 'mt-1 text-sm' : ''}>{message}</p>
 			</div>
 			{dismissible && onClose && (
-				<button onClick={onClose} className="shrink-0 opacity-75 hover:opacity-100">
+				<button type="button" onClick={onClose} className="shrink-0 opacity-75 hover:opacity-100">
 					<X className="h-5 w-5" />
 				</button>
 			)}

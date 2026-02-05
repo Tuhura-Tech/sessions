@@ -1,25 +1,25 @@
 import { ArrowLeft } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
 import { adminApi } from '../services/api';
-import type { Session, SessionLocation } from '../types';
+import type { Session, SessionBlock, SessionLocation } from '../types';
 
 const EditSession: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 	const [session, setSession] = useState<Session | null>(null);
 	const [locations, setLocations] = useState<SessionLocation[]>([]);
-	const [blocks, setBlocks] = useState<any[]>([]);
+	const [blocks, setBlocks] = useState<SessionBlock[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const [formData, setFormData] = useState({
 		name: '',
 		year: new Date().getFullYear(),
-		sessionLocationId: '',
+		locationId: '',
 		ageLower: '',
 		ageUpper: '',
 		dayOfWeek: '',
@@ -31,55 +31,58 @@ const EditSession: React.FC = () => {
 		prerequisites: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
-		sessionType: 'term',
-		blockIds: [] as string[],
+		sessionType: 'term' as 'term' | 'special',
+		blocks: [] as string[],
 	});
+
+	const loadSessionData = useCallback(
+		async (sessionId: string) => {
+			try {
+				setIsLoading(true);
+				const [sessionData, locationsData, blocksData] = await Promise.all([
+					adminApi.getSession(sessionId),
+					adminApi.getLocations(),
+					adminApi.getBlocks(),
+				]);
+
+				setSession(sessionData);
+				setLocations(locationsData);
+				setBlocks(blocksData);
+
+				setFormData({
+					name: sessionData.name,
+					year: sessionData.year,
+					locationId: sessionData.session_location_id || '',
+					ageLower: sessionData.age_lower?.toString() || '',
+					ageUpper: sessionData.age_upper?.toString() || '',
+					dayOfWeek: sessionData.day_of_week?.toString() || '',
+					startTime: sessionData.start_time || '',
+					endTime: sessionData.end_time || '',
+					capacity: sessionData.capacity?.toString() || '',
+					waitlist: sessionData.waitlist ?? false,
+					whatToBring: sessionData.what_to_bring || '',
+					prerequisites: sessionData.prerequisites || '',
+					photoAlbumUrl: sessionData.photo_album_url || '',
+					internalNotes: sessionData.internal_notes || '',
+					sessionType: 'term',
+					blocks: sessionData.blocks || [],
+				});
+			} catch (error) {
+				console.error('Failed to load session data:', error);
+				alert('Failed to load session');
+				navigate('/sessions');
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[navigate],
+	);
 
 	useEffect(() => {
 		if (id) {
 			loadSessionData(id);
 		}
-	}, [id]);
-
-	const loadSessionData = async (sessionId: string) => {
-		try {
-			setIsLoading(true);
-			const [sessionData, locationsData, blocksData] = await Promise.all([
-				adminApi.getSession(sessionId),
-				adminApi.getLocations(),
-				adminApi.getBlocks(),
-			]);
-
-			setSession(sessionData);
-			setLocations(locationsData);
-			setBlocks(blocksData);
-
-			setFormData({
-				name: sessionData.name,
-				year: sessionData.year,
-				sessionLocationId: sessionData.sessionLocationId || '',
-				ageLower: sessionData.ageLower?.toString() || '',
-				ageUpper: sessionData.ageUpper?.toString() || '',
-				dayOfWeek: sessionData.dayOfWeek?.toString() || '',
-				startTime: sessionData.startTime || '',
-				endTime: sessionData.endTime || '',
-				capacity: sessionData.capacity?.toString() || '',
-				waitlist: sessionData.waitlist,
-				whatToBring: sessionData.whatToBring || '',
-				prerequisites: sessionData.prerequisites || '',
-				photoAlbumUrl: sessionData.photoAlbumUrl || '',
-				internalNotes: sessionData.internalNotes || '',
-				sessionType: 'term',
-				blockIds: sessionData.blockIds || [],
-			});
-		} catch (error) {
-			console.error('Failed to load session data:', error);
-			alert('Failed to load session');
-			navigate('/sessions');
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	}, [id, loadSessionData]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -90,20 +93,18 @@ const EditSession: React.FC = () => {
 			const sessionData = {
 				name: formData.name,
 				year: formData.year,
-				sessionLocationId: formData.sessionLocationId || null,
-				ageLower: formData.ageLower ? Number.parseInt(formData.ageLower) : null,
-				ageUpper: formData.ageUpper ? Number.parseInt(formData.ageUpper) : null,
-				dayOfWeek: formData.dayOfWeek ? Number.parseInt(formData.dayOfWeek) : null,
-				startTime: formData.startTime || null,
-				endTime: formData.endTime || null,
-				capacity: formData.capacity ? Number.parseInt(formData.capacity) : null,
-				waitlist: formData.waitlist,
+				locationId: formData.locationId || undefined,
+				ageLower: formData.ageLower ? Number.parseInt(formData.ageLower, 10) : undefined,
+				ageUpper: formData.ageUpper ? Number.parseInt(formData.ageUpper, 10) : undefined,
+				dayOfWeek: formData.dayOfWeek ? Number.parseInt(formData.dayOfWeek, 10) : undefined,
+				startTime: formData.startTime || undefined,
+				endTime: formData.endTime || undefined,
+				capacity: formData.capacity ? Number.parseInt(formData.capacity, 10) : undefined,
+				sessionType: formData.sessionType,
 				whatToBring: formData.whatToBring || null,
 				prerequisites: formData.prerequisites || null,
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
-				sessionType: formData.sessionType,
-				blockIds: formData.blockIds,
 			};
 
 			await adminApi.updateSession(id, sessionData);
@@ -149,6 +150,7 @@ const EditSession: React.FC = () => {
 			<div className="flex-1">
 				<Layout>
 					<button
+						type="button"
 						onClick={() => navigate(`/sessions/${id}`)}
 						className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
 					>
@@ -181,7 +183,7 @@ const EditSession: React.FC = () => {
 										onChange={(e) =>
 											setFormData({
 												...formData,
-												year: Number.parseInt(e.target.value),
+												year: Number.parseInt(e.target.value, 10),
 											})
 										}
 										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -193,7 +195,12 @@ const EditSession: React.FC = () => {
 									<select
 										required
 										value={formData.sessionType}
-										onChange={(e) => setFormData({ ...formData, sessionType: e.target.value })}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												sessionType: e.target.value as 'term' | 'special',
+											})
+										}
 										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 									>
 										<option value="term">Term (Recurring)</option>
@@ -204,11 +211,11 @@ const EditSession: React.FC = () => {
 								<div>
 									<label className="block text-sm font-medium text-gray-700">Location</label>
 									<select
-										value={formData.sessionLocationId}
+										value={formData.locationId}
 										onChange={(e) =>
 											setFormData({
 												...formData,
-												sessionLocationId: e.target.value,
+												locationId: e.target.value,
 											})
 										}
 										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -307,24 +314,24 @@ const EditSession: React.FC = () => {
 											<label key={block.id} className="flex items-center">
 												<input
 													type="checkbox"
-													checked={formData.blockIds.includes(block.id)}
+													checked={formData.blocks.includes(block.id)}
 													onChange={(e) => {
 														if (e.target.checked) {
 															setFormData({
 																...formData,
-																blockIds: [...formData.blockIds, block.id],
+																blocks: [...formData.blocks, block.id],
 															});
 														} else {
 															setFormData({
 																...formData,
-																blockIds: formData.blockIds.filter((id) => id !== block.id),
+																blocks: formData.blocks.filter((id) => id !== block.id),
 															});
 														}
 													}}
 													className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 												/>
 												<span className="ml-2 text-sm text-gray-900">
-													{block.name} ({block.blockType}) - {block.year}
+													{block.name} ({block.block_type}) - {block.year}
 												</span>
 											</label>
 										))}

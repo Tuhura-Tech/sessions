@@ -1,13 +1,13 @@
 import { ArrowLeft, Save } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
 import { adminApi } from '../services/api';
 import type { AttendanceRoll, AttendanceUpsert, Session } from '../types';
 
-const AttendanceRoll: React.FC = () => {
+const AttendanceRollPage: React.FC = () => {
 	const { occurrenceId } = useParams<{ occurrenceId: string }>();
 	const navigate = useNavigate();
 	const [roll, setRoll] = useState<AttendanceRoll | null>(null);
@@ -16,21 +16,15 @@ const AttendanceRoll: React.FC = () => {
 	const [isSaving, setIsSaving] = useState(false);
 	const [changes, setChanges] = useState<Map<string, AttendanceUpsert>>(new Map());
 
-	useEffect(() => {
-		if (occurrenceId) {
-			loadRoll(occurrenceId);
-		}
-	}, [occurrenceId]);
-
-	const loadRoll = async (id: string) => {
+	const loadRoll = useCallback(async (id: string) => {
 		try {
 			setIsLoading(true);
 			const data = await adminApi.getAttendanceRoll(id);
 			setRoll(data);
 
 			// Load session data to get full session details
-			if (data.occurrence.sessionId) {
-				const sessionData = await adminApi.getSession(data.occurrence.sessionId);
+			if (data.session_id) {
+				const sessionData = await adminApi.getSession(data.session_id);
 				setSession(sessionData);
 			}
 		} catch (error) {
@@ -38,14 +32,20 @@ const AttendanceRoll: React.FC = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
+
+	useEffect(() => {
+		if (occurrenceId) {
+			loadRoll(occurrenceId);
+		}
+	}, [occurrenceId, loadRoll]);
 
 	const handleStatusChange = (
-		signupId: string,
+		studentId: string,
 		status: 'present' | 'absent_known' | 'absent_unknown',
 	) => {
 		const newChanges = new Map(changes);
-		newChanges.set(signupId, { signupId, status });
+		newChanges.set(studentId, { student_id: studentId, status });
 		setChanges(newChanges);
 	};
 
@@ -70,8 +70,8 @@ const AttendanceRoll: React.FC = () => {
 		}
 	};
 
-	const getStatusForStudent = (signupId: string, currentStatus: string | null) => {
-		const change = changes.get(signupId);
+	const getStatusForStudent = (studentId: string, currentStatus: string | null) => {
+		const change = changes.get(studentId);
 		return change ? change.status : currentStatus || '';
 	};
 
@@ -99,6 +99,19 @@ const AttendanceRoll: React.FC = () => {
 		);
 	}
 
+	if (!roll.occurrence_id) {
+		return (
+			<div className="flex min-h-screen">
+				<Sidebar />
+				<div className="flex-1">
+					<Layout title="Occurrence Not Found">
+						<p className="text-gray-500">Occurrence data is unavailable</p>
+					</Layout>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex min-h-screen">
 			<Sidebar />
@@ -106,7 +119,8 @@ const AttendanceRoll: React.FC = () => {
 			<div className="flex-1">
 				<Layout>
 					<button
-						onClick={() => navigate(`/sessions/${roll.occurrence.sessionId}`)}
+						type="button"
+						onClick={() => navigate(`/sessions/${roll.session_id}`)}
 						className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" />
@@ -120,17 +134,17 @@ const AttendanceRoll: React.FC = () => {
 								<div>
 									<h1 className="text-2xl font-bold text-gray-900">{session?.name}</h1>
 									<p className="mt-1 text-sm text-gray-600">
-										{new Date(roll.occurrence.startsAt).toLocaleDateString('en-NZ', {
+										{new Date(roll.starts_at).toLocaleDateString('en-NZ', {
 											day: '2-digit',
 											month: '2-digit',
 											year: 'numeric',
 										})}{' '}
-										• {session?.dayOfWeek} {session?.startTime} - {session?.endTime}
+										• {session?.day_of_week} {session?.start_time} - {session?.end_time}
 									</p>
 									{session?.location && (
 										<p className="text-sm text-gray-600">{session.location.name}</p>
 									)}
-									{roll.occurrence.cancelled && (
+									{roll.cancelled && (
 										<span className="mt-2 inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
 											Cancelled
 										</span>
@@ -139,6 +153,7 @@ const AttendanceRoll: React.FC = () => {
 
 								{changes.size > 0 && (
 									<button
+										type="button"
 										onClick={handleSaveAll}
 										disabled={isSaving}
 										className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
@@ -174,23 +189,26 @@ const AttendanceRoll: React.FC = () => {
 								<tbody className="divide-y divide-gray-200 bg-white">
 									{roll.items.map((item) => {
 										const currentStatus = getStatusForStudent(
-											item.signupId,
+											item.student_id,
 											item.attendance?.status || null,
 										);
-										const hasChanges = changes.has(item.signupId);
+										const hasChanges = changes.has(item.student_id);
 
 										return (
-											<tr key={item.signupId} className={hasChanges ? 'bg-yellow-50' : ''}>
+											<tr key={item.signup_id} className={hasChanges ? 'bg-yellow-50' : ''}>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm font-medium text-gray-900">{item.childName}</div>
+													<div className="text-sm font-medium text-gray-900">
+														{item.student_name}
+													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-gray-500">{item.guardianName}</div>
+													<div className="text-sm text-gray-500">{item.caregiver_name}</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="flex gap-2">
 														<button
-															onClick={() => handleStatusChange(item.signupId, 'present')}
+															type="button"
+															onClick={() => handleStatusChange(item.student_id, 'present')}
 															className={`rounded-md px-3 py-1 text-sm font-medium ${
 																currentStatus === 'present'
 																	? 'bg-green-600 text-white'
@@ -200,7 +218,8 @@ const AttendanceRoll: React.FC = () => {
 															Present
 														</button>
 														<button
-															onClick={() => handleStatusChange(item.signupId, 'absent_unknown')}
+															type="button"
+															onClick={() => handleStatusChange(item.student_id, 'absent_unknown')}
 															className={`rounded-md px-3 py-1 text-sm font-medium ${
 																currentStatus === 'absent_unknown'
 																	? 'bg-red-600 text-white'
@@ -210,7 +229,8 @@ const AttendanceRoll: React.FC = () => {
 															Absent (Unknown)
 														</button>
 														<button
-															onClick={() => handleStatusChange(item.signupId, 'absent_known')}
+															type="button"
+															onClick={() => handleStatusChange(item.student_id, 'absent_known')}
 															className={`rounded-md px-3 py-1 text-sm font-medium ${
 																currentStatus === 'absent_known'
 																	? 'bg-yellow-600 text-white'
@@ -222,9 +242,9 @@ const AttendanceRoll: React.FC = () => {
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
-													{item.attendance?.markedAt && (
+													{item.attendance?.updated_at && (
 														<span className="text-xs text-gray-500">
-															Marked {new Date(item.attendance.markedAt).toLocaleString()}
+															Marked {new Date(item.attendance.updated_at).toLocaleString()}
 														</span>
 													)}
 													{hasChanges && (
@@ -257,7 +277,7 @@ const AttendanceRoll: React.FC = () => {
 										{
 											roll.items.filter(
 												(i) =>
-													getStatusForStudent(i.signupId, i.attendance?.status || null) ===
+													getStatusForStudent(i.signup_id, i.attendance?.status || null) ===
 													'present',
 											).length
 										}
@@ -268,7 +288,7 @@ const AttendanceRoll: React.FC = () => {
 										{
 											roll.items.filter(
 												(i) =>
-													getStatusForStudent(i.signupId, i.attendance?.status || null) ===
+													getStatusForStudent(i.signup_id, i.attendance?.status || null) ===
 													'absent',
 											).length
 										}
@@ -279,7 +299,7 @@ const AttendanceRoll: React.FC = () => {
 										{
 											roll.items.filter(
 												(i) =>
-													getStatusForStudent(i.signupId, i.attendance?.status || null) ===
+													getStatusForStudent(i.signup_id, i.attendance?.status || null) ===
 													'excused',
 											).length
 										}
@@ -294,4 +314,4 @@ const AttendanceRoll: React.FC = () => {
 	);
 };
 
-export default AttendanceRoll;
+export default AttendanceRollPage;

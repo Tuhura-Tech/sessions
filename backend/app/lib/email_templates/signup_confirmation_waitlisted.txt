@@ -1,0 +1,15 @@
+Hi {{ caregiver_name }},
+
+{{ student_name }} has been added to the waitlist for {{ session_name }}.
+
+Why on the waitlist?
+{% if waitlist_reason %}{{ waitlist_reason }}{% else %}The session is currently full or has specific requirements.{% endif %}
+
+Session details:
+- Student: {{ student_name }}
+- Session: {{ session_name }}
+{% if session_venue %}- Location: {{ session_venue }}{% endif %}
+{% if session_address %}
+- Address: {{ session_address }}{% endif %}
+
+We will notify you if a spot becomes available. For questions, contact {{ support_email }}.

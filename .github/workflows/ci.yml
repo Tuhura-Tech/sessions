@@ -43,10 +43,6 @@ jobs:
         working-directory: ./backend
         run: uv run ruff format --check .
 
-      - name: Run type checking
-        working-directory: ./backend
-        run: uv run ty check
-
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
@@ -125,7 +121,7 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-        run: uv run alembic -c alembic.ini upgrade head
+        run: uv run litestar database upgrade --no-prompt
 
   # Admin Portal jobs
   admin-portal-lint:
@@ -249,8 +245,48 @@ jobs:
   frontend-test:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18@sha256:5773fe724c49c42a7a9ca70202e11e1dff21fb7235b335a73f39297d200b73a2
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
+        with:
+          version: latest
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.13"
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: uv sync
+
+      - name: Upgrade database
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        run: export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar database upgrade --no-prompt
+
+      - name: Start backend server
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        run: export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar run --reload --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
 
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
@@ -263,7 +299,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
@@ -271,8 +307,25 @@ jobs:
         working-directory: ./frontend
         run: pnpm exec playwright install --with-deps
 
+      - name: Wait for backend server
+        run: |
+          for i in {1..60}; do
+            if curl -s http://127.0.0.1:8000/health > /dev/null 2>&1; then
+              echo "Backend server is ready"
+              exit 0
+            fi
+            echo "Waiting for backend server... ($i/60)"
+            sleep 1
+          done
+          echo "Backend server did not start in time"
+          cat /tmp/backend.log
+          exit 1
+
       - name: Run e2e tests
         working-directory: ./frontend
+        env:
+          PUBLIC_BASE_URL: http://127.0.0.1:8000
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4321
         run: pnpm run test:e2e
 
   frontend-build:

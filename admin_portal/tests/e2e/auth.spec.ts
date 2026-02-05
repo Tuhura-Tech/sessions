@@ -1,7 +1,16 @@
 import { expect, test } from '@playwright/test';
-import { clickButtonByText, mockGoogleOAuthSession, navigateTo } from './helpers';
+import { authenticateAsAdmin, navigateTo, trackPageErrors, waitForAuthReady } from './helpers';
 
 test.describe('Authentication', () => {
+	let pageErrors: string[] = [];
+
+	test.beforeEach(async ({ page }) => {
+		pageErrors = trackPageErrors(page);
+	});
+
+	test.afterEach(async () => {
+		expect(pageErrors).toEqual([]);
+	});
 	test('should display login page', async ({ page }) => {
 		await navigateTo(page, '/');
 
@@ -19,15 +28,13 @@ test.describe('Authentication', () => {
 		await expect(loginButton).toBeVisible();
 	});
 
-	test('should redirect to dashboard when authenticated', async ({ page }) => {
-		// Set session cookie and mock API to simulate authenticated user
-		await mockGoogleOAuthSession(page);
+	test('should allow access to dashboard when authenticated', async ({ page }) => {
+		await authenticateAsAdmin(page);
 
-		// Navigate to login
-		await navigateTo(page, '/login');
+		await navigateTo(page, '/dashboard');
+		await waitForAuthReady(page);
 
-		// Should redirect to dashboard
-		await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+		await expect(page.locator('header h1')).toContainText(/dashboard/i);
 	});
 
 	test('should redirect to login when accessing protected route without auth', async ({ page }) => {
@@ -39,15 +46,10 @@ test.describe('Authentication', () => {
 		await expect(page).toHaveURL(/\/login/);
 	});
 
-	test('should show error on failed session check', async ({ page }) => {
-		// Mock 401 response for session check
-		await page.route('**/api/v1/admin/auth/check-session', async (route) => {
-			await route.abort('failed');
-		});
+	test('should keep login page when unauthenticated', async ({ page }) => {
+		await navigateTo(page, '/login');
 
-		await navigateTo(page, '/');
-
-		// Should still show login page
 		await expect(page.locator('h2')).toContainText('Admin Portal');
+		await expect(page).toHaveURL(/\/login/);
 	});
 });

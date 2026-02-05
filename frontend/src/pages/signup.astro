@@ -46,15 +46,38 @@ if (!user) {
 				{
 					session ? (
 						<>
-							<h1 class="text-3xl font-bold text-gray-900">Sign up for {session.name}</h1>
+							{/* Session Summary Banner */}
+							<div class="rounded-2xl border-l-4 border-tuhura-green bg-tuhura-green/10 p-6 shadow-sm">
+								<p class="text-sm font-medium tracking-wide text-tuhura-green uppercase">
+									Sign up for
+								</p>
+								<h1 class="mt-2 text-3xl font-bold text-gray-900">Sign up for {session.name}</h1>
+								<div class="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
+									<div>
+										<p class="text-xs font-medium text-gray-600 uppercase">Time</p>
+										<p class="mt-1 text-sm font-semibold text-gray-900">{session.time}</p>
+									</div>
+									<div>
+										<p class="text-xs font-medium text-gray-600 uppercase">Age Group</p>
+										<p class="mt-1 text-sm font-semibold text-gray-900">{session.age}</p>
+									</div>
+									<div>
+										<p class="text-xs font-medium text-gray-600 uppercase">Location</p>
+										<p class="mt-1 text-sm font-semibold text-gray-900">
+											{session.venueName || session.location}
+										</p>
+									</div>
+								</div>
+							</div>
 
+							{/* Full Session Details */}
 							<div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-								<div class="space-y-4">
+								<div class="space-y-6">
 									<div>
 										<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 											When & Where
 										</h3>
-										<p class="mt-1 text-lg text-gray-900">{session.time}</p>
+										<p class="mt-2 text-lg text-gray-900">{session.time}</p>
 										<p class="mt-1 text-gray-700">{session.venueName || session.location}</p>
 										{session.address && <p class="text-sm text-gray-600">{session.address}</p>}
 									</div>
@@ -64,7 +87,7 @@ if (!user) {
 											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 												Term
 											</h3>
-											<p class="mt-1 text-gray-900">{session.term_summary}</p>
+											<p class="mt-2 text-gray-900">{session.term_summary}</p>
 										</div>
 									)}
 
@@ -73,7 +96,7 @@ if (!user) {
 											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 												Age Group
 											</h3>
-											<p class="mt-1 text-gray-900">{session.age}</p>
+											<p class="mt-2 text-gray-900">{session.age}</p>
 										</div>
 									)}
 
@@ -82,7 +105,7 @@ if (!user) {
 											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 												What to Bring
 											</h3>
-											<p class="mt-1 text-gray-900">{session.what_to_bring}</p>
+											<p class="mt-2 text-gray-900">{session.what_to_bring}</p>
 										</div>
 									)}
 
@@ -91,7 +114,7 @@ if (!user) {
 											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 												Important Information
 											</h3>
-											<p class="mt-1 whitespace-pre-line text-gray-900">
+											<p class="mt-2 whitespace-pre-line text-gray-900">
 												{session.public_instructions}
 											</p>
 										</div>
@@ -102,7 +125,7 @@ if (!user) {
 											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 												Arrival Instructions
 											</h3>
-											<p class="mt-1 whitespace-pre-line text-gray-900">
+											<p class="mt-2 whitespace-pre-line text-gray-900">
 												{session.arrival_instructions}
 											</p>
 										</div>
@@ -113,7 +136,7 @@ if (!user) {
 											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
 												Prerequisites
 											</h3>
-											<p class="mt-1 text-gray-900">{session.prerequisites}</p>
+											<p class="mt-2 text-gray-900">{session.prerequisites}</p>
 										</div>
 									)}
 
@@ -137,8 +160,11 @@ if (!user) {
 										You need to add at least one child to your account before you can sign up for
 										sessions.
 									</p>
-									<a href="/account" class="btn btn-primary mt-6">
-										Go to account settings
+									<a
+										href={`/account?returnTo=${encodeURIComponent(`/signup?session=${sessionId}`)}`}
+										class="btn btn-primary mt-6"
+									>
+										Add a child and continue
 									</a>
 								</div>
 							) : (

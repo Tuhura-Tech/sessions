@@ -32,7 +32,9 @@ if (title !== siteName) {
 } else {
 	shownTitle = siteName;
 }
-const canonicalUrl = Astro.url?.href || 'https://sessions.tuhuratech.org.nz';
+// Use dynamic canonical URL based on request or site config
+const siteUrl = Astro.site?.toString() ?? 'https://sessions.tuhuratech.org.nz';
+const canonicalUrl = Astro.url?.href ?? siteUrl;
 const ogImage = await getImage({ src: heroOg, width: 1200, height: 630, format: 'jpg' });
 const ogImageUrl = new URL(ogImage.src, canonicalUrl).toString();
 
@@ -67,7 +69,7 @@ const cta: NavItem = {
 		<title>{shownTitle}</title>
 
 		<!-- Structured data -->
-		<script is:inline type="application/ld+json">
+		<script type="application/ld+json">
 			{
 				"@context": "https://schema.org",
 				"@type": "Organization",
@@ -91,7 +93,6 @@ const cta: NavItem = {
 
 		<!-- Plausible Analytics -->
 		<script
-			is:inline
 			data-domain="sessions.tuhuratech.org.nz"
 			src="https://plausible.tuhuratech.org.nz/js/script.js"></script>
 	</head>
@@ -105,7 +106,7 @@ const cta: NavItem = {
 		<Partners />
 		<Footer />
 		<DonateModal />
-		<script is:inline>
+		<script>
 			const headerEl = document.querySelector('header');
 			const onScroll = () => {
 				if (!headerEl) return;

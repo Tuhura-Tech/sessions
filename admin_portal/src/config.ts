@@ -1,10 +1,14 @@
 /**
  * Configuration for environment-specific settings
  */
+/// <reference types="vite/client" />
 
 export const config = {
 	// Always call the API directly (no nginx proxy)
-	apiUrl: (import.meta as any).env.PUBLIC_BASE_URL || 'https://sessions-api.tuhuratech.org.nz',
+	// Prefer explicit environment variable, fall back to dev mode
+	apiUrl:
+		(import.meta.env.PUBLIC_BASE_URL as string | undefined) ||
+		(import.meta.env.DEV ? '' : '/api/v1'),
 	appName: 'Admin Portal',
 	appVersion: '1.0.0',
 };

@@ -23,31 +23,32 @@ export function extractErrorMessage(error: unknown): string {
 	// Axios error with response
 	if (isAxiosError(error) && error.response) {
 		const { status, data } = error.response;
+		const responseData = data as Record<string, unknown>;
 
 		// Handle specific HTTP status codes
 		switch (status) {
 			case 400:
-				return data?.detail || data?.message || 'Invalid request. Please check your input.';
+				return (responseData?.detail as string | undefined) || (responseData?.message as string | undefined) || 'Invalid request. Please check your input.';
 			case 401:
 				return 'You are not authorized. Please log in again.';
 			case 403:
 				return 'You do not have permission to perform this action.';
 			case 404:
-				return data?.detail || 'The requested resource was not found.';
+				return (responseData?.detail as string | undefined) || 'The requested resource was not found.';
 			case 409:
-				return data?.detail || 'This action conflicts with existing data.';
+				return (responseData?.detail as string | undefined) || 'This action conflicts with existing data.';
 			case 422:
 				// Validation error
-				if (data?.detail && Array.isArray(data.detail)) {
-					const errors = data.detail
-						.map((err: { msg?: string; loc?: string[] }) => {
+				if (responseData?.detail && Array.isArray(responseData.detail)) {
+					const errors = (responseData.detail as Array<{ msg?: string; loc?: string[] }>)
+						.map((err) => {
 							const field = err.loc?.slice(1).join('.') || 'field';
 							return `${field}: ${err.msg}`;
 						})
 						.join('; ');
 					return `Validation error: ${errors}`;
 				}
-				return data?.detail || data?.message || 'Invalid data submitted.';
+				return (responseData?.detail as string | undefined) || (responseData?.message as string | undefined) || 'Invalid data submitted.';
 			case 429:
 				return 'Too many requests. Please wait a moment and try again.';
 			case 500:
@@ -57,7 +58,7 @@ export function extractErrorMessage(error: unknown): string {
 			case 504:
 				return 'Request timeout. The server took too long to respond.';
 			default:
-				return data?.detail || data?.message || `Error: ${status}`;
+				return (responseData?.detail as string | undefined) || (responseData?.message as string | undefined) || `Error: ${status}`;
 		}
 	}
 
@@ -98,11 +99,12 @@ function isAxiosError(error: unknown): error is AxiosError {
  */
 export function parseApiError(error: unknown): ApiError {
 	if (isAxiosError(error) && error.response) {
+		const responseData = error.response.data as Record<string, unknown>;
 		return {
 			status: error.response.status,
 			message: extractErrorMessage(error),
-			detail: error.response.data?.detail,
-			field: error.response.data?.field,
+			detail: (responseData?.detail as string | undefined),
+			field: (responseData?.field as string | undefined),
 		};
 	}
 

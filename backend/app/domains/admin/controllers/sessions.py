@@ -56,12 +56,14 @@ class SessionController(Controller):
         offset: int = 0,
     ) -> service.OffsetPagination[Session]:
         """List all sessions with pagination.
-        
+
         Args:
             limit: Maximum number of results to return (default: 100)
             offset: Number of results to skip (default: 0)
         """
-        results, total = await session_service.list_and_count(LimitOffset(limit, offset))
+        results, total = await session_service.list_and_count(
+            LimitOffset(limit, offset)
+        )
         return session_service.to_schema(results, total, schema_type=Session)
 
     @get("/{session_id:uuid}")
@@ -162,7 +164,7 @@ class SessionController(Controller):
         session = await session_service.get(session_id)
         if not session:
             raise NotFoundException(detail="Session not found")
-        
+
         # Eager load related data to avoid N+1 queries
         occurrences = await session_service.occurrences.list(
             m.Occurrence.session_id == session_id,

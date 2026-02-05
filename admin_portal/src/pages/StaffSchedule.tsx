@@ -51,7 +51,7 @@ const StaffSchedulePage: React.FC = () => {
 				staff.map(async (s) => {
 					const sessions = await adminApi.getStaffSessions(s.id);
 					console.log(`Staff ${s.name} sessions:`, sessions);
-					
+
 					// Group sessions by day of week
 					const schedule: DaySchedule[] = DAYS.map((dayName, dayOfWeek) => ({
 						dayOfWeek,
@@ -109,9 +109,7 @@ const StaffSchedulePage: React.FC = () => {
 
 		// Filter by selected day
 		if (selectedDay !== null) {
-			filtered = filtered.filter((s) =>
-				s.schedule[selectedDay].sessions.length > 0,
-			);
+			filtered = filtered.filter((s) => s.schedule[selectedDay].sessions.length > 0);
 		}
 
 		return filtered;
@@ -212,7 +210,7 @@ const StaffSchedulePage: React.FC = () => {
 								placeholder="Search staff or sessions..."
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
 							/>
 						</div>
 
@@ -220,10 +218,8 @@ const StaffSchedulePage: React.FC = () => {
 							<Filter className="h-4 w-4 text-gray-500" />
 							<select
 								value={selectedDay ?? ''}
-								onChange={(e) =>
-									setSelectedDay(e.target.value ? Number(e.target.value) : null)
-								}
-								className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								onChange={(e) => setSelectedDay(e.target.value ? Number(e.target.value) : null)}
+								className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
 							>
 								<option value="">All days</option>
 								{DAYS.map((day, idx) => (
@@ -251,9 +247,7 @@ const StaffSchedulePage: React.FC = () => {
 										<div className="border-b border-gray-200 px-6 py-4">
 											<div className="flex items-center justify-between">
 												<div>
-													<h3 className="text-lg font-semibold text-gray-900">
-														{data.staff.name}
-													</h3>
+													<h3 className="text-lg font-semibold text-gray-900">{data.staff.name}</h3>
 													<p className="text-sm text-gray-500">{data.staff.email}</p>
 												</div>
 												<div className="text-right">
@@ -283,10 +277,7 @@ const StaffSchedulePage: React.FC = () => {
 															<div className="text-xs text-gray-400">—</div>
 														) : (
 															day.sessions.map((session) => (
-																<div
-																	key={session.id}
-																	className="rounded-md bg-blue-50 p-2 text-xs"
-																>
+																<div key={session.id} className="rounded-md bg-blue-50 p-2 text-xs">
 																	<div className="mb-1 font-medium text-blue-900">
 																		{session.name}
 																	</div>
@@ -299,9 +290,7 @@ const StaffSchedulePage: React.FC = () => {
 																	{session.locationName && (
 																		<div className="mt-1 flex items-center gap-1 text-blue-600">
 																			<MapPin className="h-3 w-3" />
-																			<span className="truncate">
-																				{session.locationName}
-																			</span>
+																			<span className="truncate">{session.locationName}</span>
 																		</div>
 																	)}
 																</div>
@@ -328,16 +317,16 @@ const StaffSchedulePage: React.FC = () => {
 								<table className="min-w-full divide-y divide-gray-200">
 									<thead className="bg-gray-50">
 										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
 												Staff
 											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
 												Sessions
 											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
 												Days/Week
 											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
 												Workload
 											</th>
 										</tr>
@@ -353,9 +342,7 @@ const StaffSchedulePage: React.FC = () => {
 											return (
 												<tr key={stat.staff_id} className="hover:bg-gray-50">
 													<td className="px-6 py-4">
-														<div className="text-sm font-medium text-gray-900">
-															{stat.name}
-														</div>
+														<div className="text-sm font-medium text-gray-900">{stat.name}</div>
 														<div className="text-xs text-gray-500">{stat.email}</div>
 													</td>
 													<td className="px-6 py-4">

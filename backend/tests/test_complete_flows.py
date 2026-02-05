@@ -12,7 +12,7 @@ Tests verify all data is correctly created and related.
 """
 
 import pytest
-from datetime import date, time, timedelta
+from datetime import date, time
 from httpx import AsyncClient
 from uuid import UUID
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
@@ -111,7 +111,7 @@ class TestAdminSessionCreationFlow:
             )
             db_session.add(session)
             await db_session.flush()
-            
+
             # Link to block
             block_link = m.BlockLink(session_id=session.id, block_id=UUID(block_id))
             db_session.add(block_link)
@@ -145,12 +145,13 @@ class TestAdminSessionCreationFlow:
         if len(occurrences) == 0:
             # Create occurrences manually
             from datetime import datetime
+
             for i in range(4):  # 4 weeks in term
                 occurrence = m.Occurrence(
                     session_id=UUID(session_id),
                     block_id=UUID(block_id),
-                    starts_at=datetime(2026, 2, 4 + i*7, 14, 0),
-                    ends_at=datetime(2026, 2, 4 + i*7, 15, 30),
+                    starts_at=datetime(2026, 2, 4 + i * 7, 14, 0),
+                    ends_at=datetime(2026, 2, 4 + i * 7, 15, 30),
                     cancelled=False,
                 )
                 db_session.add(occurrence)
@@ -240,7 +241,9 @@ class TestCaregiverSignupFlow:
         )
         caregiver = result.scalar_one_or_none()
         assert caregiver is not None
-        assert caregiver.name is None or caregiver.name == ""  # Name not provided in signup
+        assert (
+            caregiver.name is None or caregiver.name == ""
+        )  # Name not provided in signup
 
         # Step 5: Create student directly (via DB)
         student = m.Student(
@@ -324,6 +327,7 @@ class TestAttendanceMarkingFlow:
 
         # Create occurrence
         from datetime import datetime
+
         occurrence = m.Occurrence(
             session_id=session.id,
             block_id=block.id,
@@ -347,7 +351,7 @@ class TestAttendanceMarkingFlow:
         for i in range(3):
             student = m.Student(
                 caregiver_id=caregiver.id,
-                name=f"Student {i+1}",
+                name=f"Student {i + 1}",
                 date_of_birth=date(2011, 1, 1),
             )
             db_session.add(student)
@@ -432,7 +436,7 @@ class TestStaffAssignmentFlow:
                 location_id=location.id,
                 year=2026,
                 session_type="term",
-                name=f"Course {i+1}",
+                name=f"Course {i + 1}",
                 age_lower=8 + i,
                 age_upper=12 + i,
                 day_of_week=i % 5,
@@ -450,9 +454,9 @@ class TestStaffAssignmentFlow:
             staff_response = await client.post(
                 "/api/v1/admin/staff",
                 json={
-                    "name": f"Instructor {i+1}",
-                    "email": f"instructor{i+1}@training.nz",
-                    "ssoId": f"staff-{i+1}",
+                    "name": f"Instructor {i + 1}",
+                    "email": f"instructor{i + 1}@training.nz",
+                    "ssoId": f"staff-{i + 1}",
                 },
                 cookies={"admin_session": admin_session_cookie},
             )
@@ -470,7 +474,10 @@ class TestStaffAssignmentFlow:
                         json={"staff_id": staff_id},
                         cookies={"admin_session": admin_session_cookie},
                     )
-                    assert assign_response.status_code in [HTTP_200_OK, HTTP_201_CREATED]
+                    assert assign_response.status_code in [
+                        HTTP_200_OK,
+                        HTTP_201_CREATED,
+                    ]
                     assignments.append((staff_id, session.id))
 
         # Step 4: Verify staff assignments
@@ -539,9 +546,9 @@ class TestDataIntegrityAcrossFlows:
         caregivers = []
         for i in range(2):
             caregiver = m.Caregiver(
-                name=f"Guardian {i+1}",
-                email=f"guardian{i+1}@example.com",
-                phone=f"021 555 {1000+i}",
+                name=f"Guardian {i + 1}",
+                email=f"guardian{i + 1}@example.com",
+                phone=f"021 555 {1000 + i}",
             )
             db_session.add(caregiver)
             caregivers.append(caregiver)
@@ -552,7 +559,7 @@ class TestDataIntegrityAcrossFlows:
             for j in range(2):
                 student = m.Student(
                     caregiver_id=caregiver.id,
-                    name=f"Student {len(students)+1}",
+                    name=f"Student {len(students) + 1}",
                     date_of_birth=date(2012, 1, 1),
                 )
                 db_session.add(student)
@@ -646,7 +653,7 @@ class TestStudentLifecycleFlow:
                 location_id=location.id,
                 year=2026,
                 session_type="term",
-                name=f"Youth Activity {i+1}",
+                name=f"Youth Activity {i + 1}",
                 age_lower=14,
                 age_upper=18,
                 day_of_week=i,
@@ -680,6 +687,7 @@ class TestStudentLifecycleFlow:
 
         # Step 2.5: Create occurrences for sessions
         from datetime import datetime
+
         occurrences = []
         for session in sessions:
             occurrence = m.Occurrence(
@@ -735,7 +743,9 @@ class TestStudentLifecycleFlow:
         assert attendance_count == 2
 
         # Verify student details
-        result = await db_session.execute(select(m.Student).where(m.Student.id == student.id))
+        result = await db_session.execute(
+            select(m.Student).where(m.Student.id == student.id)
+        )
         stored_student = result.scalar_one_or_none()
         assert stored_student is not None
         assert stored_student.name == "Lifecycle Test Student"

@@ -354,7 +354,7 @@ class TestSessionStaffController:
 
     async def test_assign_staff_duplicate(self):
         from app.domains.admin.schemas.staff import StaffAssignmentCreate
-        
+
         controller = make_session_staff_controller()
         session_staff_service = DummySessionStaffService([])
         session_staff_service.create_error = "uq_session_staff"

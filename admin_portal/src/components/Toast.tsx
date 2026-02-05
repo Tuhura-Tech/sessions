@@ -31,10 +31,10 @@ function ToastItem({ toast, onDismiss }: ToastProps) {
 	}, [toast.duration, handleDismiss]);
 
 	const iconMap = {
-		success: <CheckCircle className="w-5 h-5" />,
-		error: <XCircle className="w-5 h-5" />,
-		warning: <AlertCircle className="w-5 h-5" />,
-		info: <Info className="w-5 h-5" />,
+		success: <CheckCircle className="h-5 w-5" />,
+		error: <XCircle className="h-5 w-5" />,
+		warning: <AlertCircle className="h-5 w-5" />,
+		info: <Info className="h-5 w-5" />,
 	};
 
 	const colorMap = {
@@ -46,26 +46,19 @@ function ToastItem({ toast, onDismiss }: ToastProps) {
 
 	return (
 		<div
-			className={`
-				flex items-start gap-3 p-4 rounded-lg border shadow-lg max-w-md
-				transition-all duration-300 ease-in-out
-				${colorMap[toast.type]}
-				${
-					isExiting
-						? 'opacity-0 translate-x-full'
-						: 'opacity-100 translate-x-0'
-				}
-			`}
+			className={`flex max-w-md items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300 ease-in-out ${colorMap[toast.type]} ${
+				isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+			} `}
 		>
-			<div className="flex-shrink-0 mt-0.5">{iconMap[toast.type]}</div>
+			<div className="mt-0.5 flex-shrink-0">{iconMap[toast.type]}</div>
 			<div className="flex-1 text-sm">{toast.message}</div>
 			<button
 				type="button"
 				onClick={handleDismiss}
-				className="flex-shrink-0 text-current opacity-70 hover:opacity-100 transition-opacity"
+				className="flex-shrink-0 text-current opacity-70 transition-opacity hover:opacity-100"
 				aria-label="Dismiss"
 			>
-				<X className="w-4 h-4" />
+				<X className="h-4 w-4" />
 			</button>
 		</div>
 	);
@@ -77,11 +70,7 @@ interface ToastContainerProps {
 	position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center';
 }
 
-export function ToastContainer({
-	toasts,
-	onDismiss,
-	position = 'top-right',
-}: ToastContainerProps) {
+export function ToastContainer({ toasts, onDismiss, position = 'top-right' }: ToastContainerProps) {
 	const positionClasses = {
 		'top-right': 'top-4 right-4',
 		'top-left': 'top-4 left-4',
@@ -92,7 +81,7 @@ export function ToastContainer({
 
 	return (
 		<div
-			className={`fixed z-50 flex flex-col gap-3 pointer-events-none ${positionClasses[position]}`}
+			className={`pointer-events-none fixed z-50 flex flex-col gap-3 ${positionClasses[position]}`}
 			aria-live="polite"
 			aria-atomic="true"
 		>

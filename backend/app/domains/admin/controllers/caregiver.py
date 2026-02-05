@@ -48,12 +48,14 @@ class CaregiverController(Controller):
         offset: int = 0,
     ) -> service.OffsetPagination[Caregiver]:
         """List all caregivers with pagination.
-        
+
         Args:
             limit: Maximum number of results to return (default: 100)
             offset: Number of results to skip (default: 0)
         """
-        results, total = await caregiver_service.list_and_count(LimitOffset(limit, offset))
+        results, total = await caregiver_service.list_and_count(
+            LimitOffset(limit, offset)
+        )
         return caregiver_service.to_schema(results, total, schema_type=Caregiver)
 
     @get("/{caregiver_id:uuid}")

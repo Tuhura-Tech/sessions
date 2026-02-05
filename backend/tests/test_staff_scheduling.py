@@ -9,9 +9,8 @@ Tests cover:
 """
 
 import pytest
-from datetime import date, time, timedelta
+from datetime import time
 from httpx import AsyncClient
-from uuid import UUID
 
 from app.db import models as m
 
@@ -39,7 +38,7 @@ async def test_staff_availability_endpoint(
     )
     assert response.status_code == 200
     data = response.json()
-    
+
     # Could be a list or paginated response
     if isinstance(data, dict):
         assert "items" in data
@@ -107,17 +106,17 @@ async def test_get_staff_sessions(
     )
     assert response.status_code == 200
     data = response.json()
-    
+
     sessions = data if isinstance(data, list) else data.get("items", [])
     assert len(sessions) >= 1
-    
+
     # Check that response has required fields (accept both camelCase and snake_case)
     session_data = sessions[0]
     assert "id" in session_data
     assert "name" in session_data
     assert "year" in session_data
     # Accept either camelCase or snake_case
-    has_day_of_week = ("dayOfWeek" in session_data or "day_of_week" in session_data)
+    has_day_of_week = "dayOfWeek" in session_data or "day_of_week" in session_data
     assert has_day_of_week
     assert "locationName" in session_data or "location_name" in session_data
 
@@ -172,7 +171,7 @@ async def test_assign_staff_to_session(
         cookies={"admin_session": admin_session_cookie},
     )
     assert response.status_code in [200, 201]
-    
+
     # Verify assignment
     result = response.json()
     # Accept both camelCase and snake_case
@@ -311,10 +310,14 @@ async def test_get_session_staff_list(
         cookies={"admin_session": admin_session_cookie},
     )
     assert response.status_code == 200
-    
-    staff_list = response.json() if isinstance(response.json(), list) else response.json().get("items", [])
+
+    staff_list = (
+        response.json()
+        if isinstance(response.json(), list)
+        else response.json().get("items", [])
+    )
     assert len(staff_list) == 2
-    
+
     # Verify staff details
     names = [s.get("name") for s in staff_list]
     assert "Staff 0" in names
@@ -378,8 +381,10 @@ async def test_bulk_assign_staff(
     )
     # Bulk endpoint might not exist, accept various response codes
     if response.status_code not in [200, 201, 400, 404]:
-        pytest.fail(f"Unexpected status code: {response.status_code}, body: {response.text}")
-    
+        pytest.fail(
+            f"Unexpected status code: {response.status_code}, body: {response.text}"
+        )
+
     # If endpoint exists and succeeds, verify assignments
     if response.status_code in [200, 201]:
         check_response = await client.get(
@@ -387,7 +392,11 @@ async def test_bulk_assign_staff(
             cookies={"admin_session": admin_session_cookie},
         )
         assert check_response.status_code == 200
-        staff_list = check_response.json() if isinstance(check_response.json(), list) else check_response.json().get("items", [])
+        staff_list = (
+            check_response.json()
+            if isinstance(check_response.json(), list)
+            else check_response.json().get("items", [])
+        )
         assert len(staff_list) == 3
 
 
@@ -473,7 +482,7 @@ async def test_staff_availability_year_filter(
     )
     assert response.status_code == 200
     data = response.json()
-    
+
     assert "items" in data or isinstance(data, list)
 
 
@@ -499,7 +508,7 @@ async def test_staff_list_pagination(
     )
     assert response.status_code == 200
     data = response.json()
-    
+
     staff_list = data if isinstance(data, list) else data.get("items", [])
     # Verify we get all staff (no pagination limit applied yet)
     assert len(staff_list) >= 10

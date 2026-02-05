@@ -185,7 +185,9 @@ class StaffController(Controller):
                 day_of_week=assignment.session.day_of_week,
                 start_time=str(assignment.session.start_time),
                 end_time=str(assignment.session.end_time),
-                location_name=assignment.session.location.name if assignment.session.location else None,
+                location_name=assignment.session.location.name
+                if assignment.session.location
+                else None,
             )
             for assignment in assignments
         ]

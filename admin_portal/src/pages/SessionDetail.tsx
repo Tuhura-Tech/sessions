@@ -595,8 +595,7 @@ const SessionDetail: React.FC = () => {
 														<p className="mt-1 text-sm text-gray-600">{staff.email}</p>
 														{staff.last_login_at && (
 															<p className="mt-2 text-xs text-gray-500">
-																Last login:{' '}
-																{new Date(staff.last_login_at).toLocaleDateString()}
+																Last login: {new Date(staff.last_login_at).toLocaleDateString()}
 															</p>
 														)}
 													</div>
@@ -683,9 +682,7 @@ const SessionDetail: React.FC = () => {
 								>
 									<div className="font-medium text-gray-900">{staff.name}</div>
 									<div className="text-sm text-gray-600">{staff.email}</div>
-									{!staff.active && (
-										<div className="mt-1 text-xs text-gray-500">(Inactive)</div>
-									)}
+									{!staff.active && <div className="mt-1 text-xs text-gray-500">(Inactive)</div>}
 								</button>
 							))}
 						{availableStaff.filter(

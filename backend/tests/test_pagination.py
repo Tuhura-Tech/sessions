@@ -11,7 +11,9 @@ from app.db import models as m
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
 
-async def test_sessions_list_with_pagination(client: AsyncClient, admin_session_cookie: str, db_session):
+async def test_sessions_list_with_pagination(
+    client: AsyncClient, admin_session_cookie: str, db_session
+):
     """Test that sessions list endpoint supports pagination parameters."""
     # Create multiple sessions
     location = m.Location(
@@ -66,7 +68,9 @@ async def test_sessions_list_with_pagination(client: AsyncClient, admin_session_
     assert data["total"] == 15
 
 
-async def test_students_list_with_pagination(client: AsyncClient, admin_session_cookie: str, db_session):
+async def test_students_list_with_pagination(
+    client: AsyncClient, admin_session_cookie: str, db_session
+):
     """Test that students list endpoint supports pagination parameters."""
     # Create caregiver
     caregiver = m.Caregiver(

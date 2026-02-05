@@ -66,10 +66,9 @@ test.describe('Pagination and Validation', () => {
 			}
 
 			// Test limit=0 edge case
-			const zeroLimitRes = await page.request.get(
-				`${ADMIN_API_BASE_URL}/admin/sessions?limit=0`,
-				{ headers },
-			);
+			const zeroLimitRes = await page.request.get(`${ADMIN_API_BASE_URL}/admin/sessions?limit=0`, {
+				headers,
+			});
 			expect(zeroLimitRes.ok()).toBeTruthy();
 			const zeroLimitData = await zeroLimitRes.json();
 			expect(zeroLimitData.items).toHaveLength(0);
@@ -153,7 +152,7 @@ test.describe('Pagination and Validation', () => {
 				// Should have validation errors for required fields
 				const errors = page.locator('[role="alert"], .error, .text-red-500, .text-red-600');
 				const errorCount = await errors.count();
-				
+
 				// Expect at least some validation errors for required fields
 				// (name, location, capacity, etc.)
 				expect(errorCount).toBeGreaterThan(0);
@@ -167,7 +166,7 @@ test.describe('Pagination and Validation', () => {
 
 			// Look for "Add Location" or "Create" button
 			const createButton = page.getByRole('button', { name: /add location|new location|create/i });
-			const hasCreateButton = await createButton.count() > 0;
+			const hasCreateButton = (await createButton.count()) > 0;
 
 			if (hasCreateButton) {
 				await createButton.first().click();
@@ -197,16 +196,16 @@ test.describe('Pagination and Validation', () => {
 
 			// Check if student data displays properly
 			const table = page.locator('table');
-			if (await table.count() > 0) {
+			if ((await table.count()) > 0) {
 				const rows = page.locator('table tbody tr');
 				const rowCount = await rows.count();
-				
+
 				if (rowCount > 0) {
 					// First row should have valid data
 					const firstRow = rows.first();
 					const rowText = await firstRow.innerText();
 					expect(rowText.length).toBeGreaterThan(0);
-					
+
 					// Should have student name
 					expect(rowText).not.toBe('undefined');
 					expect(rowText).not.toBe('null');
@@ -432,7 +431,7 @@ test.describe('Pagination and Validation', () => {
 
 			// Page should eventually show content (not stuck in loading)
 			await page.waitForTimeout(5000); // Wait max 5 seconds
-			
+
 			// Should have either content or an empty state
 			const hasTable = (await page.locator('table').count()) > 0;
 			const hasEmptyState = (await page.locator('text=No sessions').count()) > 0;

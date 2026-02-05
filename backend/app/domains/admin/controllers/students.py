@@ -48,12 +48,14 @@ class StudentController(Controller):
         offset: int = 0,
     ) -> service.OffsetPagination[Student]:
         """List all students with pagination.
-        
+
         Args:
             limit: Maximum number of results to return (default: 100)
             offset: Number of results to skip (default: 0)
         """
-        results, total = await student_service.list_and_count(LimitOffset(limit, offset))
+        results, total = await student_service.list_and_count(
+            LimitOffset(limit, offset)
+        )
         return student_service.to_schema(results, total, schema_type=Student)
 
     @get("/{student_id:uuid}")

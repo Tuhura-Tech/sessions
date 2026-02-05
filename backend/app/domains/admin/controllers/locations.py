@@ -55,12 +55,14 @@ class LocationController(Controller):
         offset: int = 0,
     ) -> service.OffsetPagination[Location]:
         """List all locations with pagination.
-        
+
         Args:
             limit: Maximum number of results to return (default: 100)
             offset: Number of results to skip (default: 0)
         """
-        results, total = await location_service.list_and_count(LimitOffset(limit, offset))
+        results, total = await location_service.list_and_count(
+            LimitOffset(limit, offset)
+        )
         return location_service.to_schema(results, total, schema_type=Location)
 
     @post("/")

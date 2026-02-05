@@ -91,9 +91,7 @@ class TestAdminLocationSessionsEndpoint:
     async def test_get_location_sessions_not_found(self, test_client):
         """Test GET /api/v1/admin/locations/{id}/sessions with invalid ID."""
         fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.get(
-            f"/api/v1/admin/locations/{fake_id}/sessions"
-        )
+        response = await test_client.get(f"/api/v1/admin/locations/{fake_id}/sessions")
 
         # Expect 404 or auth error
         assert response.status_code in (401, 403, 404)

@@ -35,7 +35,7 @@ class BlockController(Controller):
         offset: int = 0,
     ) -> service.OffsetPagination[Block]:
         """List all blocks with pagination.
-        
+
         Args:
             limit: Maximum number of results to return (default: 100)
             offset: Number of results to skip (default: 0)

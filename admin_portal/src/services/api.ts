@@ -270,25 +270,11 @@ export const adminApi = {
 	getStaffSessions: async (staffId: string): Promise<StaffSessionSummary[]> => {
 		const { data } = await api.get(`/admin/staff/${staffId}/sessions`);
 		return unwrapList<Record<string, unknown>>(data).map((item) => {
-			const sessionType = (item.sessionType ?? item.session_type) as
-				| string
-				| undefined;
-			const dayOfWeek = (item.dayOfWeek ?? item.day_of_week) as
-				| number
-				| null
-				| undefined;
-			const startTime = (item.startTime ?? item.start_time) as
-				| string
-				| null
-				| undefined;
-			const endTime = (item.endTime ?? item.end_time) as
-				| string
-				| null
-				| undefined;
-			const locationName = (item.locationName ?? item.location_name) as
-				| string
-				| null
-				| undefined;
+			const sessionType = (item.sessionType ?? item.session_type) as string | undefined;
+			const dayOfWeek = (item.dayOfWeek ?? item.day_of_week) as number | null | undefined;
+			const startTime = (item.startTime ?? item.start_time) as string | null | undefined;
+			const endTime = (item.endTime ?? item.end_time) as string | null | undefined;
+			const locationName = (item.locationName ?? item.location_name) as string | null | undefined;
 			const location = (item.location ?? item.location_name ?? item.locationName) as
 				| string
 				| null
@@ -308,10 +294,7 @@ export const adminApi = {
 		});
 	},
 
-	getStaffAvailability: async (
-		year?: number,
-		activeOnly = true,
-	): Promise<StaffAvailability[]> => {
+	getStaffAvailability: async (year?: number, activeOnly = true): Promise<StaffAvailability[]> => {
 		const params = new URLSearchParams();
 		if (year !== undefined) params.append('year', year.toString());
 		params.append('active_only', activeOnly.toString());

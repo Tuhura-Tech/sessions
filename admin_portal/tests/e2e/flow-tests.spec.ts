@@ -256,9 +256,11 @@ test('Responsive layout: mobile and desktop views work', async ({ page }) => {
  */
 test('Form interactions: inputs are interactive and accept input', async ({ page }) => {
 	// Navigate to sessions create page if it exists
-	await page.goto(`${ADMIN_BASE_URL}/sessions/create`, { waitUntil: 'domcontentloaded' }).catch(() => {
-		// If direct URL doesn't work, try sessions page then find create button
-	});
+	await page
+		.goto(`${ADMIN_BASE_URL}/sessions/create`, { waitUntil: 'domcontentloaded' })
+		.catch(() => {
+			// If direct URL doesn't work, try sessions page then find create button
+		});
 
 	// Wait a moment
 	await page.waitForTimeout(500);

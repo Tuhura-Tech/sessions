@@ -112,8 +112,7 @@ const StaffPage: React.FC = () => {
 		const maxSessions = Math.max(...availability.map((a) => a.assigned_session_count), 0);
 		const avgSessions =
 			availability.length > 0
-				? availability.reduce((sum, a) => sum + a.assigned_session_count, 0) /
-					availability.length
+				? availability.reduce((sum, a) => sum + a.assigned_session_count, 0) / availability.length
 				: 0;
 		return { maxSessions, avgSessions: Math.round(avgSessions * 10) / 10 };
 	}, [availability]);

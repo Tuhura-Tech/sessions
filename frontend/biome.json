@@ -5,7 +5,8 @@
 		"indentWidth": 2,
 		"lineWidth": 100,
 		"formatWithErrors": true,
-		"includes": ["**", "!**/*.astro"]
+		"includes": ["src/**", "tests/**"],
+		"ignore": ["playwright-report/**", "test-results/**"]
 	},
 	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {

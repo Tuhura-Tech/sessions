@@ -59,7 +59,7 @@ export default defineConfig({
 	webServer: [
 		{
 			command:
-				'cd ../backend && export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar run --host 0.0.0.0 --port 8000',
+				'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
 			url: 'http://localhost:8000/api/v1/health',
 			reuseExistingServer: !process.env.CI,
 		},

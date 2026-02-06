@@ -17,7 +17,7 @@
 ### Backend (Python)
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 
 # 1. Run tests
 uv run pytest tests/ -v --tb=short
@@ -117,7 +117,7 @@ backend/
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run litestar run --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -125,7 +125,7 @@ uv run litestar run --reload --host 0.0.0.0 --port 8000
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run litestar run --reload --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
 ```
 
@@ -153,7 +153,7 @@ pkill -f "litestar run"
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run litestar database make-migrations -m "description"
 ```
 
@@ -161,7 +161,7 @@ uv run litestar database make-migrations -m "description"
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run litestar database upgrade --no-prompt
 ```
 
@@ -169,7 +169,7 @@ uv run litestar database upgrade --no-prompt
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run litestar database downgrade --no-prompt
 ```
 
@@ -179,7 +179,7 @@ uv run litestar database downgrade --no-prompt
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run pytest --cov=app
 ```
 
@@ -187,7 +187,7 @@ uv run pytest --cov=app
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run pytest tests/test_security.py -v
 ```
 
@@ -195,7 +195,7 @@ uv run pytest tests/test_security.py -v
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run pytest -k "test_admin" -v
 ```
 
@@ -578,7 +578,7 @@ docker compose up --build -d
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run litestar run --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -609,7 +609,7 @@ pnpm run dev
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run pytest --cov=app
 ```
 
@@ -638,7 +638,7 @@ nix-shell --run "cd admin_portal && pnpm run test"
 
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run pytest tests/test_security.py -v
 ```
 
@@ -777,7 +777,7 @@ Before pushing, ensure:
 Run tests with coverage:
 ```bash
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
+
 uv run pytest --cov=app --cov-report=html
 ```
 

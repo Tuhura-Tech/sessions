@@ -178,7 +178,7 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-        run: export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar database upgrade --no-prompt
+        run: uv run litestar database upgrade --no-prompt
 
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
@@ -301,13 +301,13 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-        run: export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar database upgrade --no-prompt
+        run: uv run litestar database upgrade --no-prompt
 
       - name: Start backend server
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-        run: export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar run --reload --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+        run: uv run litestar run --reload --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
 
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:

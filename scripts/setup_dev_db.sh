@@ -7,7 +7,6 @@ cd "$(dirname "$0")/.."
 
 echo "🔄 Running database migrations..."
 cd backend
-export LITESTAR_APP="app.server.asgi:create_app"
 uv run litestar database upgrade --no-prompt
 cd ..
 

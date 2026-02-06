@@ -24,9 +24,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 
-# Set up environment
-export LITESTAR_APP="app.server.asgi:create_app"
-
 # Change to backend directory
 cd "$BACKEND_DIR"
 

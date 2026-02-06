@@ -18,7 +18,7 @@ export default async function globalSetup() {
 		stdio: 'inherit',
 		env: {
 			...process.env,
-			LITESTAR_APP: process.env.LITESTAR_APP || 'app.server.asgi:create_app',
+			LITESTAR_APP: process.env.LITESTAR_APP || 'app.asgi:create_app',
 		},
 	});
 
@@ -28,7 +28,7 @@ export default async function globalSetup() {
 		stdio: 'pipe',
 		env: {
 			...process.env,
-			LITESTAR_APP: process.env.LITESTAR_APP || 'app.server.asgi:create_app',
+			LITESTAR_APP: process.env.LITESTAR_APP || 'app.asgi:create_app',
 		},
 	});
 

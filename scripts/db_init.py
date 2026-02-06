@@ -26,7 +26,7 @@ Examples:
 
 Environment Variables:
     DATABASE_URL    PostgreSQL connection string (required if not passed via --database-url)
-    LITESTAR_APP    Application path (default: app.server.asgi:create_app)
+    LITESTAR_APP    Application path (default: app.asgi:create_app)
 """
 
 import argparse
@@ -116,7 +116,7 @@ def run_migrations():
     
     # Set up environment
     env = os.environ.copy()
-    env.setdefault("LITESTAR_APP", "app.server.asgi:create_app")
+    env.setdefault("LITESTAR_APP", "app.asgi:create_app")
     
     # Change to backend directory for Alembic
     backend_dir = Path(__file__).parents[1] / "backend"

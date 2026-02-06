@@ -58,8 +58,7 @@ export default defineConfig({
 	/* Run your local dev server before starting the tests */
 	webServer: [
 		{
-			command:
-				'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
+			command: 'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
 			url: 'http://localhost:8000/api/v1/health',
 			reuseExistingServer: !process.env.CI,
 		},

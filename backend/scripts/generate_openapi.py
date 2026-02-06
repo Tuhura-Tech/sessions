@@ -16,7 +16,7 @@ sys.path.insert(0, str(backend_dir))
 async def generate_schema():
     """Generate and save the OpenAPI schema."""
     # Import after environment is set
-    from app.server.asgi import create_app
+    from app.asgi import create_app
 
     app = create_app()
 

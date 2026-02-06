@@ -194,7 +194,7 @@ def app(
 
     The app uses the same PostgreSQL database as the test session.
     """
-    from app.server.asgi import create_app
+    from app.asgi import create_app
     from app.lib.settings import settings
 
     # Monkeypatch settings to use the test engine

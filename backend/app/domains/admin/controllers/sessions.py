@@ -122,6 +122,8 @@ class SessionController(Controller):
                     )
                 day += timedelta(weeks=1)
 
+        # Refresh the session to load relationships
+        session = await session_service.get(session.id)
         return session_service.to_schema(session, schema_type=Session)
 
     @patch("/{session_id:uuid}")

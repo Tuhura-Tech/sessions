@@ -298,7 +298,7 @@ python scripts/seed_test_data.py
 DATABASE_URL=postgresql+asyncpg://sessions:password@localhost:5432/sessions
 
 # Required for migration commands
-LITESTAR_APP=app.server.asgi:create_app
+LITESTAR_APP=app.asgi:create_app
 ```
 
 ### .env File Locations
@@ -311,7 +311,7 @@ Scripts automatically load `DATABASE_URL` from:
 **Example backend/.env**:
 ```env
 DATABASE_URL=postgresql+asyncpg://sessions:9e58291888...@localhost:5432/sessions
-LITESTAR_APP=app.server.asgi:create_app
+LITESTAR_APP=app.asgi:create_app
 SECRET_KEY=dev-secret-key
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret

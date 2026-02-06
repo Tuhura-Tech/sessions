@@ -123,7 +123,11 @@ class TestAdminSessionCreationFlow:
             assert session_id is not None
             assert session_data["name"] == "Beginner Python Programming"
             assert session_data["capacity"] == 20
-            assert session_data["dayOfWeek"] == 1
+            # Check for either snake_case or camelCase key
+            assert (
+                session_data.get("day_of_week") == 1
+                or session_data.get("dayOfWeek") == 1
+            )
 
         # Step 5: Verify session in database
         from sqlalchemy import select

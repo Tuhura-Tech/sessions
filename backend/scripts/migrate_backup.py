@@ -88,7 +88,7 @@ def move_tables_to_legacy(conn: psycopg.Connection, legacy_schema: str) -> None:
 
 def run_alembic_upgrade() -> None:
     env = os.environ.copy()
-    env.setdefault("LITESTAR_APP", "app.server.asgi:create_app")
+    env.setdefault("LITESTAR_APP", "app.asgi:create_app")
     subprocess.run(
         ["uv", "run", "litestar", "database", "upgrade", "--no-prompt"],
         check=True,

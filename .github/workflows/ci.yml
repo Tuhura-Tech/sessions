@@ -159,6 +159,27 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
+        with:
+          version: latest
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: uv sync
+
+      - name: Upgrade database
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        run: export LITESTAR_APP="app.server.asgi:create_app" && uv run litestar database upgrade --no-prompt
+
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
           version: "10"
@@ -272,7 +293,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         working-directory: ./backend
         run: uv sync
 

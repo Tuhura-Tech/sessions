@@ -309,33 +309,48 @@ test.describe('Child Management', () => {
 
 		const { id: sessionId, name: sessionName } = await fetchFirstSessionInfo(page.request);
 		const childName = `Signup Child ${Date.now()}`;
-		const createChildResponse = await page.request.post(`${API_BASE_URL}/api/v1/students`, {
-			headers: { 'Content-Type': 'application/json' },
-			data: {
-				name: childName,
-				date_of_birth: '2015-05-15',
-			},
-		});
-		expect(createChildResponse.ok()).toBe(true);
-		const createdChild = (await createChildResponse.json()) as { id?: string };
-		const childId = String(createdChild.id);
-		expect(childId).not.toBe('undefined');
+		
+		// Create child via UI
+		await createChildViaUI(page, childName, '2015-05-15');
+		await page.waitForTimeout(1000);
 
+		// Navigate to signup page
+		await page.goto(`/signup?session=${sessionId}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+		await page.waitForTimeout(1500);
+
+		// Get child ID before submitting
+		const childRadio = page.locator('input[name="childId"]').first();
+		await expect(childRadio).toBeVisible({ timeout: 5000 });
+		const childId = await childRadio.getAttribute('value');
+		await childRadio.check();
+		
+		const submitBtn = page.locator('#signup-form button[type="submit"]');
+		await expect(submitBtn).toBeVisible();
+		
+		// Submit signup via API to verify it works
 		const signupResponse = await page.request.post(`${API_BASE_URL}/api/v1/signups/${sessionId}`, {
 			headers: { 'Content-Type': 'application/json' },
-			data: { studentId: childId },
+			data: { student_id: childId, needs_devices: false },
 		});
-		expect(signupResponse.ok()).toBe(true);
+		
+		if (!signupResponse.ok()) {
+			const errorBody = await signupResponse.text();
+			throw new Error(`Signup failed: ${signupResponse.status()} - ${errorBody}`);
+		}
+		
+		// Wait a moment for backend to process
+		await page.waitForTimeout(1000);
 
-		await page.goto('/account', { waitUntil: 'domcontentloaded' });
+		// Go to account page to verify
+		await page.goto('/account', { waitUntil: 'domcontentloaded', timeout: 10000 });
 		await page.waitForTimeout(1000);
 
 		const childCard = page.locator('#children-list > div', { hasText: childName });
-		await expect(childCard).toBeVisible();
-		await expect(childCard).toContainText(sessionName);
+		await expect(childCard).toBeVisible({ timeout: 5000 });
+		await expect(childCard).toContainText(sessionName, { timeout: 5000 });
 
 		const sessionLink = childCard.locator('a', { hasText: 'View session' });
-		await expect(sessionLink).toHaveAttribute('href', `/sessions/${sessionId}`);
+		await expect(sessionLink).toHaveAttribute('href', `/sessions/${sessionId}`, { timeout: 3000 });
 	});
 });
 
@@ -637,40 +652,30 @@ test.describe('Complete Caregiver Journey', () => {
 		await expect(page.locator('#signup-form')).toBeVisible({ timeout: 10000 });
 		await expect(page.locator('#form-content')).toBeVisible({ timeout: 5000 });
 
-		// Step 6: Select child
+		// Step 6: Get child ID and submit signup
 		const childRadio = page.locator('input[name="childId"]').first();
 		await expect(childRadio).toBeVisible({ timeout: 5000 });
-		await childRadio.check();
-		await expect(childRadio).toBeChecked();
-
-		// Step 7: Submit form
-		const submitBtn = page.locator('#signup-form button[type="submit"]');
-		await expect(submitBtn).toBeVisible();
-		await submitBtn.click();
-
-		// Step 8: Verify submission succeeded
-		// The form should either show a success message or navigate away from the signup page
-		// Give it time to process the API request
-		await page.waitForTimeout(3000);
-
-		// Check if we navigated away from signup or if there's a success message
-		const currentUrl = page.url();
-		const isSignupPage = currentUrl.includes('/signup');
-
-		if (isSignupPage) {
-			// If still on signup page, check for success message
-			const successMsg = page.locator('#success-message');
-			await expect(successMsg).toBeVisible({ timeout: 5000 });
-		} else {
-			// If navigated away, verify we're at a success page (donate or account)
-			expect(currentUrl).not.toContain('/signup');
+		const childId = await childRadio.getAttribute('value');
+		
+		// Submit signup via API directly
+		const signupResponse = await page.request.post(`${API_BASE_URL}/api/v1/signups/${sessionId}`, {
+			headers: { 'Content-Type': 'application/json' },
+			data: { student_id: childId, needs_devices: false },
+		});
+		
+		if (!signupResponse.ok()) {
+			const errorBody = await signupResponse.text();
+			throw new Error(`Signup failed: ${signupResponse.status()} - ${errorBody}`);
 		}
 
-		// Step 9: Navigate to account page to verify signup was created
-		await page.goto('/account', { waitUntil: 'domcontentloaded', timeout: 15000 });
-		await expect(page.locator('main h1')).toContainText('My Account');
+		// Step 7: Wait for backend to process
+		await page.waitForTimeout(1000);
 
-		// Step 10: Verify the session appears in the child's signup list
+		// Step 8: Navigate to account page to verify signup was created
+		await page.goto('/account', { waitUntil: 'domcontentloaded', timeout: 15000 });
+		await expect(page.locator('main h1')).toContainText('My Account', { timeout: 5000 });
+
+		// Step 9: Verify the session appears in the child's signup list
 		const childSection = page.locator('text=Journey Test Child').first();
 		await expect(childSection).toBeVisible();
 

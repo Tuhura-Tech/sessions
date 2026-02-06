@@ -354,14 +354,41 @@ def schema_upgrades() -> None:
     # Step 12: Remove auto_generated column from occurrences table
     op.drop_column("occurrences", "auto_generated")
 
-    # Step 13: Remove needs_devices column from students table
+    # Step 13: Add needs_devices column to signups table (moved from students)
+    with op.batch_alter_table("signups", schema=None) as batch_op:
+        batch_op.add_column(
+            sa.Column("needs_devices", sa.Boolean(), nullable=False, server_default="false")
+        )
+
+    # Step 14: Add archived column to students table
+    with op.batch_alter_table("students", schema=None) as batch_op:
+        batch_op.add_column(
+            sa.Column("archived", sa.Boolean(), nullable=False, server_default="false")
+        )
+
+    # Step 15: Remove needs_devices column from students table
     op.drop_column("students", "needs_devices")
 
-    # Step 14: Remove waitlist column from sessions table
+    # Step 16: Remove waitlist column from sessions table
     op.drop_column("sessions", "waitlist")
 
-    # Step 15: Add sa_orm_sentinel column to tables that need it (for advanced-alchemy)
+    # Step 17: Add sa_orm_sentinel column to tables that need it (for advanced-alchemy)
+    with op.batch_alter_table("attendance_audit_logs", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
+    with op.batch_alter_table("attendance_records", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
+    with op.batch_alter_table("block_links", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
     with op.batch_alter_table("blocks", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
+    with op.batch_alter_table("caregiver_magic_links", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
+    with op.batch_alter_table("caregiver_sessions", schema=None) as batch_op:
         batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
 
     with op.batch_alter_table("caregivers", schema=None) as batch_op:
@@ -373,27 +400,65 @@ def schema_upgrades() -> None:
     with op.batch_alter_table("locations", schema=None) as batch_op:
         batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
 
+    with op.batch_alter_table("occurrences", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
     with op.batch_alter_table("sessions", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
+    with op.batch_alter_table("session_staff", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
+    with op.batch_alter_table("signups", schema=None) as batch_op:
         batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
 
     with op.batch_alter_table("staff", schema=None) as batch_op:
         batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
 
+    with op.batch_alter_table("student_notes", schema=None) as batch_op:
+        batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
+
     with op.batch_alter_table("students", schema=None) as batch_op:
         batch_op.add_column(sa.Column("sa_orm_sentinel", sa.Integer(), nullable=True))
 
+    with op.batch_alter_table('attendance_audit_logs', schema=None) as batch_op:
+            batch_op.drop_index(batch_op.f('ix_attendance_audit_logs_occurrence_id'))
+            batch_op.drop_index(batch_op.f('ix_attendance_audit_logs_student_id'))
+
+    op.drop_table('attendance_audit_logs')
+    with op.batch_alter_table('student_notes', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_student_notes_student_id'))
+
+    op.drop_table('student_notes')
+    with op.batch_alter_table('exclusion_dates', schema=None) as batch_op:
+        batch_op.alter_column('reason',
+            existing_type=sa.VARCHAR(length=255),
+            nullable=False)
+
+    with op.batch_alter_table('signups', schema=None) as batch_op:
+        batch_op.drop_constraint(batch_op.f('signups_caregiver_id_fkey'), type_='foreignkey')
+        batch_op.drop_column('caregiver_id')
 
 def schema_downgrades() -> None:
     """Schema downgrades - revert table renames and column changes."""
 
     # Remove sa_orm_sentinel columns
     op.drop_column("students", "sa_orm_sentinel")
+    op.drop_column("student_notes", "sa_orm_sentinel")
     op.drop_column("staff", "sa_orm_sentinel")
+    op.drop_column("signups", "sa_orm_sentinel")
+    op.drop_column("session_staff", "sa_orm_sentinel")
     op.drop_column("sessions", "sa_orm_sentinel")
+    op.drop_column("occurrences", "sa_orm_sentinel")
     op.drop_column("locations", "sa_orm_sentinel")
     op.drop_column("exclusion_dates", "sa_orm_sentinel")
     op.drop_column("caregivers", "sa_orm_sentinel")
+    op.drop_column("caregiver_sessions", "sa_orm_sentinel")
+    op.drop_column("caregiver_magic_links", "sa_orm_sentinel")
     op.drop_column("blocks", "sa_orm_sentinel")
+    op.drop_column("block_links", "sa_orm_sentinel")
+    op.drop_column("attendance_records", "sa_orm_sentinel")
+    op.drop_column("attendance_audit_logs", "sa_orm_sentinel")
 
     # Restore removed columns
     with op.batch_alter_table("sessions", schema=None) as batch_op:
@@ -407,6 +472,12 @@ def schema_downgrades() -> None:
                 "needs_devices", sa.Boolean(), nullable=False, server_default="false"
             )
         )
+
+    # Remove archived column from students (was added in upgrade)
+    op.drop_column("students", "archived")
+
+    # Remove needs_devices from signups (it was moved there from students)
+    op.drop_column("signups", "needs_devices")
 
     with op.batch_alter_table("occurrences", schema=None) as batch_op:
         batch_op.add_column(

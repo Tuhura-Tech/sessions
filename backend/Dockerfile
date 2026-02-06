@@ -27,7 +27,7 @@
 # -----------------------------------------------------------------------------
 ARG PYTHON_VERSION=3.13
 ARG DEBIAN_VERSION=bookworm
-ARG BUILDER_IMAGE=python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
+ARG BUILDER_IMAGE=docker.io/python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
 ARG RUN_IMAGE=gcr.io/distroless/cc-debian12:nonroot
 
 # =============================================================================
@@ -49,9 +49,6 @@ RUN apt-get update \
 # Pin to specific version for reproducible builds
 # For SHA256 pinning: COPY --from=ghcr.io/astral-sh/uv@sha256:<digest> /uv /uvx /bin/
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Install bun (fast JavaScript runtime/bundler)
-COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
 
 # =============================================================================
 # Stage 2: Builder
@@ -91,18 +88,6 @@ WORKDIR /workspace/app
 
 # Copy dependency files first (better layer caching)
 COPY pyproject.toml uv.lock README.md ./
-COPY src/js/web/package.json src/js/web/bun.lock ./src/js/web/
-COPY src/js/web/biome.json src/js/web/vite.config.ts src/js/web/tsconfig.json ./src/js/web/
-COPY src/js/templates/package.json src/js/templates/bun.lock ./src/js/templates/
-
-# Install JavaScript dependencies for web app
-WORKDIR /workspace/app/src/js/web
-RUN bun install --frozen-lockfile
-
-# Install JavaScript dependencies for email templates
-WORKDIR /workspace/app/src/js/templates
-RUN bun install --frozen-lockfile
-WORKDIR /workspace/app
 
 # Create virtual environment and install Python dependencies
 RUN uv venv \
@@ -110,21 +95,10 @@ RUN uv venv \
     && uv export ${UV_INSTALL_ARGS} --frozen --no-hashes --no-emit-project --output-file=requirements.txt
 
 # Copy application source
-COPY tools ./tools/
-COPY src/js/web/ ./src/js/web/
-COPY src/js/templates/ ./src/js/templates/
-COPY src/py/ ./src/py/
+COPY app ./app
 
-# Create required directories
-RUN mkdir -p src/py/app/server/static/web src/py/app/server/static/email
-
-# Build email templates (must be before wheel build to include in package)
-RUN cd src/js/templates && bun run build
-
-# Build frontend assets, copy index.html for SPA mode, and create wheel
-RUN uv run app assets build \
-    && cp src/js/web/index.html src/py/app/server/static/web/index.html \
-    && uv sync ${UV_INSTALL_ARGS} --frozen --no-editable \
+# Create wheel distribution for the application
+RUN uv sync ${UV_INSTALL_ARGS} --frozen --no-editable \
     && uv build --wheel
 
 # =============================================================================
@@ -184,16 +158,13 @@ RUN ARCH_DIR=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64-linux-gnu" || echo "
 # =============================================================================
 FROM ${RUN_IMAGE} AS runtime
 
-ARG LITESTAR_APP="app.server.asgi:create_app"
-
 ENV PATH="/workspace/app/.venv/bin:/usr/local/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PYTHONHASHSEED=random \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    LITESTAR_APP="${LITESTAR_APP}"
+    LC_ALL=C.UTF-8
 
 # Copy Python interpreter and standard library
 COPY --from=runtime-prep /usr/local/lib/ /usr/local/lib/
@@ -221,8 +192,8 @@ ENTRYPOINT ["/usr/local/bin/tini", "--"]
 CMD ["app", "run", "--host", "0.0.0.0"]
 
 # Labels for container metadata (OCI spec)
-LABEL org.opencontainers.image.title="Litestar Fullstack SPA" \
-      org.opencontainers.image.description="Secure distroless Python application" \
-      org.opencontainers.image.vendor="Litestar" \
-      org.opencontainers.image.licenses="AGPLv3" \
+LABEL org.opencontainers.image.title="Sessions API" \
+      org.opencontainers.image.description="Tūhura Tech Sessions management system" \
+      org.opencontainers.image.vendor="Tūhura Tech" \
+      org.opencontainers.image.licenses="AGPLv3-or-later" \
       org.opencontainers.image.base.name="gcr.io/distroless/cc-debian12:nonroot"

@@ -124,8 +124,7 @@ const StaffPage: React.FC = () => {
 				<Layout
 					title="Staff"
 					actions={
-						<div className="flex items-center gap-3">
-							<label className="inline-flex items-center text-sm text-gray-700">
+						<div className="flex items-center gap-3">						{/* biome-ignore lint/a11y/noLabelWithoutControl: checkbox is inside label */}							<label className="inline-flex items-center text-sm text-gray-700">
 								<FormCheckbox
 									checked={activeOnly}
 									onChange={(e) => setActiveOnly(e.target.checked)}

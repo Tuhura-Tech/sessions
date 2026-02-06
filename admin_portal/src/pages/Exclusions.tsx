@@ -165,8 +165,8 @@ const Exclusions: React.FC = () => {
 
 					{/* Year Filter */}
 					<div className="mb-6">
-						<label className="mb-2 block text-sm font-medium text-gray-700">Filter by Year</label>
-						<select
+						<label htmlFor="filter-by-year" className="mb-2 block text-sm font-medium text-gray-700">Filter by Year</label><select
+						id="filter-by-year"
 							value={selectedYear}
 							onChange={(e) => setSelectedYear(Number(e.target.value))}
 							className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -278,8 +278,7 @@ const Exclusions: React.FC = () => {
 						)}
 
 						{editingExclusion && (
-							<div className="mb-4">
-								<label className="mb-2 block text-sm font-medium text-gray-700">Date</label>
+							<div className="mb-4">							{/* biome-ignore lint/a11y/noLabelWithoutControl: label for display-only date */}								<label className="mb-2 block text-sm font-medium text-gray-700">Date</label>
 								<div className="text-sm text-gray-900">
 									{new Date(editingExclusion.date).toLocaleDateString('en-NZ', {
 										weekday: 'long',

@@ -236,32 +236,33 @@ export default function CaregiverDetail() {
 					>
 						<form onSubmit={handleUpdate} className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700">Full Name *</label>
-								<input
-									type="text"
-									required
-									value={editData.name || ''}
-									onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-								/>
-							</div>
+							<label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Full Name *</label>
+							<input
+								id="edit-name"
+								type="text"
+								required
+								value={editData.name || ''}
+								onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+								className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+							/>
+						</div>
 
-							<div>
-								<label className="block text-sm font-medium text-gray-700">Email *</label>
-								<input
-									type="email"
-									required
-									value={editData.email || ''}
-									onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-								/>
-							</div>
+						<div>
+							<label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">Email *</label>
+							<input
+								id="edit-email"
+								type="email"
+								required
+								value={editData.email || ''}
+								onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+								className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+							/>
+						</div>
 
-							<div>
-								<label className="block text-sm font-medium text-gray-700">Phone Number</label>
-								<input
-									type="tel"
-									value={editData.phone || ''}
+						<div>
+							<label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+							<input
+								id="edit-phone"
 									onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
 									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
 								/>

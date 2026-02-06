@@ -18,7 +18,7 @@ const Blocks: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
-	const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+	const [selectedYear] = useState<number>(new Date().getFullYear());
 	const [showModal, setShowModal] = useState(false);
 	const [editingBlock, setEditingBlock] = useState<Block | null>(null);
 
@@ -146,10 +146,9 @@ const Blocks: React.FC = () => {
 
 					{/* Year Filter */}
 					<div className="mb-6">
-						<label className="mb-2 block text-sm font-medium text-gray-700">Filter by Year</label>
-						<select
-							value={selectedYear}
-							onChange={(e) => setSelectedYear(Number(e.target.value))}
+					<label htmlFor="filter-year" className="mb-2 block text-sm font-medium text-gray-700">Filter by Year</label>
+					<select
+						id="filter-year"
 							className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 						>
 							{years.map((year) => (

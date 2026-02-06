@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface AsyncDataState<T> {
 	data: T | null;
@@ -15,18 +15,15 @@ export interface UseAsyncDataReturn<T> extends AsyncDataState<T> {
  * Custom hook to standardize async data fetching patterns
  *
  * @param fetchFn - Async function that fetches data
- * @param dependencies - Array of dependencies that trigger refetch
  * @returns Object with data, loading, error, and refetch function
  *
  * @example
  * const { data, loading, error, refetch } = useAsyncData(
- *   () => adminApi.getSession(id),
- *   [id]
+ *   () => adminApi.getSession(id)
  * );
  */
 export function useAsyncData<T>(
 	fetchFn: () => Promise<T>,
-	dependencies: React.DependencyList = [],
 ): UseAsyncDataReturn<T> {
 	const [state, setState] = useState<AsyncDataState<T>>({
 		data: null,
@@ -45,10 +42,6 @@ export function useAsyncData<T>(
 			console.error('useAsyncData error:', err);
 		}
 	}, [fetchFn]);
-
-	useEffect(() => {
-		fetchData();
-	}, dependencies);
 
 	const setData = useCallback((data: T | null) => {
 		setState((prev) => ({ ...prev, data }));

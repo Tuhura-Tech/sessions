@@ -164,8 +164,8 @@ const EditSession: React.FC = () => {
 						<form onSubmit={handleSubmit} className="space-y-6">
 							<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 								<div className="md:col-span-2">
-									<label className="block text-sm font-medium text-gray-700">Session Name *</label>
-									<input
+									<label htmlFor="session-name-" className="block text-sm font-medium text-gray-700">Session Name *</label><input
+							id="session-name-"
 										type="text"
 										required
 										value={formData.name}
@@ -175,8 +175,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Year *</label>
-									<input
+									<label htmlFor="year-" className="block text-sm font-medium text-gray-700">Year *</label><input
+							id="year-"
 										type="number"
 										required
 										value={formData.year}
@@ -191,8 +191,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Session Type *</label>
-									<select
+									<label htmlFor="session-type-" className="block text-sm font-medium text-gray-700">Session Type *</label><select
+						id="session-type-"
 										required
 										value={formData.sessionType}
 										onChange={(e) =>
@@ -209,8 +209,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Location</label>
-									<select
+									<label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label><select
+						id="location"
 										value={formData.locationId}
 										onChange={(e) =>
 											setFormData({
@@ -230,8 +230,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Day of Week</label>
-									<select
+									<label htmlFor="day-of-week" className="block text-sm font-medium text-gray-700">Day of Week</label><select
+						id="day-of-week"
 										value={formData.dayOfWeek}
 										onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
 										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -246,8 +246,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Start Time</label>
-									<input
+									<label htmlFor="start-time" className="block text-sm font-medium text-gray-700">Start Time</label><input
+							id="start-time"
 										type="time"
 										value={formData.startTime}
 										onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
@@ -256,8 +256,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">End Time</label>
-									<input
+									<label htmlFor="end-time" className="block text-sm font-medium text-gray-700">End Time</label><input
+							id="end-time"
 										type="time"
 										value={formData.endTime}
 										onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
@@ -266,8 +266,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Age Lower</label>
-									<input
+									<label htmlFor="age-lower" className="block text-sm font-medium text-gray-700">Age Lower</label><input
+							id="age-lower"
 										type="number"
 										value={formData.ageLower}
 										onChange={(e) => setFormData({ ...formData, ageLower: e.target.value })}
@@ -276,8 +276,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Age Upper</label>
-									<input
+									<label htmlFor="age-upper" className="block text-sm font-medium text-gray-700">Age Upper</label><input
+							id="age-upper"
 										type="number"
 										value={formData.ageUpper}
 										onChange={(e) => setFormData({ ...formData, ageUpper: e.target.value })}
@@ -286,8 +286,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Capacity</label>
-									<input
+									<label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacity</label><input
+							id="capacity"
 										type="number"
 										value={formData.capacity}
 										onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
@@ -302,10 +302,12 @@ const EditSession: React.FC = () => {
 										onChange={(e) => setFormData({ ...formData, waitlist: e.target.checked })}
 										className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
 									/>
+									{/* biome-ignore lint/a11y/noLabelWithoutControl: label is adjacent to checkbox */}
 									<label className="ml-2 block text-sm text-gray-900">Enable waitlist</label>
 								</div>
 
 								<div className="md:col-span-2">
+									{/* biome-ignore lint/a11y/noLabelWithoutControl: label headers a section */}
 									<label className="block text-sm font-medium text-gray-700">
 										Associated Blocks (for term sessions)
 									</label>
@@ -339,8 +341,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div className="md:col-span-2">
-									<label className="block text-sm font-medium text-gray-700">What to Bring</label>
-									<textarea
+									<label htmlFor="what-to-bring" className="block text-sm font-medium text-gray-700">What to Bring</label><textarea
+				id="what-to-bring"
 										rows={3}
 										value={formData.whatToBring}
 										onChange={(e) => setFormData({ ...formData, whatToBring: e.target.value })}
@@ -349,8 +351,8 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div className="md:col-span-2">
-									<label className="block text-sm font-medium text-gray-700">Prerequisites</label>
-									<textarea
+									<label htmlFor="prerequisites" className="block text-sm font-medium text-gray-700">Prerequisites</label><textarea
+				id="prerequisites"
 										rows={3}
 										value={formData.prerequisites}
 										onChange={(e) =>

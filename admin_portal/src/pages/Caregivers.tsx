@@ -222,32 +222,33 @@ export default function Caregivers() {
 					>
 						<form onSubmit={handleCreateCaregiver} className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700">Full Name *</label>
-								<input
-									type="text"
-									required
-									value={newCaregiver.name}
-									onChange={(e) => setNewCaregiver({ ...newCaregiver, name: e.target.value })}
-									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-								/>
-							</div>
+							<label htmlFor="new-name" className="block text-sm font-medium text-gray-700">Full Name *</label>
+							<input
+								id="new-name"
+								type="text"
+								required
+								value={newCaregiver.name}
+								onChange={(e) => setNewCaregiver({ ...newCaregiver, name: e.target.value })}
+								className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+							/>
+						</div>
 
-							<div>
-								<label className="block text-sm font-medium text-gray-700">Email *</label>
-								<input
-									type="email"
-									required
-									value={newCaregiver.email}
-									onChange={(e) => setNewCaregiver({ ...newCaregiver, email: e.target.value })}
-									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-								/>
-							</div>
+						<div>
+							<label htmlFor="new-email" className="block text-sm font-medium text-gray-700">Email *</label>
+							<input
+								id="new-email"
+								type="email"
+								required
+								value={newCaregiver.email}
+								onChange={(e) => setNewCaregiver({ ...newCaregiver, email: e.target.value })}
+								className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+							/>
+						</div>
 
-							<div>
-								<label className="block text-sm font-medium text-gray-700">Phone Number</label>
-								<input
-									type="tel"
-									value={newCaregiver.phone}
+						<div>
+							<label htmlFor="new-phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+							<input
+								id="new-phone"
 									onChange={(e) => setNewCaregiver({ ...newCaregiver, phone: e.target.value })}
 									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
 								/>

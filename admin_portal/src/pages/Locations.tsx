@@ -136,8 +136,9 @@ const Locations: React.FC = () => {
 							<form onSubmit={handleSubmit} className="space-y-4">
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Name *</label>
-										<input
+										<label htmlFor="name-" className="block text-sm font-medium text-gray-700">Name *</label>
+<input
+						id="name-"
 											type="text"
 											required
 											value={formData.name}
@@ -147,8 +148,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Region</label>
-										<input
+										<label htmlFor="region" className="block text-sm font-medium text-gray-700">Region</label>
+<input
+						id="region"
 											type="text"
 											value={formData.region}
 											onChange={(e) => setFormData({ ...formData, region: e.target.value })}
@@ -157,8 +159,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div className="md:col-span-2">
-										<label className="block text-sm font-medium text-gray-700">Address</label>
-										<input
+										<label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
+<input
+						id="address"
 											type="text"
 											value={formData.address}
 											onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -167,8 +170,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Latitude *</label>
-										<input
+										<label htmlFor="latitude-" className="block text-sm font-medium text-gray-700">Latitude *</label>
+<input
+						id="latitude-"
 											type="number"
 											step="0.000001"
 											required
@@ -184,8 +188,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Longitude *</label>
-										<input
+										<label htmlFor="longitude-" className="block text-sm font-medium text-gray-700">Longitude *</label>
+<input
+						id="longitude-"
 											type="number"
 											step="0.000001"
 											required
@@ -201,8 +206,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Contact Name</label>
-										<input
+										<label htmlFor="contact-name" className="block text-sm font-medium text-gray-700">Contact Name</label>
+<input
+						id="contact-name"
 											type="text"
 											value={formData.contactName}
 											onChange={(e) =>
@@ -216,8 +222,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Contact Email</label>
-										<input
+										<label htmlFor="contact-email" className="block text-sm font-medium text-gray-700">Contact Email</label>
+<input
+						id="contact-email"
 											type="email"
 											value={formData.contactEmail}
 											onChange={(e) =>
@@ -231,8 +238,9 @@ const Locations: React.FC = () => {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700">Contact Phone</label>
-										<input
+										<label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700">Contact Phone</label>
+<input
+						id="contact-phone"
 											type="tel"
 											value={formData.contactPhone}
 											onChange={(e) =>
@@ -245,8 +253,7 @@ const Locations: React.FC = () => {
 										/>
 									</div>
 
-									<div className="md:col-span-2">
-										<label className="block text-sm font-medium text-gray-700">Instructions</label>
+									<div className="md:col-span-2">									{/* biome-ignore lint/a11y/noLabelWithoutControl: label for textarea */}										<label className="block text-sm font-medium text-gray-700">Instructions</label>
 										<textarea
 											rows={3}
 											value={formData.instructions}
@@ -260,8 +267,7 @@ const Locations: React.FC = () => {
 										/>
 									</div>
 
-									<div className="md:col-span-2">
-										<label className="block text-sm font-medium text-gray-700">
+									<div className="md:col-span-2">									{/* biome-ignore lint/a11y/noLabelWithoutControl: label for textarea */}										<label className="block text-sm font-medium text-gray-700">
 											Internal Notes
 										</label>
 										<textarea

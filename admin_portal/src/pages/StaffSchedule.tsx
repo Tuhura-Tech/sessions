@@ -144,6 +144,7 @@ const StaffSchedulePage: React.FC = () => {
 					title="Staff Schedule"
 					actions={
 						<div className="flex items-center gap-3">
+							{/* biome-ignore lint/a11y/noLabelWithoutControl: checkbox is inside label */}
 							<label className="inline-flex items-center text-sm text-gray-700">
 								<FormCheckbox
 									checked={activeOnly}

@@ -10,7 +10,7 @@ def setup_environment() -> None:
     current_path = Path(__file__).parent.parent.resolve()
     sys.path.append(str(current_path))
 
-    os.environ.setdefault("LITESTAR_APP", "app.asgi:create_app")
+    os.environ.setdefault("LITESTAR_APP", "app.server.asgi:create_app")
     os.environ.setdefault("LITESTAR_APP_NAME", "Sessions API")
     os.environ.setdefault("LITESTAR_GRANIAN_IN_SUBPROCESS", "false")
     os.environ.setdefault("LITESTAR_GRANIAN_USE_LITESTAR_LOGGER", "true")

@@ -156,6 +156,19 @@ jobs:
   admin-portal-test:
     name: Admin Portal Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18@sha256:5773fe724c49c42a7a9ca70202e11e1dff21fb7235b335a73f39297d200b73a2
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
@@ -201,6 +214,8 @@ jobs:
 
       - name: Run tests
         working-directory: ./admin_portal
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
         run: pnpm run test
 
   admin-portal-build:
@@ -345,6 +360,7 @@ jobs:
       - name: Run e2e tests
         working-directory: ./frontend
         env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
           PUBLIC_BASE_URL: http://127.0.0.1:8000
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4321
         run: pnpm run test:e2e

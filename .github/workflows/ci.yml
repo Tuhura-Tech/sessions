@@ -193,6 +193,12 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
         run: uv run litestar database upgrade --no-prompt
 
+      - name: Start backend server
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        run: uv run litestar run --reload --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
           version: "10"
@@ -342,20 +348,6 @@ jobs:
       - name: Install Playwright browsers
         working-directory: ./frontend
         run: pnpm exec playwright install --with-deps
-
-      - name: Wait for backend server
-        run: |
-          for i in {1..60}; do
-            if curl -s http://127.0.0.1:8000/health > /dev/null 2>&1; then
-              echo "Backend server is ready"
-              exit 0
-            fi
-            echo "Waiting for backend server... ($i/60)"
-            sleep 1
-          done
-          echo "Backend server did not start in time"
-          cat /tmp/backend.log
-          exit 1
 
       - name: Run e2e tests
         working-directory: ./frontend

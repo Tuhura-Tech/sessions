@@ -64,11 +64,12 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 		},
 		{
-		command: 'pnpm dev',
-		url: 'http://localhost:4321',
-		reuseExistingServer: true,
-		env: {
-			PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
+			command: 'pnpm dev',
+			url: 'http://localhost:4321',
+			reuseExistingServer: true,
+			env: {
+				PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
+			},
 		},
-	}],
+	],
 });

@@ -25,10 +25,9 @@ from advanced_alchemy.types.encrypted_string import PGCryptoBackend
 from advanced_alchemy.types.password_hash.passlib import PasslibHasher
 from advanced_alchemy.types.password_hash.pwdlib import PwdlibHasher
 from sqlalchemy import Text  # noqa: F401
-from sqlalchemy.dialects import postgresql
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    pass
 
 __all__ = [
     "downgrade",

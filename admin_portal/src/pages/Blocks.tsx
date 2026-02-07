@@ -146,9 +146,11 @@ const Blocks: React.FC = () => {
 
 					{/* Year Filter */}
 					<div className="mb-6">
-					<label htmlFor="filter-year" className="mb-2 block text-sm font-medium text-gray-700">Filter by Year</label>
-					<select
-						id="filter-year"
+						<label htmlFor="filter-year" className="mb-2 block text-sm font-medium text-gray-700">
+							Filter by Year
+						</label>
+						<select
+							id="filter-year"
 							className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 						>
 							{years.map((year) => (

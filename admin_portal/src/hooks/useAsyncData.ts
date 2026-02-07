@@ -22,9 +22,7 @@ export interface UseAsyncDataReturn<T> extends AsyncDataState<T> {
  *   () => adminApi.getSession(id)
  * );
  */
-export function useAsyncData<T>(
-	fetchFn: () => Promise<T>,
-): UseAsyncDataReturn<T> {
+export function useAsyncData<T>(fetchFn: () => Promise<T>): UseAsyncDataReturn<T> {
 	const [state, setState] = useState<AsyncDataState<T>>({
 		data: null,
 		loading: true,

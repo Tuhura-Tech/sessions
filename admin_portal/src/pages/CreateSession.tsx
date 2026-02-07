@@ -106,8 +106,14 @@ const CreateSession: React.FC = () => {
 						<form onSubmit={handleSubmit} className="space-y-6">
 							<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 								<div className="md:col-span-2">
-									<label htmlFor="session-name-" className="block text-sm font-medium text-gray-700">Session Name *</label><input
-							id="session-name-"
+									<label
+										htmlFor="session-name-"
+										className="block text-sm font-medium text-gray-700"
+									>
+										Session Name *
+									</label>
+									<input
+										id="session-name-"
 										type="text"
 										required
 										value={formData.name}
@@ -117,8 +123,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="year-" className="block text-sm font-medium text-gray-700">Year *</label><input
-							id="year-"
+									<label htmlFor="year-" className="block text-sm font-medium text-gray-700">
+										Year *
+									</label>
+									<input
+										id="year-"
 										type="number"
 										required
 										value={formData.year}
@@ -133,8 +142,14 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="session-type-" className="block text-sm font-medium text-gray-700">Session Type *</label><select
-						id="session-type-"
+									<label
+										htmlFor="session-type-"
+										className="block text-sm font-medium text-gray-700"
+									>
+										Session Type *
+									</label>
+									<select
+										id="session-type-"
 										required
 										value={formData.sessionType}
 										onChange={(e) =>
@@ -151,8 +166,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label><select
-						id="location"
+									<label htmlFor="location" className="block text-sm font-medium text-gray-700">
+										Location
+									</label>
+									<select
+										id="location"
 										value={formData.locationId}
 										onChange={(e) =>
 											setFormData({
@@ -172,8 +190,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="day-of-week" className="block text-sm font-medium text-gray-700">Day of Week</label><select
-						id="day-of-week"
+									<label htmlFor="day-of-week" className="block text-sm font-medium text-gray-700">
+										Day of Week
+									</label>
+									<select
+										id="day-of-week"
 										value={formData.dayOfWeek}
 										onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -188,8 +209,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="start-time" className="block text-sm font-medium text-gray-700">Start Time</label><input
-							id="start-time"
+									<label htmlFor="start-time" className="block text-sm font-medium text-gray-700">
+										Start Time
+									</label>
+									<input
+										id="start-time"
 										type="time"
 										value={formData.startTime}
 										onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
@@ -198,8 +222,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="end-time" className="block text-sm font-medium text-gray-700">End Time</label><input
-							id="end-time"
+									<label htmlFor="end-time" className="block text-sm font-medium text-gray-700">
+										End Time
+									</label>
+									<input
+										id="end-time"
 										type="time"
 										value={formData.endTime}
 										onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
@@ -208,8 +235,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="age-lower" className="block text-sm font-medium text-gray-700">Age Lower</label><select
-						id="age-lower"
+									<label htmlFor="age-lower" className="block text-sm font-medium text-gray-700">
+										Age Lower
+									</label>
+									<select
+										id="age-lower"
 										value={formData.ageLower}
 										onChange={(e) => setFormData({ ...formData, ageLower: e.target.value })}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -224,8 +254,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="age-upper" className="block text-sm font-medium text-gray-700">Age Upper</label><select
-						id="age-upper"
+									<label htmlFor="age-upper" className="block text-sm font-medium text-gray-700">
+										Age Upper
+									</label>
+									<select
+										id="age-upper"
 										value={formData.ageUpper}
 										onChange={(e) => setFormData({ ...formData, ageUpper: e.target.value })}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -240,8 +273,11 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div>
-									<label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacity</label><select
-						id="capacity"
+									<label htmlFor="capacity" className="block text-sm font-medium text-gray-700">
+										Capacity
+									</label>
+									<select
+										id="capacity"
 										value={formData.capacity}
 										onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -301,8 +337,14 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div className="md:col-span-2">
-									<label htmlFor="what-to-bring" className="block text-sm font-medium text-gray-700">What to Bring</label><textarea
-				id="what-to-bring"
+									<label
+										htmlFor="what-to-bring"
+										className="block text-sm font-medium text-gray-700"
+									>
+										What to Bring
+									</label>
+									<textarea
+										id="what-to-bring"
 										rows={3}
 										value={formData.whatToBring}
 										onChange={(e) => setFormData({ ...formData, whatToBring: e.target.value })}
@@ -311,8 +353,14 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div className="md:col-span-2">
-									<label htmlFor="prerequisites" className="block text-sm font-medium text-gray-700">Prerequisites</label><textarea
-				id="prerequisites"
+									<label
+										htmlFor="prerequisites"
+										className="block text-sm font-medium text-gray-700"
+									>
+										Prerequisites
+									</label>
+									<textarea
+										id="prerequisites"
 										rows={3}
 										value={formData.prerequisites}
 										onChange={(e) =>

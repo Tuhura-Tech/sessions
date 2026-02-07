@@ -309,13 +309,16 @@ test.describe('Child Management', () => {
 
 		const { id: sessionId, name: sessionName } = await fetchFirstSessionInfo(page.request);
 		const childName = `Signup Child ${Date.now()}`;
-		
+
 		// Create child via UI
 		await createChildViaUI(page, childName, '2015-05-15');
 		await page.waitForTimeout(1000);
 
 		// Navigate to signup page
-		await page.goto(`/signup?session=${sessionId}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+		await page.goto(`/signup?session=${sessionId}`, {
+			waitUntil: 'domcontentloaded',
+			timeout: 15000,
+		});
 		await page.waitForTimeout(1500);
 
 		// Get child ID before submitting
@@ -323,21 +326,21 @@ test.describe('Child Management', () => {
 		await expect(childRadio).toBeVisible({ timeout: 5000 });
 		const childId = await childRadio.getAttribute('value');
 		await childRadio.check();
-		
+
 		const submitBtn = page.locator('#signup-form button[type="submit"]');
 		await expect(submitBtn).toBeVisible();
-		
+
 		// Submit signup via API to verify it works
 		const signupResponse = await page.request.post(`${API_BASE_URL}/api/v1/signups/${sessionId}`, {
 			headers: { 'Content-Type': 'application/json' },
 			data: { student_id: childId, needs_devices: false },
 		});
-		
+
 		if (!signupResponse.ok()) {
 			const errorBody = await signupResponse.text();
 			throw new Error(`Signup failed: ${signupResponse.status()} - ${errorBody}`);
 		}
-		
+
 		// Wait a moment for backend to process
 		await page.waitForTimeout(1000);
 
@@ -656,13 +659,13 @@ test.describe('Complete Caregiver Journey', () => {
 		const childRadio = page.locator('input[name="childId"]').first();
 		await expect(childRadio).toBeVisible({ timeout: 5000 });
 		const childId = await childRadio.getAttribute('value');
-		
+
 		// Submit signup via API directly
 		const signupResponse = await page.request.post(`${API_BASE_URL}/api/v1/signups/${sessionId}`, {
 			headers: { 'Content-Type': 'application/json' },
 			data: { student_id: childId, needs_devices: false },
 		});
-		
+
 		if (!signupResponse.ok()) {
 			const errorBody = await signupResponse.text();
 			throw new Error(`Signup failed: ${signupResponse.status()} - ${errorBody}`);

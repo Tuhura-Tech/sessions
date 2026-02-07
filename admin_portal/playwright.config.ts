@@ -67,7 +67,12 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 			env: {
-				DATABASE_URL: process.env.DATABASE_URL,
+				...process.env,
+				DATABASE_URL:
+					process.env.DATABASE_URL ||
+					(process.env.CI
+						? 'postgresql+asyncpg://postgres:postgres@localhost:5432/test_db'
+						: 'postgresql+asyncpg://sessions:sessions@localhost:5433/sessions'),
 			},
 		},
 		{
@@ -76,6 +81,7 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 			env: {
+				...process.env,
 				VITE_API_BASE_URL: process.env.CI ? 'http://127.0.0.1:8000' : 'http://localhost:8000',
 			},
 		},

@@ -69,7 +69,7 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 			env: {
-				...process.env,
+				...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
 				DATABASE_URL:
 					process.env.DATABASE_URL ||
 					(process.env.CI
@@ -83,7 +83,7 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 			env: {
-				...process.env,
+				...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
 				VITE_API_BASE_URL: process.env.CI ? 'http://127.0.0.1:8000' : 'http://localhost:8000',
 			},
 		},

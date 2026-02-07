@@ -62,8 +62,9 @@ export default defineConfig({
 	webServer: [
 		{
 			command: process.env.CI
-				? 'cd ../backend && uv run litestar run --host 127.0.0.1 --port 8000'
-				: 'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
+				? 'uv run litestar run --host 127.0.0.1 --port 8000'
+				: 'uv run litestar run --host 0.0.0.0 --port 8000',
+			cwd: '../backend',
 			url: process.env.CI
 				? 'http://127.0.0.1:8000/api/v1/health'
 				: 'http://localhost:8000/api/v1/health',

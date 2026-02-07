@@ -1,14 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -23,14 +15,15 @@ export default defineConfig({
 	/* Opt out of parallel tests on CI. */
 	...(process.env.CI ? { workers: 1 } : {}),
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
-	reporter: [['list'], ['html', { open: 'never' }]],
+	reporter: 'html',
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
 		baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4321',
-
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: 'on-first-retry',
+		screenshot: 'only-on-failure',
+		video: 'retain-on-failure',
 	},
 
 	/* Configure projects for major browsers */
@@ -40,9 +33,6 @@ export default defineConfig({
 			use: { ...devices['Desktop Chrome'] },
 		},
 
-		// Firefox and webkit require system dependencies that may not be available in all environments
-		// Uncomment these to enable them if needed:
-		/*
 		{
 			name: 'firefox',
 			use: { ...devices['Desktop Firefox'] },
@@ -51,41 +41,34 @@ export default defineConfig({
 		{
 			name: 'webkit',
 			use: { ...devices['Desktop Safari'] },
+			workers: 1, // Reduce parallelization to prevent flakiness
 		},
-		*/
 
 		/* Test against mobile viewports. */
-		// {
-		//   name: 'Mobile Chrome',
-		//   use: { ...devices['Pixel 5'] },
-		// },
-		// {
-		//   name: 'Mobile Safari',
-		//   use: { ...devices['iPhone 12'] },
-		// },
-
-		/* Test against branded browsers. */
-		// {
-		//   name: 'Microsoft Edge',
-		//   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-		// },
-		// {
-		//   name: 'Google Chrome',
-		//   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-		// },
+		{
+			name: 'Mobile Chrome',
+			use: { ...devices['Pixel 5'] },
+		},
+		{
+			name: 'Mobile Safari',
+			use: { ...devices['iPhone 12'] },
+			workers: 1, // Reduce parallelization to prevent flakiness
+		},
 	],
 
 	/* Run your local dev server before starting the tests */
-	...(process.env.CI
-		? {}
-		: {
-				webServer: {
-					command: 'pnpm dev',
-					url: 'http://localhost:4321',
-					reuseExistingServer: true,
-					env: {
-						PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
-					},
-				},
-			}),
+	webServer: [
+		{
+			command: 'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
+			url: 'http://localhost:8000/api/v1/health',
+			reuseExistingServer: !process.env.CI,
+		},
+		{
+		command: 'pnpm dev',
+		url: 'http://localhost:4321',
+		reuseExistingServer: true,
+		env: {
+			PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
+		},
+	}],
 });

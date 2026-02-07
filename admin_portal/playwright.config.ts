@@ -18,7 +18,9 @@ export default defineConfig({
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
-		baseURL: process.env.PLAYWRIGHT_BASE_URL || (process.env.CI ? 'http://127.0.0.1:3002' : 'http://localhost:3002'),
+		baseURL:
+			process.env.PLAYWRIGHT_BASE_URL ||
+			(process.env.CI ? 'http://127.0.0.1:3002' : 'http://localhost:3002'),
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',
@@ -59,7 +61,9 @@ export default defineConfig({
 	webServer: [
 		{
 			command: 'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
-			url: process.env.CI ? 'http://127.0.0.1:8000/api/v1/health' : 'http://localhost:8000/api/v1/health',
+			url: process.env.CI
+				? 'http://127.0.0.1:8000/api/v1/health'
+				: 'http://localhost:8000/api/v1/health',
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 			env: {

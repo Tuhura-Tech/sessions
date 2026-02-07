@@ -468,18 +468,6 @@ def schema_upgrades() -> None:
         sa.Column("cancellation_reason", sa.String(length=500), nullable=True),
         sa.Column("auto_generated", sa.Boolean(), nullable=False),
         sa.Column("block_id", sa.UUID(), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
         sa.CheckConstraint(
             "starts_at < ends_at", name="ck_session_occurrences_time_valid"
         ),
@@ -524,18 +512,6 @@ def schema_upgrades() -> None:
         sa.Column("staff_id", sa.UUID(), nullable=False),
         sa.Column(
             "assigned_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
@@ -611,18 +587,6 @@ def schema_upgrades() -> None:
         sa.Column("child_id", sa.UUID(), nullable=False),
         sa.Column("status", sa.String(length=20), nullable=False),
         sa.Column("reason", sa.Text(), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
         sa.CheckConstraint(
             "status IN ('present', 'absent_known', 'absent_unknown')",
             name="ck_attendance_records_status",
@@ -667,18 +631,6 @@ def schema_upgrades() -> None:
         sa.Column("new_reason", sa.Text(), nullable=True),
         sa.Column(
             "changed_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,

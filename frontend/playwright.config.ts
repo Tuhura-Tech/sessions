@@ -62,11 +62,13 @@ export default defineConfig({
 			command: 'cd ../backend && uv run litestar run --host 0.0.0.0 --port 8000',
 			url: 'http://localhost:8000/api/v1/health',
 			reuseExistingServer: !process.env.CI,
+			timeout: 120 * 1000,
 		},
 		{
 			command: 'pnpm dev',
 			url: 'http://localhost:4321',
-			reuseExistingServer: true,
+			reuseExistingServer: !process.env.CI,
+			timeout: 120 * 1000,
 			env: {
 				PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || 'http://localhost:8000',
 			},

@@ -118,7 +118,8 @@ class AdminAuthController(Controller):
                 status_code=500, detail="Admin Google OAuth not configured"
             )
 
-        redirect_url = str(request.url_for("admin-google-callback"))
+        # Build callback URL from public_base_url to preserve https behind reverse proxies
+        redirect_url = f"{settings.public_base_url}/api/v1/admin/auth/google/callback"
         return_url = returnTo or f"{settings.admin_base_url}/dashboard"
         state = create_oauth_state(
             provider="google",
@@ -181,7 +182,8 @@ class AdminAuthController(Controller):
                 content=None, status_code=302, headers={"Location": redirect}
             )
 
-        redirect_url = str(request.url_for("admin-google-callback"))
+        # Build callback URL from public_base_url to preserve https behind reverse proxies
+        redirect_url = f"{settings.public_base_url}/api/v1/admin/auth/google/callback"
         return_to = str(payload.get("redirect_url") or fallback_redirect)
 
         token_data = await _exchange_code_for_token(code, redirect_url)

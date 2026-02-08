@@ -37,6 +37,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://sessions:sessions@postgres:5432/sessions
       - REDIS_URL=redis://redis:6379/0
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8000}
+      - ADMIN_BASE_URL=${ADMIN_BASE_URL:-http://localhost:3002}
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:4321}
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,6 +58,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://sessions:sessions@postgres:5432/sessions
       - REDIS_URL=redis://redis:6379/0
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8000}
+      - ADMIN_BASE_URL=${ADMIN_BASE_URL:-http://localhost:3002}
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:4321}
     depends_on:
       postgres:
         condition: service_healthy

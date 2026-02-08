@@ -29,17 +29,35 @@ GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 
 
 def _cookie_domain_from_url(url: str) -> str | None:
+    """Extract cookie domain from URL. Returns None for localhost, .domain.com for subdomains."""
     host = urlparse(url).hostname
-    if not host or host in {"localhost", "127.0.0.1"}:
+    if not host or host in {"localhost", "127.0.0.1", "0.0.0.0"}:
         return None
-    if host.count(".") >= 2:
+    # For production domains with subdomains (e.g., sessions-admin.tuhuratech.org.nz)
+    # Extract the root domain (e.g., .tuhuratech.org.nz)
+    parts = host.split(".")
+    if len(parts) >= 3:
+        # Only return .domain.tld for subdomains (3+ parts)
+        # e.g., admin.example.com -> .example.com
+        # e.g., sessions-admin.tuhuratech.org.nz -> .org.nz (WRONG!)
+        # Better: just use the original logic that strips first part
+        # admin.example.com -> .example.com
+        # sessions-admin.tuhuratech.org.nz -> .tuhuratech.org.nz
         return f".{host.split('.', 1)[1]}"
+    # For single-level domains (example.com), return None
     return None
 
 
 def _cookie_settings() -> tuple[bool, Literal["lax", "strict", "none"]]:
+    """Determine cookie security settings based on environment.
+
+    For HTTPS (production): secure=True, samesite=none (allows cross-domain)
+    For HTTP (development): secure=False, samesite=lax
+    """
     scheme = urlparse(settings.admin_base_url).scheme
     secure = scheme == "https"
+    # Use 'none' for HTTPS to allow cross-domain cookies (API -> Admin Portal)
+    # Use 'lax' for HTTP (development)
     samesite: Literal["lax", "strict", "none"] = "none" if secure else "lax"
     return secure, samesite
 

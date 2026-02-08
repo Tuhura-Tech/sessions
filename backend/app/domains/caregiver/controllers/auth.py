@@ -234,14 +234,27 @@ class CaregiverAuthController(Controller):
         )
 
         # Set secure session cookie
-        cookie_domain = ".tuhuratech.org.nz"
+        # Extract domain from frontend_base_url for cross-subdomain cookie sharing
+        from urllib.parse import urlparse
+
+        frontend_host = urlparse(settings.frontend_base_url).hostname
+        cookie_domain = None
+        if frontend_host and frontend_host not in {"localhost", "127.0.0.1", "0.0.0.0"}:
+            parts = frontend_host.split(".")
+            if len(parts) >= 3:
+                # Strip first subdomain part for cross-subdomain cookie sharing
+                # sessions.tuhuratech.org.nz -> .tuhuratech.org.nz
+                cookie_domain = f".{frontend_host.split('.', 1)[1]}"
+
+        is_https = urlparse(settings.frontend_base_url).scheme == "https"
+
         response.set_cookie(
             CAREGIVER_SESSION_COOKIE,
             raw_session_token,
-            domain=cookie_domain if not settings.debug else None,
+            domain=cookie_domain,
             httponly=True,
-            secure=not settings.debug,  # Allow http in debug mode
-            samesite="none" if not settings.debug else "lax",
+            secure=is_https,
+            samesite="none" if is_https else "lax",
             path="/",
         )
 

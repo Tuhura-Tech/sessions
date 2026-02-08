@@ -127,36 +127,7 @@ export type UiSessionLocation = {
 	sessions: UiSession[];
 };
 
-// Get API base URL from global data attribute set by server.
-// The server injects this via a script tag in the HTML head so both server and client use the same URL.
-// This avoids environment variable issues where client-side code can't access env vars.
-function getApiBaseUrl(): string {
-	// Client-side: read from global data attribute (set by server in HTML)
-	if (typeof window !== 'undefined') {
-		const apiBaseUrl = (globalThis as unknown as { __TUHURA_API_BASE_URL?: string })
-			?.__TUHURA_API_BASE_URL;
-		if (apiBaseUrl) return apiBaseUrl;
-	}
-
-	// Server-side (SSR): use runtime env vars
-	if (typeof window === 'undefined') {
-		// INTERNAL_API_URL is for Docker-internal networking (e.g. http://backend:8000)
-		// PUBLIC_BASE_URL is the public API origin
-		const serverUrl =
-			process.env.INTERNAL_API_URL ||
-			process.env.PUBLIC_BASE_URL ||
-			import.meta.env?.PUBLIC_BASE_URL;
-		return serverUrl || 'https://sessions-api.tuhuratech.org.nz';
-	}
-
-	// Fallback (should not reach here if server properly sets global)
-	const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-	if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
-		return 'https://sessions-api.tuhuratech.org.nz';
-	}
-
-	return '';
-}
+import { getApiBaseUrl } from '@/config';
 
 export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 	const baseUrl = getApiBaseUrl();

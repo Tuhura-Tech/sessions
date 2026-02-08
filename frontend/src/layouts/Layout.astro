@@ -6,6 +6,7 @@ import Footer from '@components/Footer.astro';
 import type { NavItem } from '@components/Header.astro';
 import Header from '@components/Header.astro';
 import Partners from '@components/Partners.astro';
+import { getServerApiBaseUrl } from '@/config';
 import '../styles/global.css';
 
 interface Props {
@@ -20,17 +21,8 @@ const {
 	description = 'Empowering the next generation through industry supported Technology Education.',
 } = Astro.props;
 
-// Get API base URL from runtime environment variables
-// This is set by Docker or the deployment environment
-const getApiBaseUrl = () => {
-	// INTERNAL_API_URL is used by server-side code for Docker-internal networking
-	// PUBLIC_BASE_URL is the public URL exposed to clients
-	const internalUrl = process.env.INTERNAL_API_URL;
-	const publicUrl = process.env.PUBLIC_BASE_URL;
-	return internalUrl || publicUrl || 'https://sessions-api.tuhuratech.org.nz';
-};
-
-const apiBaseUrl = getApiBaseUrl();
+// Get API base URL from centralized config
+const apiBaseUrl = getServerApiBaseUrl();
 
 // Preload critical assets
 const faviconImg = await getImage({
@@ -75,7 +67,7 @@ const cta: NavItem = {
 		<!-- Set API base URL as a global FIRST, before any other scripts or modules load -->
 		<!-- This runs before any other scripts so both SSR and client code can access it -->
 		<script
-			set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl || 'https://sessions-api.tuhuratech.org.nz'}';
+			set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl}';
 			console.debug('[Tuhura] API Base URL initialized:', globalThis.__TUHURA_API_BASE_URL);`}
 		/>
 

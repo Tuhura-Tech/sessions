@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
 
     # Application
-    debug: bool = True
+    debug: bool = False
 
     cors_origins: str = "http://localhost:4321,http://localhost:4324,http://localhost:3001,http://localhost:3002,http://localhost:8000,http://localhost:4173,https://sessions.tuhuratech.org.nz,https://sessions-admin.tuhuratech.org.nz"
     public_base_url: str = "http://localhost:8000"

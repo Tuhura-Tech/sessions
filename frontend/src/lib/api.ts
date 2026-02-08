@@ -127,16 +127,24 @@ export type UiSessionLocation = {
 	sessions: UiSession[];
 };
 
-// Use dynamic API URL: prefer environment variable, then localhost in dev, else same-origin
+// Use dynamic API URL: prefer environment variable, then localhost in dev, else same-origin.
+// Server-side (SSR): reads process.env at runtime so Docker can override.
+// Client-side: uses import.meta.env (inlined at build time by Vite).
 function getApiBaseUrl(): string {
-	const envUrl = import.meta.env?.PUBLIC_BASE_URL || import.meta.env?.PUBLIC_API_BASE_URL;
-
-	// Server-side: use env var or localhost dev URL
+	// Server-side: use runtime env vars (process.env is available in Node adapter)
 	if (typeof window === 'undefined') {
-		return envUrl || 'http://localhost:8000';
+		// INTERNAL_API_URL is for Docker-internal networking (e.g. http://backend:8000)
+		// PUBLIC_BASE_URL is the public API origin
+		const serverUrl =
+			process.env.INTERNAL_API_URL ||
+			process.env.PUBLIC_BASE_URL ||
+			import.meta.env?.PUBLIC_BASE_URL;
+		return serverUrl || 'http://localhost:8000';
 	}
 
-	if (envUrl) return envUrl;
+	// Client-side: use build-time env var (inlined by Vite)
+	const clientUrl = import.meta.env?.PUBLIC_BASE_URL || import.meta.env?.PUBLIC_API_BASE_URL;
+	if (clientUrl) return clientUrl;
 
 	const hostname = window.location.hostname;
 	if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {

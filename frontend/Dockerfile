@@ -15,6 +15,10 @@ RUN pnpm install --frozen-lockfile
 # Copy source
 COPY . .
 
+# Build arg: public API URL for client-side code (inlined by Vite at build time)
+ARG PUBLIC_BASE_URL
+ENV PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
+
 # Build the app
 RUN pnpm run build
 

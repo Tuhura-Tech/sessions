@@ -95,8 +95,12 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
+      args:
+        - PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
     env_file:
       - .env
+    environment:
+      - INTERNAL_API_URL=http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped

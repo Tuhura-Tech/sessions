@@ -20,6 +20,18 @@ const {
 	description = 'Empowering the next generation through industry supported Technology Education.',
 } = Astro.props;
 
+// Get API base URL from runtime environment variables
+// This is set by Docker or the deployment environment
+const getApiBaseUrl = () => {
+	// INTERNAL_API_URL is used by server-side code for Docker-internal networking
+	// PUBLIC_BASE_URL is the public URL exposed to clients
+	const internalUrl = process.env.INTERNAL_API_URL;
+	const publicUrl = process.env.PUBLIC_BASE_URL;
+	return internalUrl || publicUrl || 'http://localhost:8000';
+};
+
+const apiBaseUrl = getApiBaseUrl();
+
 // Preload critical assets
 const faviconImg = await getImage({
 	src: '/favicon.svg',
@@ -95,6 +107,10 @@ const cta: NavItem = {
 		<script
 			data-domain="sessions.tuhuratech.org.nz"
 			src="https://plausible.tuhuratech.org.nz/js/script.js"></script>
+
+		<!-- Set API base URL as a global for client-side code -->
+		<!-- This runs before any other scripts so both SSR and client code can access it -->
+		<script set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl || 'http://localhost:8000'}';`} />
 	</head>
 
 	<body class="flex min-h-screen flex-col">

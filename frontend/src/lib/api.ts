@@ -127,11 +127,17 @@ export type UiSessionLocation = {
 	sessions: UiSession[];
 };
 
-// Use dynamic API URL: prefer environment variable, then localhost in dev, else same-origin.
-// Server-side (SSR): reads process.env at runtime so Docker can override.
-// Client-side: uses import.meta.env (inlined at build time by Vite).
+// Get API base URL from global data attribute set by server.
+// The server injects this via a script tag in the HTML head so both server and client use the same URL.
+// This avoids environment variable issues where client-side code can't access env vars.
 function getApiBaseUrl(): string {
-	// Server-side: use runtime env vars (process.env is available in Node adapter)
+	// Client-side: read from global data attribute (set by server in HTML)
+	if (typeof window !== 'undefined') {
+		const apiBaseUrl = (globalThis as unknown as { __TUHURA_API_BASE_URL?: string })?.__TUHURA_API_BASE_URL;
+		if (apiBaseUrl) return apiBaseUrl;
+	}
+
+	// Server-side (SSR): use runtime env vars
 	if (typeof window === 'undefined') {
 		// INTERNAL_API_URL is for Docker-internal networking (e.g. http://backend:8000)
 		// PUBLIC_BASE_URL is the public API origin
@@ -142,16 +148,12 @@ function getApiBaseUrl(): string {
 		return serverUrl || 'http://localhost:8000';
 	}
 
-	// Client-side: use build-time env var (inlined by Vite)
-	const clientUrl = import.meta.env?.PUBLIC_BASE_URL || import.meta.env?.PUBLIC_API_BASE_URL;
-	if (clientUrl) return clientUrl;
-
-	const hostname = window.location.hostname;
+	// Fallback (should not reach here if server properly sets global)
+	const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 	if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
 		return 'http://localhost:8000';
 	}
 
-	// Client-side: fallback to same-origin in production
 	return '';
 }
 

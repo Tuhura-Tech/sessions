@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 const returnTo = Astro.url.searchParams.get('returnTo') || '/account';
 // Use environment variable or fall back to localhost:8000 in dev
 const apiBaseUrl =
-	import.meta.env.PUBLIC_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
+	import.meta.env.PUBLIC_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'https://sessions-api.tuhuratech.org.nz';
 ---
 
 <Layout>

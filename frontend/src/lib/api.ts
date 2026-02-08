@@ -146,13 +146,13 @@ function getApiBaseUrl(): string {
 			process.env.INTERNAL_API_URL ||
 			process.env.PUBLIC_BASE_URL ||
 			import.meta.env?.PUBLIC_BASE_URL;
-		return serverUrl || 'http://localhost:8000';
+		return serverUrl || 'https://sessions-api.tuhuratech.org.nz';
 	}
 
 	// Fallback (should not reach here if server properly sets global)
 	const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 	if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
-		return 'http://localhost:8000';
+		return 'https://sessions-api.tuhuratech.org.nz';
 	}
 
 	return '';

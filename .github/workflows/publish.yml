@@ -101,6 +101,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            PUBLIC_BASE_URL=https://sessions-api.tuhuratech.org.nz
 
   frontend:
     name: Build Frontend Image

@@ -10,10 +10,9 @@ export default defineConfig({
 			'/api/v1': 'http://localhost:8000',
 		},
 	},
-	define: {
-		// Set API base URL for development
-		'import.meta.env.API_BASE_URL': JSON.stringify(''),
-	},
+	// Vite automatically reads VITE_* prefixed environment variables
+	// VITE_PUBLIC_BASE_URL is set at build time via Docker build argument
+	// In development, it's empty and Vite proxy handles /api/v1 requests
 	build: {
 		// Ensure assets are referenced with relative paths
 		assetsDir: 'assets',

@@ -1,6 +1,10 @@
 # Frontend admin portal build
 FROM docker.io/library/node:24-alpine@sha256:931d7d57f8c1fd0e2179dbff7cc7da4c9dd100998bc2b32afc85142d8efbc213 AS builder
 
+# Build-time argument for API base URL (must be set at build time)
+# Usage: docker build --build-arg PUBLIC_BASE_URL=https://api.example.com
+ARG PUBLIC_BASE_URL=http://localhost:8000
+
 WORKDIR /app
 
 # Install pnpm
@@ -15,8 +19,8 @@ RUN pnpm install --frozen-lockfile
 # Copy source
 COPY . .
 
-# Build the app
-RUN pnpm run build
+# Build the app with PUBLIC_BASE_URL embedded in static files
+RUN VITE_PUBLIC_BASE_URL=${PUBLIC_BASE_URL} pnpm run build
 
 # Production image
 FROM docker.io/library/nginx:alpine@sha256:b0f7830b6bfaa1258f45d94c240ab668ced1b3651c8a222aefe6683447c7bf55

@@ -235,21 +235,21 @@ jobs:
           VITE_API_BASE_URL: http://127.0.0.1:8000
         run: pnpm run build
 
-      - name: Start admin portal server
-        working-directory: ./admin_portal
-        run: npx http-server dist -p 3002 -s > /tmp/admin_portal.log 2>&1 &
+      # - name: Start admin portal server
+      #   working-directory: ./admin_portal
+      #   run: npx http-server dist -p 3002 -s > /tmp/admin_portal.log 2>&1 &
 
-      - name: Wait for admin portal
-        run: |
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:3002/ > /dev/null 2>&1; then
-              echo "Admin portal is ready"
-              break
-            fi
-            echo "Waiting for admin portal... attempt $i"
-            sleep 2
-          done
-          curl -sf http://127.0.0.1:3002/ || (echo "Admin portal failed to start"; cat /tmp/admin_portal.log; exit 1)
+      # - name: Wait for admin portal
+      #   run: |
+      #     for i in $(seq 1 30); do
+      #       if curl -sf http://127.0.0.1:3002/ > /dev/null 2>&1; then
+      #         echo "Admin portal is ready"
+      #         break
+      #       fi
+      #       echo "Waiting for admin portal... attempt $i"
+      #       sleep 2
+      #     done
+      #     curl -sf http://127.0.0.1:3002/ || (echo "Admin portal failed to start"; cat /tmp/admin_portal.log; exit 1)
 
       - name: Install Playwright browsers
         working-directory: ./admin_portal
@@ -404,24 +404,24 @@ jobs:
           PUBLIC_BASE_URL: http://127.0.0.1:8000
         run: pnpm run build
 
-      - name: Start frontend server
-        working-directory: ./frontend
-        run: node ./dist/server/entry.mjs > /tmp/frontend.log 2>&1 &
-        env:
-          HOST: 127.0.0.1
-          PORT: 4321
+      # - name: Start frontend server
+      #   working-directory: ./frontend
+      #   run: node ./dist/server/entry.mjs > /tmp/frontend.log 2>&1 &
+      #   env:
+      #     HOST: 127.0.0.1
+      #     PORT: 4321
 
-      - name: Wait for frontend
-        run: |
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:4321/ > /dev/null 2>&1; then
-              echo "Frontend is ready"
-              break
-            fi
-            echo "Waiting for frontend... attempt $i"
-            sleep 2
-          done
-          curl -sf http://127.0.0.1:4321/ || (echo "Frontend failed to start"; cat /tmp/frontend.log; exit 1)
+      # - name: Wait for frontend
+      #   run: |
+      #     for i in $(seq 1 30); do
+      #       if curl -sf http://127.0.0.1:4321/ > /dev/null 2>&1; then
+      #         echo "Frontend is ready"
+      #         break
+      #       fi
+      #       echo "Waiting for frontend... attempt $i"
+      #       sleep 2
+      #     done
+      #     curl -sf http://127.0.0.1:4321/ || (echo "Frontend failed to start"; cat /tmp/frontend.log; exit 1)
 
       - name: Install Playwright browsers
         working-directory: ./frontend

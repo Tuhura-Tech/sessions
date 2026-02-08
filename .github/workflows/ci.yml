@@ -80,7 +80,7 @@ jobs:
       - name: Run tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
         run: uv run pytest -v --cov=app --cov-report=xml
 
   backend-migrations:
@@ -120,7 +120,7 @@ jobs:
       - name: Check migrations
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
         run: uv run litestar database upgrade --no-prompt
 
   # Admin Portal jobs
@@ -190,13 +190,16 @@ jobs:
       - name: Upgrade database
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
         run: uv run litestar database upgrade --no-prompt
 
       - name: Start backend server
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
+          PUBLIC_BASE_URL: http://127.0.0.1:8000
+          ADMIN_BASE_URL: http://127.0.0.1:3002
+          FRONTEND_BASE_URL: http://127.0.0.1:4321
         run: uv run litestar run --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
 
       - name: Wait for backend
@@ -226,6 +229,28 @@ jobs:
         working-directory: ./admin_portal
         run: pnpm install --frozen-lockfile
 
+      - name: Build admin portal
+        working-directory: ./admin_portal
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:8000
+        run: pnpm run build
+
+      - name: Start admin portal server
+        working-directory: ./admin_portal
+        run: npx http-server dist -p 3002 -s > /tmp/admin_portal.log 2>&1 &
+
+      - name: Wait for admin portal
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3002/ > /dev/null 2>&1; then
+              echo "Admin portal is ready"
+              break
+            fi
+            echo "Waiting for admin portal... attempt $i"
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:3002/ || (echo "Admin portal failed to start"; cat /tmp/admin_portal.log; exit 1)
+
       - name: Install Playwright browsers
         working-directory: ./admin_portal
         run: pnpm exec playwright install --with-deps
@@ -233,7 +258,7 @@ jobs:
       - name: Run tests
         working-directory: ./admin_portal
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
           VITE_API_BASE_URL: http://127.0.0.1:8000
         run: pnpm run test
 
@@ -334,13 +359,16 @@ jobs:
       - name: Upgrade database
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
         run: uv run litestar database upgrade --no-prompt
 
       - name: Start backend server
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
+          PUBLIC_BASE_URL: http://127.0.0.1:8000
+          ADMIN_BASE_URL: http://127.0.0.1:3002
+          FRONTEND_BASE_URL: http://127.0.0.1:4321
         run: uv run litestar run --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
 
       - name: Wait for backend
@@ -370,6 +398,31 @@ jobs:
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          PUBLIC_BASE_URL: http://127.0.0.1:8000
+        run: pnpm run build
+
+      - name: Start frontend server
+        working-directory: ./frontend
+        run: node ./dist/server/entry.mjs > /tmp/frontend.log 2>&1 &
+        env:
+          HOST: 127.0.0.1
+          PORT: 4321
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4321/ > /dev/null 2>&1; then
+              echo "Frontend is ready"
+              break
+            fi
+            echo "Waiting for frontend... attempt $i"
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:4321/ || (echo "Frontend failed to start"; cat /tmp/frontend.log; exit 1)
+
       - name: Install Playwright browsers
         working-directory: ./frontend
         run: pnpm exec playwright install --with-deps
@@ -378,7 +431,7 @@ jobs:
         working-directory: ./frontend
         env:
           CI: true
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
           PUBLIC_BASE_URL: http://127.0.0.1:8000
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4321
         run: pnpm run test:e2e

@@ -14,6 +14,7 @@ export type ApiSession = {
 	name: string;
 	age: string;
 	time: string;
+	day_of_week?: number | null;
 	term_summary?: string | null;
 	blocks?: string[];
 	public_instructions?: string | null;
@@ -60,6 +61,7 @@ export type ApiPublicSession = {
 	name: string;
 	age_lower: number;
 	age_upper: number;
+	day_of_week?: number | null;
 	start_time: string;
 	end_time: string;
 	what_to_bring?: string | null;
@@ -106,6 +108,7 @@ export type UiSession = {
 	latlong: [number, number];
 	age: string;
 	time: string;
+	day_of_week?: number | null;
 	term_summary?: string | null;
 	blocks?: string[];
 	location: string;
@@ -157,6 +160,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 					latlong: [details?.latlong.lat ?? 0, details?.latlong.lng ?? 0],
 					age: s.age,
 					time: s.time,
+					day_of_week: s.day_of_week ?? null,
 					term_summary: s.term_summary ?? null,
 					blocks: s.blocks ?? [],
 					location: details?.region ?? loc.name,
@@ -189,6 +193,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 			latlong: [session.location?.lat ?? 0, session.location?.lng ?? 0],
 			age: `${session.age_lower}-${session.age_upper}`,
 			time: `${formatTime(session.start_time)}-${formatTime(session.end_time)}`,
+			day_of_week: session.day_of_week ?? null,
 			term_summary: null,
 			blocks: [],
 			location: session.location?.region ?? locationName,
@@ -421,6 +426,7 @@ export async function fetchSessionById(id: string): Promise<UiSession | null> {
 			latlong: [details.latlong.lat ?? 0, details.latlong.lng ?? 0],
 			age: payload.age,
 			time: payload.time,
+			day_of_week: payload.day_of_week ?? null,
 			term_summary: payload.term_summary ?? null,
 			blocks: payload.blocks ?? [],
 			location: details.region ?? '',
@@ -448,6 +454,7 @@ export async function fetchSessionById(id: string): Promise<UiSession | null> {
 			payload.start_time && payload.end_time
 				? `${formatTime(payload.start_time)}-${formatTime(payload.end_time)}`
 				: (payload.time ?? ''),
+		day_of_week: payload.day_of_week ?? null,
 		term_summary: payload.term_summary ?? null,
 		blocks: payload.blocks ?? [],
 		location: payload.location?.region ?? '',

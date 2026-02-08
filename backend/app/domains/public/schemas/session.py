@@ -32,7 +32,7 @@ class Session(CamelizedBaseSchema):
     day_of_week: int | None
     start_time: time
     end_time: time
-    # waitlist: bool
+    waitlist: bool = False
     what_to_bring: str | None
     prerequisites: str | None
 

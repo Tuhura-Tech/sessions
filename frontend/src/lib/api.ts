@@ -64,6 +64,7 @@ export type ApiPublicSession = {
 	day_of_week?: number | null;
 	start_time: string;
 	end_time: string;
+	waitlist?: boolean;
 	what_to_bring?: string | null;
 	prerequisites?: string | null;
 	location?: {
@@ -197,7 +198,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 			term_summary: null,
 			blocks: [],
 			location: session.location?.region ?? locationName,
-			waitlist: false,
+			waitlist: session.waitlist ?? false,
 			signupLink: `/signup?session=${session.id}`,
 			venueName: session.location?.name ?? null,
 			public_instructions: null,

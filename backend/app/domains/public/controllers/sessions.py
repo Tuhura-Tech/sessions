@@ -41,6 +41,7 @@ class SessionController(Controller):
             ),
             selectinload(m.Session.block_links).selectinload(m.BlockLink.block),
             selectinload(m.Session.occurrences).selectinload(m.Occurrence.block),
+            selectinload(m.Session.signups),
         ],
     )
 
@@ -97,6 +98,7 @@ class SessionController(Controller):
                 day_of_week=result.day_of_week,
                 start_time=result.start_time,
                 end_time=result.end_time,
+                waitlist=result.is_full,
                 what_to_bring=result.what_to_bring,
                 prerequisites=result.prerequisites,
                 blocks=blocks_by_session.get(str(result.id), []),
@@ -130,6 +132,7 @@ class SessionController(Controller):
                     selectinload(m.Session.occurrences).selectinload(
                         m.Occurrence.block
                     ),
+                    selectinload(m.Session.signups),
                 )
                 .where(m.Session.id == session_id)
             )
@@ -191,6 +194,7 @@ class SessionController(Controller):
             day_of_week=session.day_of_week,
             start_time=session.start_time,
             end_time=session.end_time,
+            waitlist=session.is_full,
             what_to_bring=session.what_to_bring,
             prerequisites=session.prerequisites,
             blocks=blocks,

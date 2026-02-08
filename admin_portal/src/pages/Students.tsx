@@ -1,8 +1,9 @@
-import { Users } from 'lucide-react';
+import { Trash2, Users } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import Modal from '../components/Modal';
 import Sidebar from '../components/Sidebar';
 import { formatDate } from '../lib/utils';
 import { adminApi } from '../services/api';
@@ -13,6 +14,17 @@ const Students: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState('');
 	const navigate = useNavigate();
+	const [deleteConfirm, setDeleteConfirm] = useState<{
+		show: boolean;
+		childId: string | null;
+		childName: string;
+	}>({
+		show: false,
+		childId: null,
+		childName: '',
+	});
+	const [deleting, setDeleting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const loadChildren = useCallback(async () => {
 		try {
@@ -29,6 +41,33 @@ const Students: React.FC = () => {
 	useEffect(() => {
 		loadChildren();
 	}, [loadChildren]);
+
+	const handleDeleteClick = (e: React.MouseEvent, child: ChildDetails) => {
+		e.stopPropagation();
+		setDeleteConfirm({
+			show: true,
+			childId: child.id,
+			childName: child.name,
+		});
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (!deleteConfirm.childId) return;
+
+		try {
+			setDeleting(true);
+			setError(null);
+			await adminApi.deleteStudent(deleteConfirm.childId);
+			setDeleteConfirm({ show: false, childId: null, childName: '' });
+			await loadChildren();
+		} catch (err) {
+			console.error('Failed to delete student:', err);
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to delete student');
+		} finally {
+			setDeleting(false);
+		}
+	};
 
 	const filteredChildren = children.filter((child) =>
 		child.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -99,13 +138,23 @@ const Students: React.FC = () => {
 													)}
 												</td>
 												<td className="px-6 py-4 text-sm whitespace-nowrap">
-													<button
-														type="button"
-														onClick={() => navigate(`/students/${child.id}`)}
-														className="font-medium text-blue-600 hover:text-blue-900"
-													>
-														View Details
-													</button>
+													<div className="flex items-center gap-3">
+														<button
+															type="button"
+															onClick={() => navigate(`/students/${child.id}`)}
+															className="font-medium text-blue-600 hover:text-blue-900"
+														>
+															View Details
+														</button>
+														<button
+															type="button"
+															onClick={(e) => handleDeleteClick(e, child)}
+															className="text-red-600 hover:text-red-900"
+															title="Delete student"
+														>
+															<Trash2 className="h-4 w-4" />
+														</button>
+													</div>
 												</td>
 											</tr>
 										))}
@@ -114,6 +163,44 @@ const Students: React.FC = () => {
 							</div>
 						)}
 					</div>
+
+					{/* Delete Confirmation Modal */}
+					<Modal
+						isOpen={deleteConfirm.show}
+						onClose={() =>
+							!deleting && setDeleteConfirm({ show: false, childId: null, childName: '' })
+						}
+						title="Delete Student"
+					>
+						<div className="space-y-4">
+							<p className="text-gray-700">
+								Are you sure you want to delete{' '}
+								<span className="font-semibold">{deleteConfirm.childName}</span>? This action cannot
+								be undone and will remove all associated signups and records.
+							</p>
+							{error && (
+								<div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</div>
+							)}
+							<div className="flex justify-end gap-3 pt-4">
+								<button
+									type="button"
+									onClick={() => setDeleteConfirm({ show: false, childId: null, childName: '' })}
+									disabled={deleting}
+									className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleDeleteConfirm}
+									disabled={deleting}
+									className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+								>
+									{deleting ? 'Deleting...' : 'Delete'}
+								</button>
+							</div>
+						</div>
+					</Modal>
 				</Layout>
 			</div>
 		</div>

@@ -1,4 +1,4 @@
-import { ArrowLeft, Edit, Mail, Phone, Users } from 'lucide-react';
+import { ArrowLeft, Edit, Mail, Phone, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingSpinner } from '../components/Alert';
@@ -18,6 +18,8 @@ export default function CaregiverDetail() {
 	const [error, setError] = useState<string | null>(null);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [updating, setUpdating] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleting, setDeleting] = useState(false);
 
 	const [editData, setEditData] = useState<CaregiverUpdate>({});
 
@@ -77,6 +79,23 @@ export default function CaregiverDetail() {
 		}
 	};
 
+	const handleDelete = async () => {
+		if (!id) return;
+
+		try {
+			setDeleting(true);
+			setError(null);
+			await adminApi.deleteCaregiver(id);
+			navigate('/caregivers');
+		} catch (err) {
+			console.error('Failed to delete caregiver:', err);
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to delete caregiver');
+		} finally {
+			setDeleting(false);
+		}
+	};
+
 	if (loading) {
 		return (
 			<div className="flex min-h-screen">
@@ -133,14 +152,24 @@ export default function CaregiverDetail() {
 								<ArrowLeft className="h-5 w-5" />
 								Back to Parents
 							</button>
-							<button
-								type="button"
-								onClick={() => setShowEditModal(true)}
-								className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-							>
-								<Edit className="h-4 w-4" />
-								Edit
-							</button>
+							<div className="flex gap-3">
+								<button
+									type="button"
+									onClick={() => setShowEditModal(true)}
+									className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+								>
+									<Edit className="h-4 w-4" />
+									Edit
+								</button>
+								<button
+									type="button"
+									onClick={() => setShowDeleteModal(true)}
+									className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+								>
+									<Trash2 className="h-4 w-4" />
+									Delete
+								</button>
+							</div>
 						</div>
 
 						{error && <div className="rounded-lg bg-red-50 p-4 text-red-800">{error}</div>}
@@ -295,6 +324,42 @@ export default function CaregiverDetail() {
 								</button>
 							</div>
 						</form>
+					</Modal>
+
+					{/* Delete Confirmation Modal */}
+					<Modal
+						isOpen={showDeleteModal}
+						onClose={() => !deleting && setShowDeleteModal(false)}
+						title="Delete Caregiver"
+					>
+						<div className="space-y-4">
+							<p className="text-gray-700">
+								Are you sure you want to delete{' '}
+								<span className="font-semibold">{caregiver.name}</span>? This action cannot be
+								undone and will also delete all associated children and their signups.
+							</p>
+							{error && (
+								<div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</div>
+							)}
+							<div className="flex justify-end gap-3 pt-4">
+								<button
+									type="button"
+									onClick={() => setShowDeleteModal(false)}
+									disabled={deleting}
+									className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleDelete}
+									disabled={deleting}
+									className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+								>
+									{deleting ? 'Deleting...' : 'Delete'}
+								</button>
+							</div>
+						</div>
 					</Modal>
 				</Layout>
 			</div>

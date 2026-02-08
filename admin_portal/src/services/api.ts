@@ -153,6 +153,10 @@ export const adminApi = {
 		return unwrapList<Signup>(data);
 	},
 
+	deleteStudent: async (id: string): Promise<void> => {
+		await api.delete(`/admin/students/${id}`);
+	},
+
 	getSessionSignups: async (sessionId: string, status?: string): Promise<Signup[]> => {
 		const params = status ? `?status=${status}` : '';
 		const { data } = await api.get(`/admin/sessions/${sessionId}/signups${params}`);
@@ -385,6 +389,10 @@ export const adminApi = {
 	updateCaregiver: async (id: string, caregiver: CaregiverUpdate): Promise<Caregiver> => {
 		const { data } = await api.patch(`/admin/caregivers/${id}`, caregiver);
 		return data;
+	},
+
+	deleteCaregiver: async (id: string): Promise<void> => {
+		await api.delete(`/admin/caregivers/${id}`);
 	},
 
 	getCaregiverStudents: async (id: string): Promise<ChildDetails[]> => {

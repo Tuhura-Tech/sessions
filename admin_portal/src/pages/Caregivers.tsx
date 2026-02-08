@@ -1,4 +1,4 @@
-import { Mail, Phone, Search, UserPlus, Users } from 'lucide-react';
+import { Mail, Phone, Search, Trash2, UserPlus, Users } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/Alert';
@@ -17,6 +17,16 @@ export default function Caregivers() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [creating, setCreating] = useState(false);
+	const [deleteConfirm, setDeleteConfirm] = useState<{
+		show: boolean;
+		caregiverId: string | null;
+		caregiverName: string;
+	}>({
+		show: false,
+		caregiverId: null,
+		caregiverName: '',
+	});
+	const [deleting, setDeleting] = useState(false);
 
 	const [newCaregiver, setNewCaregiver] = useState<CaregiverCreate>({
 		email: '',
@@ -84,6 +94,33 @@ export default function Caregivers() {
 			setError(error.response?.data?.detail || 'Failed to create caregiver');
 		} finally {
 			setCreating(false);
+		}
+	};
+
+	const handleDeleteClick = (e: React.MouseEvent, caregiver: Caregiver) => {
+		e.stopPropagation();
+		setDeleteConfirm({
+			show: true,
+			caregiverId: caregiver.id,
+			caregiverName: caregiver.name,
+		});
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (!deleteConfirm.caregiverId) return;
+
+		try {
+			setDeleting(true);
+			setError(null);
+			await adminApi.deleteCaregiver(deleteConfirm.caregiverId);
+			setDeleteConfirm({ show: false, caregiverId: null, caregiverName: '' });
+			await loadCaregivers();
+		} catch (err) {
+			console.error('Failed to delete caregiver:', err);
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to delete caregiver');
+		} finally {
+			setDeleting(false);
 		}
 	};
 
@@ -195,16 +232,26 @@ export default function Caregivers() {
 													{caregiver.students?.length || 0}
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<button
-														type="button"
-														onClick={(e) => {
-															e.stopPropagation();
-															navigate(`/caregivers/${caregiver.id}`);
-														}}
-														className="text-blue-600 hover:text-blue-900"
-													>
-														View Details
-													</button>
+													<div className="flex items-center gap-3">
+														<button
+															type="button"
+															onClick={(e) => {
+																e.stopPropagation();
+																navigate(`/caregivers/${caregiver.id}`);
+															}}
+															className="text-blue-600 hover:text-blue-900"
+														>
+															View Details
+														</button>
+														<button
+															type="button"
+															onClick={(e) => handleDeleteClick(e, caregiver)}
+															className="text-red-600 hover:text-red-900"
+															title="Delete caregiver"
+														>
+															<Trash2 className="h-4 w-4" />
+														</button>
+													</div>
 												</td>
 											</tr>
 										))
@@ -299,6 +346,46 @@ export default function Caregivers() {
 								</button>
 							</div>
 						</form>
+					</Modal>
+
+					{/* Delete Confirmation Modal */}
+					<Modal
+						isOpen={deleteConfirm.show}
+						onClose={() =>
+							!deleting && setDeleteConfirm({ show: false, caregiverId: null, caregiverName: '' })
+						}
+						title="Delete Caregiver"
+					>
+						<div className="space-y-4">
+							<p className="text-gray-700">
+								Are you sure you want to delete{' '}
+								<span className="font-semibold">{deleteConfirm.caregiverName}</span>? This action
+								cannot be undone.
+							</p>
+							{error && (
+								<div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</div>
+							)}
+							<div className="flex justify-end gap-3 pt-4">
+								<button
+									type="button"
+									onClick={() =>
+										setDeleteConfirm({ show: false, caregiverId: null, caregiverName: '' })
+									}
+									disabled={deleting}
+									className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleDeleteConfirm}
+									disabled={deleting}
+									className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+								>
+									{deleting ? 'Deleting...' : 'Delete'}
+								</button>
+							</div>
+						</div>
 					</Modal>
 				</Layout>
 			</div>

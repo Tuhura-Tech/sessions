@@ -1,8 +1,9 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
+import Modal from '../components/Modal';
 import Sidebar from '../components/Sidebar';
 import { calculateAge, formatDate } from '../lib/utils';
 import { adminApi } from '../services/api';
@@ -17,6 +18,9 @@ const ChildPage: React.FC = () => {
 		[],
 	);
 	const [isLoading, setIsLoading] = useState(true);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleting, setDeleting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const loadChild = useCallback(async (childId: string) => {
 		try {
@@ -51,6 +55,23 @@ const ChildPage: React.FC = () => {
 			loadChild(id);
 		}
 	}, [id, loadChild]);
+
+	const handleDeleteChild = async () => {
+		if (!id) return;
+
+		try {
+			setDeleting(true);
+			setError(null);
+			await adminApi.deleteStudent(id);
+			navigate('/students');
+		} catch (err) {
+			console.error('Failed to delete child:', err);
+			const error = err as { response?: { data?: { detail?: string } } };
+			setError(error.response?.data?.detail || 'Failed to delete child');
+		} finally {
+			setDeleting(false);
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -92,7 +113,19 @@ const ChildPage: React.FC = () => {
 		<div className="flex min-h-screen">
 			<Sidebar />
 			<div className="flex-1">
-				<Layout title={child.name}>
+				<Layout
+					title={child.name}
+					actions={
+						<button
+							type="button"
+							onClick={() => setShowDeleteModal(true)}
+							className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+						>
+							<Trash2 className="h-4 w-4" />
+							Delete Child
+						</button>
+					}
+				>
 					<button
 						type="button"
 						onClick={() => navigate(-1)}
@@ -214,6 +247,41 @@ const ChildPage: React.FC = () => {
 							)}
 						</div>
 					</div>
+
+					{/* Delete Confirmation Modal */}
+					<Modal
+						isOpen={showDeleteModal}
+						onClose={() => !deleting && setShowDeleteModal(false)}
+						title="Delete Child"
+					>
+						<div className="space-y-4">
+							<p className="text-gray-700">
+								Are you sure you want to delete <span className="font-semibold">{child.name}</span>?
+								This action cannot be undone and will remove all associated signups and records.
+							</p>
+							{error && (
+								<div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</div>
+							)}
+							<div className="flex justify-end gap-3 pt-4">
+								<button
+									type="button"
+									onClick={() => setShowDeleteModal(false)}
+									disabled={deleting}
+									className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleDeleteChild}
+									disabled={deleting}
+									className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+								>
+									{deleting ? 'Deleting...' : 'Delete'}
+								</button>
+							</div>
+						</div>
+					</Modal>
 				</Layout>
 			</div>
 		</div>

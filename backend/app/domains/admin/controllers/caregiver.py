@@ -5,8 +5,9 @@ from uuid import UUID
 
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
-from litestar import Controller, get, patch, post
+from litestar import Controller, delete, get, patch, post
 from litestar.exceptions import NotFoundException
+from litestar.status_codes import HTTP_200_OK
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.db import models as m
@@ -101,6 +102,17 @@ class CaregiverController(Controller):
         if not caregiver:
             raise NotFoundException(detail="Caregiver not found")
         return caregiver_service.to_schema(caregiver, schema_type=Caregiver)
+
+    @delete("/{caregiver_id:uuid}", status_code=HTTP_200_OK)
+    async def delete_caregiver(
+        self,
+        caregiver_id: UUID,
+        caregiver_service: CaregiverService,
+    ) -> None:
+        """Delete a caregiver."""
+        deleted = await caregiver_service.delete(caregiver_id)
+        if not deleted:
+            raise NotFoundException(detail="Caregiver not found")
 
     @post("/{caregiver_id:uuid}/email")
     async def email_caregiver(

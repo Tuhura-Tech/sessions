@@ -59,36 +59,17 @@ export default defineConfig({
 	],
 
 	/* Run your local dev server before starting the tests */
-	/* In CI, the backend is started by the workflow - only Playwright starts it locally */
-	webServer: [
-		// ...(process.env.CI
-		// 	? []
-		// 	: [
-		// 			{
-		// 				command: 'uv run litestar run --host 0.0.0.0 --port 8000',
-		// 				cwd: '../backend',
-		// 				url: 'http://localhost:8000/api/v1/health',
-		// 				reuseExistingServer: true,
-		// 				timeout: 120 * 1000,
-		// 				env: {
-		// 					...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-		// 					DATABASE_URL:
-		// 						process.env.DATABASE_URL ||
-		// 						'postgresql+psycopg://sessions:sessions@localhost:5433/sessions',
-		// 				},
-		// 			},
-		// 		]),
-		{
-			command: process.env.CI ? 'pnpm dev --host 127.0.0.1' : 'pnpm dev',
-			url: process.env.CI ? 'http://127.0.0.1:4321' : 'http://localhost:4321',
-			reuseExistingServer: !process.env.CI,
-			timeout: 120 * 1000,
-			env: {
-				...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-				PUBLIC_BASE_URL:
-					process.env.PUBLIC_BASE_URL ||
-					(process.env.CI ? 'http://127.0.0.1:8000' : 'http://localhost:8000'),
-			},
+	/* In CI, the backend is started by the workflow - only Playwright starts the frontend */
+	webServer: {
+		command: process.env.CI ? 'pnpm dev --host 127.0.0.1' : 'pnpm dev',
+		url: process.env.CI ? 'http://127.0.0.1:4321' : 'http://localhost:4321',
+		reuseExistingServer: !process.env.CI,
+		timeout: 120 * 1000,
+		env: {
+			...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
+			PUBLIC_BASE_URL:
+				process.env.PUBLIC_BASE_URL ||
+				(process.env.CI ? 'http://127.0.0.1:8000' : 'http://localhost:8000'),
 		},
-	],
+	},
 });

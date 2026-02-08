@@ -234,6 +234,7 @@ jobs:
         working-directory: ./admin_portal
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          VITE_API_BASE_URL: http://127.0.0.1:8000
         run: pnpm run test
 
   admin-portal-build:
@@ -376,6 +377,7 @@ jobs:
       - name: Run e2e tests
         working-directory: ./frontend
         env:
+          CI: true
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
           PUBLIC_BASE_URL: http://127.0.0.1:8000
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4321

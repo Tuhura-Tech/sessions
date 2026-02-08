@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import datetime
 import logging
 from typing import Any, Literal
 from urllib.parse import urlencode, urlparse
 
 import httpx
+from advanced_alchemy.extensions.litestar import providers
 from litestar import Controller, Request, Response, get, post
 from litestar.exceptions import HTTPException
 from litestar.status_codes import HTTP_200_OK
@@ -14,6 +16,7 @@ from app.domains.admin.guards import (
     create_admin_session,
     get_admin_identity_from_connection,
 )
+from app.domains.admin.services.staff import StaffService
 from app.lib.settings import settings
 from app.utils.oauth import (
     build_oauth_error_redirect,
@@ -97,6 +100,10 @@ class AdminAuthController(Controller):
 
     path = "/api/v1/admin/auth"
     tags = ["Admin Auth"]
+    dependencies = providers.create_service_dependencies(
+        StaffService,
+        "staff_service",
+    )
 
     @get("/me", status_code=HTTP_200_OK)
     async def me(self, request: Request) -> dict[str, Any]:
@@ -162,6 +169,7 @@ class AdminAuthController(Controller):
     async def google_callback(
         self,
         request: Request,
+        staff_service: StaffService | None = None,
         code: str | None = None,
         error: str | None = None,
     ) -> Response:
@@ -224,6 +232,32 @@ class AdminAuthController(Controller):
             return Response(
                 content=None, status_code=302, headers={"Location": redirect}
             )
+
+        display_name = str(userinfo.get("name") or "").strip() or email
+
+        if staff_service is not None:
+            # Ensure staff record exists (auto-create on first sign-in)
+            existing_by_sso = await staff_service.list(sso_id=provider_user_id)
+            existing_by_email = await staff_service.list(email=email)
+            staff = (existing_by_sso or existing_by_email or [None])[0]
+
+            if staff:
+                await staff_service.update(
+                    {
+                        "last_login_at": datetime.datetime.now(datetime.timezone.utc),
+                    },
+                    staff.id,
+                )
+            else:
+                await staff_service.create(
+                    {
+                        "name": display_name,
+                        "email": email,
+                        "sso_id": provider_user_id,
+                        "active": True,
+                        "last_login_at": datetime.datetime.now(datetime.timezone.utc),
+                    }
+                )
 
         session_token = create_admin_session(
             email=email,

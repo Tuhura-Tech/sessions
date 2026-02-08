@@ -21,11 +21,12 @@ export const DEFAULT_API_URL = 'http://localhost:8000';
  */
 export function getServerApiBaseUrl(): string {
 	const internalUrl = process.env.INTERNAL_API_URL;
+	const publicUrl = process.env.PUBLIC_BASE_URL;
 	return internalUrl || publicUrl || DEFAULT_API_URL;
 }
 
 export function getServerApiExternalBaseUrl(): string {
-    return process.env.PUBLIC_BASE_URL || DEFAULT_API_URL;
+	return process.env.PUBLIC_BASE_URL || DEFAULT_API_URL;
 }
 
 /**

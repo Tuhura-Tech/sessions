@@ -6,7 +6,7 @@ import Footer from '@components/Footer.astro';
 import type { NavItem } from '@components/Header.astro';
 import Header from '@components/Header.astro';
 import Partners from '@components/Partners.astro';
-import { getServerApiBaseUrl } from '@/config';
+import { getServerApiExternalBaseUrl } from '@/config';
 import '../styles/global.css';
 
 interface Props {
@@ -21,8 +21,8 @@ const {
 	description = 'Empowering the next generation through industry supported Technology Education.',
 } = Astro.props;
 
-// Get API base URL from centralized config
-const apiBaseUrl = getServerApiBaseUrl();
+// Get API base URL for client-side usage (public/external)
+const apiBaseUrl = getServerApiExternalBaseUrl();
 
 // Preload critical assets
 const faviconImg = await getImage({

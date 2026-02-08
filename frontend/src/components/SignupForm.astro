@@ -1,4 +1,6 @@
 ---
+import { getServerApiExternalBaseUrl } from '@/config';
+
 interface Props {
 	sessionId: string;
 	children: Array<{ id: string; name: string; dateOfBirth?: string | null }>;
@@ -6,9 +8,8 @@ interface Props {
 
 const { sessionId, children } = Astro.props;
 
-// Determine API base URL from environment or defaults
-const apiBaseUrl =
-	import.meta.env.PUBLIC_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'https://sessions-api.tuhuratech.org.nz';
+// Use public/external API base URL for client-side requests
+const apiBaseUrl = getServerApiExternalBaseUrl();
 ---
 
 <form id="signup-form" class="mt-8 space-y-6">

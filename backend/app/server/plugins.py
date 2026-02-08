@@ -3,7 +3,7 @@ from functools import cache
 from advanced_alchemy.extensions.litestar import SQLAlchemyPlugin
 from litestar_granian import GranianPlugin
 from litestar_saq import SAQPlugin
-from app.lib.settings import saq_settings, _get_sqlalchemy_settings
+from app.lib.settings import _get_saq_settings, _get_sqlalchemy_settings
 from app.utils.oauth import OAuth2ProviderPlugin
 
 
@@ -26,4 +26,4 @@ oauth2_provider = OAuth2ProviderPlugin()
 @cache
 def get_saq_plugin() -> SAQPlugin:
     """Get SAQ plugin lazily to avoid Redis connection during build."""
-    return SAQPlugin(config=saq_settings)
+    return SAQPlugin(config=_get_saq_settings())

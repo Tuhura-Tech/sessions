@@ -7,7 +7,7 @@ from advanced_alchemy.extensions.litestar import (
     SQLAlchemyAsyncConfig,
 )
 from litestar.utils.module_loader import module_to_os_path
-from litestar_saq import SAQConfig
+from litestar_saq import SAQConfig, QueueConfig
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -102,12 +102,36 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-saq_settings = SAQConfig(
-    web_enabled=True,
-    worker_processes=1,
-    use_server_lifespan=True,
-    queue_configs=[],
-)
+_BACKGROUND_TASKS = [
+    "app.lib.worker.send_signup_confirmation_task",
+    "app.lib.worker.send_waitlist_promoted_task",
+    "app.lib.worker.send_signup_cancelled_task",
+    "app.lib.worker.send_caregiver_message_task",
+    "app.lib.worker.send_session_cancelled_task",
+    "app.lib.worker.send_occurrence_cancelled_task",
+    "app.lib.worker.process_signup_approval_task",
+    "app.lib.worker.bulk_promote_waitlist_task",
+    "app.lib.worker.bulk_withdraw_signups_task",
+    "app.lib.worker.send_session_reminder_task",
+    "app.lib.worker.process_session_reminders_task",
+    "app.lib.worker.notify_newsletter_subscription_task",
+]
+
+
+def _get_saq_settings() -> SAQConfig:
+    """Lazily create SAQ settings to avoid Redis connection at import time."""
+    return SAQConfig(
+        web_enabled=True,
+        worker_processes=1,
+        use_server_lifespan=True,
+        queue_configs=[
+            QueueConfig(
+                name="background-tasks",
+                dsn=settings.redis_url,
+                tasks=_BACKGROUND_TASKS,
+            ),
+        ],
+    )
 
 
 def _get_sqlalchemy_settings() -> SQLAlchemyAsyncConfig:

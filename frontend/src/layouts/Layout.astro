@@ -72,6 +72,13 @@ const cta: NavItem = {
 <!doctype html>
 <html lang="en">
 	<head>
+		<!-- Set API base URL as a global FIRST, before any other scripts or modules load -->
+		<!-- This runs before any other scripts so both SSR and client code can access it -->
+		<script
+			set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl || 'http://localhost:8000'}';
+			console.debug('[Tuhura] API Base URL initialized:', globalThis.__TUHURA_API_BASE_URL);`}
+		/>
+
 		<meta charset="UTF-8" />
 		<meta name="description" content={description} />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -107,12 +114,6 @@ const cta: NavItem = {
 		<script
 			data-domain="sessions.tuhuratech.org.nz"
 			src="https://plausible.tuhuratech.org.nz/js/script.js"></script>
-
-		<!-- Set API base URL as a global for client-side code -->
-		<!-- This runs before any other scripts so both SSR and client code can access it -->
-		<script
-			set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl || 'http://localhost:8000'}';`}
-		/>
 	</head>
 
 	<body class="flex min-h-screen flex-col">

@@ -55,7 +55,21 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    command: ["uv", "run", "saq", "app.worker.queue_settings"]
+    command: ["app", "workers", "run"]
+
+  migrator:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    restart: "no"
+    command: litestar database upgrade --no-prompt
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   admin-portal:
     build:

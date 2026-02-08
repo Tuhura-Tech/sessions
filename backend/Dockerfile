@@ -159,6 +159,7 @@ RUN ARCH_DIR=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64-linux-gnu" || echo "
 FROM ${RUN_IMAGE} AS runtime
 
 ENV PATH="/workspace/app/.venv/bin:/usr/local/bin:$PATH" \
+    LITESTAR_APP="app.server.asgi:create_app" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \

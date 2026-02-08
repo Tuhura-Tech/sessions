@@ -110,7 +110,9 @@ const cta: NavItem = {
 
 		<!-- Set API base URL as a global for client-side code -->
 		<!-- This runs before any other scripts so both SSR and client code can access it -->
-		<script set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl || 'http://localhost:8000'}';`} />
+		<script
+			set:html={`globalThis.__TUHURA_API_BASE_URL = '${apiBaseUrl || 'http://localhost:8000'}';`}
+		/>
 	</head>
 
 	<body class="flex min-h-screen flex-col">

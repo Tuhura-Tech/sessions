@@ -133,7 +133,8 @@ export type UiSessionLocation = {
 function getApiBaseUrl(): string {
 	// Client-side: read from global data attribute (set by server in HTML)
 	if (typeof window !== 'undefined') {
-		const apiBaseUrl = (globalThis as unknown as { __TUHURA_API_BASE_URL?: string })?.__TUHURA_API_BASE_URL;
+		const apiBaseUrl = (globalThis as unknown as { __TUHURA_API_BASE_URL?: string })
+			?.__TUHURA_API_BASE_URL;
 		if (apiBaseUrl) return apiBaseUrl;
 	}
 

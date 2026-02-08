@@ -13,7 +13,7 @@ import axios from 'axios';
 // To deploy with a specific API URL:
 //   docker build --build-arg PUBLIC_BASE_URL=https://api.yourdomain.com -t admin-portal .
 
-export const API_BASE_URL = 'https://sessions-api.tuhuratech.org.nz'//import.meta.env.VITE_PUBLIC_BASE_URL || '';
+export const API_BASE_URL = 'https://sessions-api.tuhuratech.org.nz'; //import.meta.env.VITE_PUBLIC_BASE_URL || '';
 
 // Build the API base URL
 const baseURL = API_BASE_URL?.endsWith('/api/v1')

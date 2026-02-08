@@ -90,6 +90,10 @@ services:
     build:
       context: admin_portal
       dockerfile: Dockerfile
+      args:
+        # PUBLIC_BASE_URL is baked into the static build at container build time
+        # This is NOT a runtime environment variable - the app is fully static
+        - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8000}
     depends_on:
       - backend
     restart: unless-stopped
@@ -102,11 +106,15 @@ services:
       context: frontend
       dockerfile: Dockerfile
       args:
-        - PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
+        # PUBLIC_BASE_URL is baked into client-side code at build time
+        - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8000}
     env_file:
       - .env
     environment:
-      - INTERNAL_API_URL=http://backend:8000
+      # INTERNAL_API_URL: used by server-side code for Docker-internal networking
+      - INTERNAL_API_URL=${INTERNAL_API_URL:-http://backend:8000}
+      # PUBLIC_BASE_URL: used by server-side code for client-side requests
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:8000}
     depends_on:
       - backend
     restart: unless-stopped

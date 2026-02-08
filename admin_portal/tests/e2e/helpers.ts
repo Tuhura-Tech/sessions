@@ -14,7 +14,8 @@ const AUTH_SECRET =
 const ADMIN_SESSION_ALGORITHM = 'HS256';
 const ADMIN_SESSION_TTL_HOURS = 24;
 const TEST_ADMIN_EMAIL = 'test@example.com';
-export const ADMIN_API_BASE_URL = 'http://localhost:8000/api/v1';
+const BASE_HOST = process.env.CI ? '127.0.0.1' : 'localhost';
+export const ADMIN_API_BASE_URL = `http://${BASE_HOST}:8000/api/v1`;
 
 /**
  * Create a real admin session token using backend's JWT algorithm
@@ -89,7 +90,7 @@ export async function authenticateAsAdmin(page: Page, email: string = TEST_ADMIN
 		{
 			name: 'admin_session',
 			value: token,
-			url: 'http://localhost:3002',
+			url: `http://${BASE_HOST}:3002`,
 			httpOnly: false,
 			sameSite: 'Lax',
 			expires: Math.floor(Date.now() / 1000) + 86400,

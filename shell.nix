@@ -7,6 +7,7 @@ mkShell {
     pnpm
     playwright-driver.browsers
     act
+    gh
   ];
 
   NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [

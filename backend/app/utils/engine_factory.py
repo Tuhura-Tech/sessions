@@ -11,8 +11,15 @@ if TYPE_CHECKING:
 
 
 def create_sqlalchemy_engine(settings: Settings) -> "AsyncEngine":
-    url = settings.database_url.replace("postgresql://", "postgresql+psycopg://")
-    if url.startswith("postgresql+asyncpg"):
+    url = settings.database_url
+    # Normalise bare postgresql:// to use psycopg async driver
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    # Also accept the legacy asyncpg scheme and rewrite to psycopg
+    elif url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
+
+    if url.startswith("postgresql+psycopg"):
         # Build engine kwargs - pool args are invalid with NullPool
         engine_kwargs: dict[str, Any] = {
             "url": url,

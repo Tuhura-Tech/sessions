@@ -73,7 +73,7 @@ export default defineConfig({
 							...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
 							DATABASE_URL:
 								process.env.DATABASE_URL ||
-								'postgresql+asyncpg://sessions:sessions@localhost:5433/sessions',
+								'postgresql+psycopg://sessions:sessions@localhost:5433/sessions',
 						},
 					},
 				]),

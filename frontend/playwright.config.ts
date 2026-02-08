@@ -79,7 +79,7 @@ export default defineConfig({
 		// 			},
 		// 		]),
 		{
-			command: 'pnpm dev',
+			command: process.env.CI ? 'pnpm dev --host 127.0.0.1' : 'pnpm dev',
 			url: process.env.CI ? 'http://127.0.0.1:4321' : 'http://localhost:4321',
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,

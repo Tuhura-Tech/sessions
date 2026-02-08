@@ -302,6 +302,28 @@ export const adminApi = {
 		return unwrapList<StaffAvailability>(data);
 	},
 
+	getUnassignedSessions: async (): Promise<StaffSessionSummary[]> => {
+		const { data } = await api.get('/admin/sessions/unassigned');
+		return unwrapList<Record<string, unknown>>(data).map((item) => {
+			const sessionType = (item.sessionType ?? item.session_type) as string | undefined;
+			const dayOfWeek = (item.dayOfWeek ?? item.day_of_week) as number | null | undefined;
+			const startTime = (item.startTime ?? item.start_time) as string | null | undefined;
+			const endTime = (item.endTime ?? item.end_time) as string | null | undefined;
+			const locationName = (item.locationName ?? item.location_name) as string | null | undefined;
+
+			return {
+				id: item.id as string,
+				name: item.name as string,
+				year: item.year as number,
+				sessionType,
+				dayOfWeek,
+				startTime,
+				endTime,
+				locationName,
+			};
+		});
+	},
+
 	// Session Staff Assignments
 	getSessionStaff: async (sessionId: string): Promise<StaffPublic[]> => {
 		const { data } = await api.get(`/admin/sessions/${sessionId}/staff`);

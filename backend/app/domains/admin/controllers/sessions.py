@@ -26,6 +26,7 @@ from app.domains.admin.schemas.session import (
     SessionUpdate,
 )
 from app.domains.admin.schemas.signup import Signup
+from app.domains.admin.schemas.staff import StaffSessionSummary
 from app.domains.admin.services.session import SessionService
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,46 @@ class SessionController(Controller):
             LimitOffset(limit, offset)
         )
         return session_service.to_schema(results, total, schema_type=Session)
+
+    @get("/unassigned")
+    async def list_unassigned_sessions(
+        self,
+        session_service: SessionService,
+    ) -> list[StaffSessionSummary]:
+        """List all sessions that have no staff assigned.
+
+        Returns sessions that don't have any staff members assigned to them,
+        useful for identifying scheduling gaps.
+        """
+        # Subquery to find sessions with staff
+        sessions_with_staff = select(m.SessionStaff.session_id).distinct()
+
+        # Get all sessions that are NOT in the subquery
+        stmt = (
+            select(m.Session)
+            .where(m.Session.id.notin_(sessions_with_staff))
+            .options(selectinload(m.Session.location))
+            .order_by(
+                m.Session.year.desc(), m.Session.day_of_week, m.Session.start_time
+            )
+        )
+
+        result = await session_service.repository.session.execute(stmt)
+        sessions = result.scalars().unique().all()
+
+        return [
+            StaffSessionSummary(
+                id=session.id,
+                name=session.name,
+                year=session.year,
+                session_type=session.session_type,
+                day_of_week=session.day_of_week,
+                start_time=str(session.start_time) if session.start_time else None,
+                end_time=str(session.end_time) if session.end_time else None,
+                location_name=session.location.name if session.location else None,
+            )
+            for session in sessions
+        ]
 
     @get("/{session_id:uuid}")
     async def get_session(

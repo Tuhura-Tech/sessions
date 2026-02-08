@@ -24,6 +24,7 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 const StaffSchedulePage: React.FC = () => {
 	const [availability, setAvailability] = useState<StaffAvailability[]>([]);
 	const [scheduleData, setScheduleData] = useState<StaffScheduleData[]>([]);
+	const [unassignedSessions, setUnassignedSessions] = useState<StaffSessionSummary[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -38,13 +39,15 @@ const StaffSchedulePage: React.FC = () => {
 			setIsLoading(true);
 			setError(null);
 
-			// Load staff list and availability
-			const [staff, avail] = await Promise.all([
+			// Load staff list, availability, and unassigned sessions
+			const [staff, avail, unassigned] = await Promise.all([
 				adminApi.getStaff(activeOnly),
 				adminApi.getStaffAvailability(selectedYear, activeOnly),
+				adminApi.getUnassignedSessions(),
 			]);
 
 			setAvailability(avail);
+			setUnassignedSessions(unassigned);
 
 			// Load sessions for each staff member
 			const schedules = await Promise.all(
@@ -236,150 +239,219 @@ const StaffSchedulePage: React.FC = () => {
 						<div className="flex items-center justify-center py-12">
 							<div className="text-gray-500">Loading schedules...</div>
 						</div>
-					) : viewMode === 'weekly' ? (
-						<div className="space-y-6">
-							{filteredSchedules.length === 0 ? (
-								<div className="rounded-lg bg-white p-8 text-center shadow">
-									<p className="text-gray-500">No staff schedules found</p>
-								</div>
-							) : (
-								filteredSchedules.map((data) => (
-									<div key={data.staff.id} className="rounded-lg bg-white shadow">
-										<div className="border-b border-gray-200 px-6 py-4">
-											<div className="flex items-center justify-between">
-												<div>
-													<h3 className="text-lg font-semibold text-gray-900">{data.staff.name}</h3>
-													<p className="text-sm text-gray-500">{data.staff.email}</p>
+					) : (
+						<>
+							{/* Unassigned Sessions Warning */}
+							{unassignedSessions.length > 0 && (
+								<div className="rounded-lg border-2 border-orange-300 bg-orange-50 shadow-md">
+									<div className="border-b border-orange-200 px-6 py-4">
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-3">
+												<div className="rounded-full bg-orange-500 p-2">
+													<Users className="h-5 w-5 text-white" />
 												</div>
-												<div className="text-right">
-													<div className="text-2xl font-bold text-blue-600">
-														{data.sessions.length}
-													</div>
-													<div className="text-xs text-gray-500">
-														session{data.sessions.length !== 1 ? 's' : ''}
-													</div>
+												<div>
+													<h3 className="text-lg font-semibold text-orange-900">
+														Sessions Without Staff
+													</h3>
+													<p className="text-sm text-orange-700">
+														{unassignedSessions.length} session
+														{unassignedSessions.length !== 1 ? 's' : ''} need staff assignments
+													</p>
 												</div>
 											</div>
+											<div className="text-3xl font-bold text-orange-600">
+												{unassignedSessions.length}
+											</div>
 										</div>
-
-										<div className="grid grid-cols-7 gap-px bg-gray-200 p-px">
-											{data.schedule.map((day) => (
+									</div>
+									<div className="p-6">
+										<div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+											{unassignedSessions.map((session) => (
 												<div
-													key={day.dayOfWeek}
-													className={`bg-white p-3 ${
-														selectedDay === day.dayOfWeek ? 'ring-2 ring-blue-500' : ''
-													}`}
+													key={session.id}
+													className="rounded-md border border-orange-200 bg-white p-4 shadow-sm"
 												>
-													<div className="mb-2 text-xs font-semibold text-gray-600">
-														{day.dayName.slice(0, 3)}
-													</div>
-													<div className="space-y-2">
-														{day.sessions.length === 0 ? (
-															<div className="text-xs text-gray-400">—</div>
-														) : (
-															day.sessions.map((session) => (
-																<div key={session.id} className="rounded-md bg-blue-50 p-2 text-xs">
-																	<div className="mb-1 font-medium text-blue-900">
-																		{session.name}
-																	</div>
-																	{session.startTime && session.endTime && (
-																		<div className="flex items-center gap-1 text-blue-700">
-																			<Clock className="h-3 w-3" />
-																			{session.startTime} - {session.endTime}
-																		</div>
-																	)}
-																	{session.locationName && (
-																		<div className="mt-1 flex items-center gap-1 text-blue-600">
-																			<MapPin className="h-3 w-3" />
-																			<span className="truncate">{session.locationName}</span>
-																		</div>
-																	)}
-																</div>
-															))
+													<div className="mb-2 font-semibold text-orange-900">{session.name}</div>
+													<div className="space-y-1 text-sm text-orange-700">
+														<div>Year: {session.year}</div>
+														{session.dayOfWeek !== null && session.dayOfWeek !== undefined && (
+															<div className="flex items-center gap-1">
+																<Calendar className="h-3 w-3" />
+																{DAYS[session.dayOfWeek]}
+															</div>
+														)}
+														{session.startTime && session.endTime && (
+															<div className="flex items-center gap-1">
+																<Clock className="h-3 w-3" />
+																{session.startTime} - {session.endTime}
+															</div>
+														)}
+														{session.locationName && (
+															<div className="flex items-center gap-1">
+																<MapPin className="h-3 w-3" />
+																<span className="truncate">{session.locationName}</span>
+															</div>
 														)}
 													</div>
 												</div>
 											))}
 										</div>
 									</div>
-								))
+								</div>
 							)}
-						</div>
-					) : (
-						<div className="rounded-lg bg-white shadow">
-							<div className="border-b border-gray-200 px-6 py-4">
-								<h3 className="text-lg font-semibold text-gray-900">Staff Workload</h3>
-								<p className="text-sm text-gray-500">
-									Session assignments per staff member for {selectedYear}
-								</p>
-							</div>
 
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Staff
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Sessions
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Days/Week
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Workload
-											</th>
-										</tr>
-									</thead>
-									<tbody className="divide-y divide-gray-200 bg-white">
-										{workloadStats.map((stat) => {
-											const maxSessions = Math.max(
-												...workloadStats.map((s) => s.assigned_session_count),
-											);
-											const workloadPercent =
-												maxSessions > 0 ? (stat.assigned_session_count / maxSessions) * 100 : 0;
-
-											return (
-												<tr key={stat.staff_id} className="hover:bg-gray-50">
-													<td className="px-6 py-4">
-														<div className="text-sm font-medium text-gray-900">{stat.name}</div>
-														<div className="text-xs text-gray-500">{stat.email}</div>
-													</td>
-													<td className="px-6 py-4">
-														<div className="text-sm font-semibold text-gray-900">
-															{stat.assigned_session_count}
+							{viewMode === 'weekly' ? (
+								<div className="space-y-6">
+									{filteredSchedules.length === 0 ? (
+										<div className="rounded-lg bg-white p-8 text-center shadow">
+											<p className="text-gray-500">No staff schedules found</p>
+										</div>
+									) : (
+										filteredSchedules.map((data) => (
+											<div key={data.staff.id} className="rounded-lg bg-white shadow">
+												<div className="border-b border-gray-200 px-6 py-4">
+													<div className="flex items-center justify-between">
+														<div>
+															<h3 className="text-lg font-semibold text-gray-900">
+																{data.staff.name}
+															</h3>
+															<p className="text-sm text-gray-500">{data.staff.email}</p>
 														</div>
-													</td>
-													<td className="px-6 py-4">
-														<div className="text-sm text-gray-600">{stat.daysCovered}</div>
-													</td>
-													<td className="px-6 py-4">
-														<div className="flex items-center gap-2">
-															<div className="h-2 flex-1 rounded-full bg-gray-200">
-																<div
-																	className={`h-2 rounded-full ${
-																		workloadPercent > 80
-																			? 'bg-red-500'
-																			: workloadPercent > 50
-																				? 'bg-yellow-500'
-																				: 'bg-green-500'
-																	}`}
-																	style={{ width: `${workloadPercent}%` }}
-																/>
+														<div className="text-right">
+															<div className="text-2xl font-bold text-blue-600">
+																{data.sessions.length}
 															</div>
 															<div className="text-xs text-gray-500">
-																{Math.round(workloadPercent)}%
+																session{data.sessions.length !== 1 ? 's' : ''}
 															</div>
 														</div>
-													</td>
+													</div>
+												</div>
+
+												<div className="grid grid-cols-7 gap-px bg-gray-200 p-px">
+													{data.schedule.map((day) => (
+														<div
+															key={day.dayOfWeek}
+															className={`bg-white p-3 ${
+																selectedDay === day.dayOfWeek ? 'ring-2 ring-blue-500' : ''
+															}`}
+														>
+															<div className="mb-2 text-xs font-semibold text-gray-600">
+																{day.dayName.slice(0, 3)}
+															</div>
+															<div className="space-y-2">
+																{day.sessions.length === 0 ? (
+																	<div className="text-xs text-gray-400">—</div>
+																) : (
+																	day.sessions.map((session) => (
+																		<div
+																			key={session.id}
+																			className="rounded-md bg-blue-50 p-2 text-xs"
+																		>
+																			<div className="mb-1 font-medium text-blue-900">
+																				{session.name}
+																			</div>
+																			{session.startTime && session.endTime && (
+																				<div className="flex items-center gap-1 text-blue-700">
+																					<Clock className="h-3 w-3" />
+																					{session.startTime} - {session.endTime}
+																				</div>
+																			)}
+																			{session.locationName && (
+																				<div className="mt-1 flex items-center gap-1 text-blue-600">
+																					<MapPin className="h-3 w-3" />
+																					<span className="truncate">{session.locationName}</span>
+																				</div>
+																			)}
+																		</div>
+																	))
+																)}
+															</div>
+														</div>
+													))}
+												</div>
+											</div>
+										))
+									)}
+								</div>
+							) : (
+								<div className="rounded-lg bg-white shadow">
+									<div className="border-b border-gray-200 px-6 py-4">
+										<h3 className="text-lg font-semibold text-gray-900">Staff Workload</h3>
+										<p className="text-sm text-gray-500">
+											Session assignments per staff member for {selectedYear}
+										</p>
+									</div>
+
+									<div className="overflow-x-auto">
+										<table className="min-w-full divide-y divide-gray-200">
+											<thead className="bg-gray-50">
+												<tr>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+														Staff
+													</th>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+														Sessions
+													</th>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+														Days/Week
+													</th>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+														Workload
+													</th>
 												</tr>
-											);
-										})}
-									</tbody>
-								</table>
-							</div>
-						</div>
+											</thead>
+											<tbody className="divide-y divide-gray-200 bg-white">
+												{workloadStats.map((stat) => {
+													const maxSessions = Math.max(
+														...workloadStats.map((s) => s.assigned_session_count),
+													);
+													const workloadPercent =
+														maxSessions > 0 ? (stat.assigned_session_count / maxSessions) * 100 : 0;
+
+													return (
+														<tr key={stat.staff_id} className="hover:bg-gray-50">
+															<td className="px-6 py-4">
+																<div className="text-sm font-medium text-gray-900">{stat.name}</div>
+																<div className="text-xs text-gray-500">{stat.email}</div>
+															</td>
+															<td className="px-6 py-4">
+																<div className="text-sm font-semibold text-gray-900">
+																	{stat.assigned_session_count}
+																</div>
+															</td>
+															<td className="px-6 py-4">
+																<div className="text-sm text-gray-600">{stat.daysCovered}</div>
+															</td>
+															<td className="px-6 py-4">
+																<div className="flex items-center gap-2">
+																	<div className="h-2 flex-1 rounded-full bg-gray-200">
+																		<div
+																			className={`h-2 rounded-full ${
+																				workloadPercent > 80
+																					? 'bg-red-500'
+																					: workloadPercent > 50
+																						? 'bg-yellow-500'
+																						: 'bg-green-500'
+																			}`}
+																			style={{ width: `${workloadPercent}%` }}
+																		/>
+																	</div>
+																	<div className="text-xs text-gray-500">
+																		{Math.round(workloadPercent)}%
+																	</div>
+																</div>
+															</td>
+														</tr>
+													);
+												})}
+											</tbody>
+										</table>
+									</div>
+								</div>
+							)}
+						</>
 					)}
 				</Layout>
 			</div>

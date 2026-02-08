@@ -59,26 +59,25 @@ export default defineConfig({
 	],
 
 	/* Run your local dev server before starting the tests */
+	/* In CI, the backend is started by the workflow - only Playwright starts it locally */
 	webServer: [
-		{
-			command: process.env.CI
-				? 'uv run litestar run --host 127.0.0.1 --port 8000'
-				: 'uv run litestar run --host 0.0.0.0 --port 8000',
-			cwd: '../backend',
-			url: process.env.CI
-				? 'http://127.0.0.1:8000/api/v1/health'
-				: 'http://localhost:8000/api/v1/health',
-			reuseExistingServer: !process.env.CI,
-			timeout: 120 * 1000,
-			env: {
-				...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-				DATABASE_URL:
-					process.env.DATABASE_URL ||
-					(process.env.CI
-						? 'postgresql+asyncpg://postgres:postgres@localhost:5432/test_db'
-						: 'postgresql+asyncpg://sessions:sessions@localhost:5433/sessions'),
-			},
-		},
+		...(process.env.CI
+			? []
+			: [
+					{
+						command: 'uv run litestar run --host 0.0.0.0 --port 8000',
+						cwd: '../backend',
+						url: 'http://localhost:8000/api/v1/health',
+						reuseExistingServer: true,
+						timeout: 120 * 1000,
+						env: {
+							...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
+							DATABASE_URL:
+								process.env.DATABASE_URL ||
+								'postgresql+asyncpg://sessions:sessions@localhost:5433/sessions',
+						},
+					},
+				]),
 		{
 			command: 'pnpm dev',
 			url: process.env.CI ? 'http://127.0.0.1:4321' : 'http://localhost:4321',

@@ -193,11 +193,23 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
         run: uv run litestar database upgrade --no-prompt
 
-      # - name: Start backend server
-      #   working-directory: ./backend
-      #   env:
-      #     DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-      #   run: uv run litestar run --reload --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+      - name: Start backend server
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        run: uv run litestar run --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... attempt $i"
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8000/api/v1/health || (echo "Backend failed to start"; cat /tmp/backend.log; exit 1)
 
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
@@ -324,11 +336,23 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
         run: uv run litestar database upgrade --no-prompt
 
-      # - name: Start backend server
-      #   working-directory: ./backend
-      #   env:
-      #     DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-      #   run: uv run litestar run --reload --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+      - name: Start backend server
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        run: uv run litestar run --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... attempt $i"
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8000/api/v1/health || (echo "Backend failed to start"; cat /tmp/backend.log; exit 1)
 
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:

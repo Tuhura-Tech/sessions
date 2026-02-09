@@ -3,88 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in to {{ app_name }}</title>
+    <title>Sign in to Tūhura Tech</title>
     <style>
+        * { margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+            background-color: #f5f5f5;
         }
         .container {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 30px;
-            margin: 20px 0;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
         }
         .header {
+            background: linear-gradient(135deg, #6aa469 0%, #175b98 100%);
+            color: white;
+            padding: 40px 20px;
             text-align: center;
-            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 20px;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #333;
         }
         .button {
             display: inline-block;
-            background-color: #007bff;
-            color: #ffffff !important;
+            background-color: #6aa469;
+            color: white !important;
             text-decoration: none;
-            padding: 14px 28px;
+            padding: 14px 32px;
             border-radius: 6px;
             font-weight: 600;
-            margin: 20px 0;
+            margin: 25px auto;
             text-align: center;
+            font-size: 15px;
         }
         .button:hover {
-            background-color: #0056b3;
+            background-color: #5a944d;
         }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            font-size: 0.9em;
-            color: #666;
+        .button-container {
+            text-align: center;
+        }
+        .info-box {
+            background-color: #f4f7fa;
+            border-left: 4px solid #6aa469;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: #555;
         }
         .warning {
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
-            padding: 12px;
+            padding: 15px 20px;
             margin: 20px 0;
             border-radius: 4px;
+            color: #856404;
+            font-size: 14px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        .footer {
+            background-color: #f4f7fa;
+            padding: 25px 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #6aa469;
+            text-decoration: none;
+        }
+        .footer-divider {
+            color: #999;
+            margin: 0 8px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Sign in to {{ app_name }}</h1>
+            <h1>🔐 Sign In to Tūhura Tech</h1>
         </div>
-        
-        <p>Hi there,</p>
-        
-        <p>You requested to sign in to your {{ app_name }} account. Click the button below to continue:</p>
-        
-        <p style="text-align: center;">
-            <a href="{{ magic_link_url }}" class="button">Sign In to {{ app_name }}</a>
-        </p>
-        
-        <p>Or copy and paste this link into your browser:</p>
-        <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.9em;">
-            {{ magic_link_url }}
-        </p>
-        
-        <div class="warning">
-            <strong>⏰ This link expires in {{ expires_minutes }} minutes.</strong>
+
+        <div class="content">
+            <p class="greeting">Hi there,</p>
+            
+            <p>You requested to sign in to your Tūhura account. Click the button below to continue:</p>
+            
+            <div class="button-container">
+                <a href="{{ magic_link_url }}" class="button">Sign In Now</a>
+            </div>
+            
+            <p>Or copy and paste this link into your browser:</p>
+            <div class="info-box">
+                {{ magic_link_url }}
+            </div>
+            
+            <div class="warning">
+                <strong>⏰ This link expires in {{ expires_minutes }} minutes.</strong>
+            </div>
+            
+            <p>If you didn't request this link, you can safely ignore this email.</p>
+
+            <div class="divider"></div>
+
+            <p style="color: #666; font-size: 14px;">Your security is important to us. We'll never ask you to enter your password in an email.</p>
         </div>
-        
-        <p>If you didn't request this link, you can safely ignore this email.</p>
-        
+
         <div class="footer">
+            <p><strong>Tūhura Tech</strong></p>
             <p>
-                <strong>{{ app_name }}</strong><br>
                 {% if support_email %}
-                Questions? Contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+                <a href="mailto:{{ support_email }}">Contact Support</a>
+                <span class="footer-divider">|</span>
                 {% endif %}
+                <a href="https://tuhuratech.org.nz/">Visit Website</a>
             </p>
+            <p style="margin-top: 10px; color: #999;">© 2025 Tūhura Tech. All rights reserved.</p>
         </div>
     </div>
 </body>

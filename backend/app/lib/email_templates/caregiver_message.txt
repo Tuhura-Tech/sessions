@@ -1,5 +1,12 @@
+MESSAGE FROM TUHURA
+===================
+
 Hi {{ caregiver_name }},
 
 {{ message }}
 
-If you have questions, contact us at {{ support_email }}.
+---
+Tūhura
+{% if support_email %}Contact: {{ support_email }}{% endif %}
+Visit: https://tuhuratech.org.nz/
+© 2025 Tūhura Tech. All rights reserved.

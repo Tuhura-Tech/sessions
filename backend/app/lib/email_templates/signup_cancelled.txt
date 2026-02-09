@@ -1,6 +1,21 @@
+SIGNUP CANCELLED
+===============
+
 Hi {{ caregiver_name }},
 
 The signup for {{ student_name }} in {{ session_name }} has been cancelled.
 {% if cancellation_reason %}Reason: {{ cancellation_reason }}{% endif %}
 
-If you have questions, contact {{ support_email }}.
+--- What Happens Next ---
+
+• Your booking has been removed
+• Check your Tūhura account for other available sessions
+• You can re-signup for other sessions anytime
+
+Manage your account: Log in to your Tūhura account
+
+---
+Tūhura
+{% if support_email %}Contact: {{ support_email }}{% endif %}
+Visit: https://tuhuratech.org.nz/
+© 2025 Tūhura Tech. All rights reserved.

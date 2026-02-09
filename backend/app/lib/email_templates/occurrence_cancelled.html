@@ -142,9 +142,15 @@
         </div>
 
         <div class="footer">
-            <p style="margin: 0;">© 2025 Tuhura. All rights reserved.</p>
-            <div class="footer-divider">|</div>
-            <p style="margin: 0;"><a href="{{ support_email }}">Contact Support</a></p>
+            <p><strong>Tūhura Tech</strong></p>
+            <p>
+                {% if support_email %}
+                <a href="mailto:{{ support_email }}">Contact Support</a>
+                <span class="footer-divider">|</span>
+                {% endif %}
+                <a href="https://tuhuratech.org.nz/">Visit Website</a>
+            </p>
+            <p style="margin-top: 10px; color: #999;">© 2025 Tūhura Tech. All rights reserved.</p>
         </div>
     </div>
 </body>

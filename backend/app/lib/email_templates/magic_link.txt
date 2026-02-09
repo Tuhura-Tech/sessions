@@ -1,8 +1,9 @@
-Sign in to {{ app_name }}
+SIGN IN TO TUHURA
+================
 
 Hi there,
 
-You requested to sign in to your {{ app_name }} account.
+You requested to sign in to your Tūhura account.
 
 Click this link to continue:
 {{ magic_link_url }}
@@ -12,5 +13,7 @@ This link expires in {{ expires_minutes }} minutes.
 If you didn't request this link, you can safely ignore this email.
 
 ---
-{{ app_name }}
-{% if support_email %}Questions? Contact us at {{ support_email }}{% endif %}
+Tūhura
+{% if support_email %}Contact: {{ support_email }}{% endif %}
+Visit: https://tuhuratech.org.nz/
+© 2025 Tūhura Tech. All rights reserved.

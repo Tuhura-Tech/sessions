@@ -102,7 +102,7 @@ export default function Caregivers() {
 		setDeleteConfirm({
 			show: true,
 			caregiverId: caregiver.id,
-			caregiverName: caregiver.name,
+			caregiverName: caregiver.name || 'Unknown Caregiver',
 		});
 	};
 

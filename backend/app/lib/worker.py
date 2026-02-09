@@ -15,8 +15,9 @@ from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 from saq.types import Context
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db import models as m
 from app.lib.age import calculate_age, is_age_eligible
@@ -589,6 +590,10 @@ async def process_signup_approval_task(
                 "error": "Session not found",
             }
 
+        session_location = None
+        if session.location_id:
+            session_location = await db.get(m.Location, session.location_id)
+
         # Calculate student age and check eligibility
         dob = student.date_of_birth
         if dob:
@@ -639,8 +644,8 @@ async def process_signup_approval_task(
                 caregiver_name=caregiver.name,
                 student_name=student.name,
                 session_name=session.name,
-                session_venue=session.location.name if session.location else "TBD",
-                session_address=session.location.address if session.location else "TBD",
+                session_venue=session_location.name if session_location else "TBD",
+                session_address=session_location.address if session_location else "TBD",
                 status=final_status,
                 signup_id=signup_id,
                 waitlist_reason=waitlist_reason
@@ -701,8 +706,18 @@ async def bulk_promote_waitlist_task(
     failed = 0
 
     try:
-        # Get session details
-        session = await db.get(m.Session, session_id)
+        # Get session details (avoid lazy-loading in async worker)
+        result = await db.execute(
+            select(m.Session)
+            .options(
+                selectinload(m.Session.location),
+                selectinload(m.Session.signups)
+                .selectinload(m.Signup.student)
+                .selectinload(m.Student.caregiver),
+            )
+            .where(m.Session.id == session_id)
+        )
+        session = result.scalar_one_or_none()
         if not session:
             return {"success": False, "error": "Session not found"}
 

@@ -42,9 +42,9 @@ export type ApiBlock = {
 	id: string;
 	year: number;
 	name: string;
-	blockType: string;
-	startDate: string;
-	endDate: string;
+	block_type: string;
+	start_date: string;
+	end_date: string;
 };
 
 export type ApiSessionDetail = ApiSession & {

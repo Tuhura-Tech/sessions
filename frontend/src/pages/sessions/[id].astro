@@ -12,35 +12,12 @@ const allBlocks = await fetchBlocks();
 const TERM_DATES: Record<string, { name: string; start: string; end: string }> = {};
 
 for (const block of allBlocks) {
-	TERM_DATES[block.blockType] = {
+	TERM_DATES[block.block_type] = {
 		name: block.name,
-		start: block.startDate,
-		end: block.endDate,
+		start: block.start_date,
+		end: block.end_date,
 	};
 }
-
-// Determine current or next active term (keeping for future use)
-// function getCurrentOrNextTerm() {
-// 	const now = new Date();
-// 	const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-//
-// 	// Check if we're currently in any term
-// 	for (const [blockType, term] of Object.entries(TERM_DATES)) {
-// 		if (today >= term.start && today <= term.end) {
-// 			return { blockType, ...term, isCurrent: true };
-// 		}
-// 	}
-//
-// 	// Find next upcoming term
-// 	for (const [blockType, term] of Object.entries(TERM_DATES)) {
-// 		if (today < term.start) {
-// 			return { blockType, ...term, isCurrent: false };
-// 		}
-// 	}
-//
-// 	// If no upcoming term this year, return null
-// 	return null;
-// }
 
 const sessionId = Astro.params.id;
 const session = sessionId ? await fetchSessionById(sessionId) : null;
@@ -91,6 +68,7 @@ if (session?.occurrences_by_block) {
 				}
 			}
 		}
+
 	}
 }
 

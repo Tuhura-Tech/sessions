@@ -32,7 +32,6 @@ let displayTermInfo: { name: string; isCurrent: boolean; isSpecial: boolean } | 
 
 if (session?.occurrences_by_block) {
 	const isSpecialSession = session.blocks?.includes('Special');
-	console.log(session)
 
 	if (isSpecialSession) {
 		// For special sessions, show the special block
@@ -189,28 +188,6 @@ const getDayLabel = (value?: number | null): string | null =>
 												/>
 											</svg>
 											Subscribe to Calendar
-										</a>
-										<a
-											class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:outline-none"
-											href={calendarUrl}
-											download={`tuhura-${session.name.replace(/\s+/g, '-').toLowerCase()}.ics`}
-											title="Download calendar file (.ics) for one-time import"
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												class="h-5 w-5"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-												/>
-											</svg>
-											Download .ics
 										</a>
 									</div>
 								)}

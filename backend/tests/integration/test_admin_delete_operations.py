@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import models as m
+from app.db.models.attendance import AttendanceStatus
 
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
@@ -414,7 +415,17 @@ class TestAdminDeleteStudentWithCascade:
         db_session.add(student)
         await db_session.flush()
 
-        # Create location, session, and occurrence
+        # Create block, location, session, and occurrence
+        block = m.Block(
+            name="Term 1",
+            year=2026,
+            block_type="term_1",
+            start_date=date(2026, 2, 1),
+            end_date=date(2026, 4, 30),
+        )
+        db_session.add(block)
+        await db_session.flush()
+
         location = m.Location(
             name="Test Location",
             address="789 Test Rd",
@@ -443,6 +454,7 @@ class TestAdminDeleteStudentWithCascade:
 
         occurrence = m.Occurrence(
             session_id=session.id,
+            block_id=block.id,
             starts_at=datetime(2026, 2, 10, 9, 0, tzinfo=timezone.utc),
             ends_at=datetime(2026, 2, 10, 15, 0, tzinfo=timezone.utc),
             cancelled=False,
@@ -454,7 +466,7 @@ class TestAdminDeleteStudentWithCascade:
         attendance = m.AttendanceRecord(
             occurrence_id=occurrence.id,
             student_id=student.id,
-            attended=True,
+            status=AttendanceStatus.PRESENT,
         )
         db_session.add(attendance)
         await db_session.commit()

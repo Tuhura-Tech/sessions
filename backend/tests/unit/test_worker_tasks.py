@@ -202,6 +202,7 @@ class TestSendWaitlistPromotedTask:
             session_name="Coding",
             session_venue="Lab A",
             session_address="1 Tech Rd",
+            session_id="session-1",
         )
 
         assert result["success"] is True
@@ -222,6 +223,7 @@ class TestSendWaitlistPromotedTask:
             session_name="Ses",
             session_venue="V",
             session_address="A",
+            session_id="session-2",
         )
 
         assert result["success"] is False

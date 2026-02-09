@@ -174,6 +174,64 @@ class TestAdminDeleteCaregiverWithCascade:
         )
         assert result.scalar_one_or_none() is None
 
+    async def test_delete_caregiver_cascades_to_magic_links_and_sessions(
+        self, test_client, db_session: AsyncSession, admin_session_cookie: str
+    ):
+        """Test deleting a caregiver cascades to their magic links and sessions."""
+        # Create caregiver
+        caregiver = m.Caregiver(
+            email="test.auth@test.com", name="Test Auth User", email_verified=True
+        )
+        db_session.add(caregiver)
+        await db_session.flush()
+
+        # Create magic link
+        magic_link = m.CaregiverMagicLink(
+            caregiver_id=caregiver.id,
+            token_hash="test_hash_12345",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
+        db_session.add(magic_link)
+
+        # Create session
+        session = m.CaregiverSession(
+            caregiver_id=caregiver.id,
+            token_hash="session_hash_67890",
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            user_agent="Test Browser",
+            ip_address="127.0.0.1",
+        )
+        db_session.add(session)
+        await db_session.commit()
+
+        magic_link_id = magic_link.id
+        session_id = session.id
+
+        # Delete caregiver
+        response = await test_client.delete(
+            f"/api/v1/admin/caregivers/{caregiver.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_200_OK
+
+        # Verify caregiver is deleted
+        result = await db_session.execute(
+            select(m.Caregiver).where(m.Caregiver.id == caregiver.id)
+        )
+        assert result.scalar_one_or_none() is None
+
+        # Verify magic link is deleted (CASCADE)
+        result = await db_session.execute(
+            select(m.CaregiverMagicLink).where(m.CaregiverMagicLink.id == magic_link_id)
+        )
+        assert result.scalar_one_or_none() is None
+
+        # Verify session is deleted (CASCADE)
+        result = await db_session.execute(
+            select(m.CaregiverSession).where(m.CaregiverSession.id == session_id)
+        )
+        assert result.scalar_one_or_none() is None
+
     async def test_delete_nonexistent_caregiver(
         self, test_client, admin_session_cookie: str
     ):

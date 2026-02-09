@@ -40,10 +40,10 @@ class Signup(UUIDv7AuditBase):
 
     # Foreign keys
     session_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("sessions.id"), nullable=False, index=True
+        UUID(), ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True
     )
     student_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("students.id"), nullable=False
+        UUID(), ForeignKey("students.id", ondelete="CASCADE"), nullable=False
     )
 
     # Status

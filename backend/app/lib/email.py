@@ -45,6 +45,25 @@ class EmailService:
             autoescape=select_autoescape(["html", "xml"]),
         )
 
+        # Log configuration status on initialization
+        self._log_configuration()
+
+    def _log_configuration(self) -> None:
+        """Log email configuration status for debugging."""
+        if self.dry_run:
+            logger.info("Email service in DRY_RUN mode - emails will be logged, not sent")
+        else:
+            if self.api_key and self.domain:
+                logger.info(
+                    f"Email service configured for Mailgun domain: {self.domain}"
+                )
+            else:
+                logger.warning(
+                    "Email service NOT properly configured for production. "
+                    "Set EMAIL_DRY_RUN=true to run in dry-run mode, or configure: "
+                    "MAILGUN_API_KEY, MAILGUN_DOMAIN, EMAIL_FROM"
+                )
+
     async def render_template(self, template_name: str, **context) -> tuple[str, str]:
         """Render an email template.
 

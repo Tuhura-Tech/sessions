@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, delete, get, patch, post
@@ -110,9 +111,10 @@ class CaregiverController(Controller):
         caregiver_service: CaregiverService,
     ) -> None:
         """Delete a caregiver."""
-        deleted = await caregiver_service.delete(caregiver_id)
-        if not deleted:
-            raise NotFoundException(detail="Caregiver not found")
+        try:
+            await caregiver_service.delete(caregiver_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Caregiver not found") from exc
 
     @post("/{caregiver_id:uuid}/email")
     async def email_caregiver(

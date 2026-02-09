@@ -124,12 +124,43 @@ class CaregiverAuthController(Controller):
                 }
             )
 
-        # In debug mode, log the token to console instead of sending email
-        if settings.debug:
-            consume_url = (
-                f"{settings.public_base_url}/api/v1/auth/magic-link/consume"
-                f"?token={raw_token}&returnTo={return_to}"
+        # Build magic link URL
+        consume_url = (
+            f"{settings.frontend_base_url}/auth/magic-link"
+            f"?token={raw_token}&returnTo={return_to}"
+        )
+
+        # Send email with magic link
+        try:
+            from app.lib.email import email_service
+
+            html, text = await email_service.render_template(
+                "magic_link",
+                app_name="Tūhura Tech Sessions",
+                magic_link_url=consume_url,
+                expires_minutes=settings.magic_link_ttl_minutes,
+                support_email=settings.email_contact or settings.SUPPORT_EMAIL,
             )
+
+            success = await email_service.send(
+                {
+                    "to": [email],
+                    "subject": "Sign in to Tūhura Tech Sessions",
+                    "html": html,
+                    "text": text,
+                }
+            )
+
+            if success:
+                logger.info(f"Magic link email sent to {email}")
+            else:
+                logger.error(f"Failed to send magic link email to {email}")
+
+        except Exception as e:
+            logger.error(f"Error sending magic link email: {e}", exc_info=True)
+
+        # In debug mode, also log the token to console for easy testing
+        if settings.debug:
             logger.warning("=" * 80)
             logger.warning(f"🔐 DEBUG: Magic Link for {email}")
             logger.warning(f"Token: {raw_token}")

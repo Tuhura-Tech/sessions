@@ -21,7 +21,7 @@ class Student(UUIDv7AuditBase):
     __tablename__ = "students"
 
     caregiver_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("caregivers.id"), nullable=False
+        UUID(), ForeignKey("caregivers.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
@@ -41,7 +41,7 @@ class Student(UUIDv7AuditBase):
 
     # Relationships
     caregiver: Mapped[Caregiver] = relationship("Caregiver", back_populates="students")
-    signups: Mapped[list[Signup]] = relationship("Signup", back_populates="student")
+    signups: Mapped[list[Signup]] = relationship("Signup", back_populates="student", cascade="all, delete-orphan")
     attendence_records: Mapped[list[AttendanceRecord]] = relationship(
-        "AttendanceRecord", back_populates="student"
+        "AttendanceRecord", back_populates="student", cascade="all, delete-orphan"
     )

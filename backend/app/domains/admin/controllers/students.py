@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, delete, get, patch, post
@@ -104,9 +105,10 @@ class StudentController(Controller):
         student_service: StudentService,
     ) -> None:
         """Delete a student."""
-        deleted = await student_service.delete(student_id)
-        if not deleted:
-            raise NotFoundException(detail="Student not found")
+        try:
+            await student_service.delete(student_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Student not found") from exc
 
     @get("/{student_id:uuid}/signups", status_code=HTTP_200_OK)
     async def get_student_signups(

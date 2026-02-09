@@ -67,7 +67,9 @@ class TestSendSignupConfirmationTask:
 
     @patch(EMAIL_SVC)
     async def test_confirmed_status(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>confirmed</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>confirmed</html>", "confirmed text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_signup_confirmation_task(
@@ -91,11 +93,13 @@ class TestSendSignupConfirmationTask:
 
         mock_email.render_template.assert_awaited_once()
         call_args = mock_email.render_template.call_args
-        assert call_args[0][0] == "signup_confirmation_confirmed.html"
+        assert call_args[0][0] == "signup_confirmation_confirmed"
 
     @patch(EMAIL_SVC)
     async def test_waitlisted_status(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>waitlisted</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>waitlisted</html>", "waitlisted text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_signup_confirmation_task(
@@ -114,11 +118,13 @@ class TestSendSignupConfirmationTask:
 
         assert result["success"] is True
         call_args = mock_email.render_template.call_args
-        assert call_args[0][0] == "signup_confirmation_waitlisted.html"
+        assert call_args[0][0] == "signup_confirmation_waitlisted"
 
     @patch(EMAIL_SVC)
     async def test_pending_status(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>pending</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>pending</html>", "pending text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_signup_confirmation_task(
@@ -136,7 +142,7 @@ class TestSendSignupConfirmationTask:
 
         assert result["success"] is True
         call_args = mock_email.render_template.call_args
-        assert call_args[0][0] == "signup_confirmation_pending.html"
+        assert call_args[0][0] == "signup_confirmation_pending"
 
     @patch(EMAIL_SVC)
     async def test_email_send_failure(self, mock_email: MagicMock) -> None:
@@ -190,7 +196,9 @@ class TestSendWaitlistPromotedTask:
 
     @patch(EMAIL_SVC)
     async def test_success(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>promoted</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>promoted</html>", "promoted text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_waitlist_promoted_task(
@@ -240,7 +248,9 @@ class TestSendSignupCancelledTask:
 
     @patch(EMAIL_SVC)
     async def test_success_with_reason(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>cancelled</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>cancelled</html>", "cancelled text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_signup_cancelled_task(
@@ -259,7 +269,9 @@ class TestSendSignupCancelledTask:
 
     @patch(EMAIL_SVC)
     async def test_success_without_reason(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>cancelled</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>cancelled</html>", "cancelled text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_signup_cancelled_task(
@@ -346,7 +358,9 @@ class TestSendSessionCancelledTask:
     async def test_sends_to_all_confirmed_signups(
         self, mock_email: MagicMock, mock_get_db: AsyncMock
     ) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>cancelled</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>cancelled</html>", "cancelled text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         mock_db = AsyncMock()
@@ -381,7 +395,7 @@ class TestSendSessionCancelledTask:
     async def test_partial_failure(
         self, mock_email: MagicMock, mock_get_db: AsyncMock
     ) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html></html>")
+        mock_email.render_template = AsyncMock(return_value=("<html></html>", "text"))
         mock_email.send = AsyncMock(side_effect=[True, False])
 
         mock_db = AsyncMock()
@@ -439,7 +453,7 @@ class TestSendOccurrenceCancelledTask:
     async def test_sends_to_all_confirmed(
         self, mock_email: MagicMock, mock_get_db: AsyncMock
     ) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html></html>")
+        mock_email.render_template = AsyncMock(return_value=("<html></html>", "text"))
         mock_email.send = AsyncMock(return_value=True)
 
         mock_db = AsyncMock()
@@ -956,7 +970,9 @@ class TestSendSessionReminderTask:
 
     @patch(EMAIL_SVC)
     async def test_success(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>reminder</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>reminder</html>", "reminder text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_session_reminder_task(
@@ -977,7 +993,9 @@ class TestSendSessionReminderTask:
 
     @patch(EMAIL_SVC)
     async def test_1_day_reminder(self, mock_email: MagicMock) -> None:
-        mock_email.render_template = AsyncMock(return_value="<html>reminder</html>")
+        mock_email.render_template = AsyncMock(
+            return_value=("<html>reminder</html>", "reminder text")
+        )
         mock_email.send = AsyncMock(return_value=True)
 
         result = await send_session_reminder_task(

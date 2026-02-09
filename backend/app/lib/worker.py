@@ -104,8 +104,8 @@ async def send_signup_confirmation_task(
             template = "signup_confirmation_pending"
 
         # Render and send email
-        html = await email_service.render_template(
-            f"{template}.html",
+        html, text_content = await email_service.render_template(
+            f"{template}",
             caregiver_name=caregiver_name,
             student_name=student_name,
             session_name=session_name,
@@ -123,6 +123,7 @@ async def send_signup_confirmation_task(
             "to": [to_email],
             "subject": subject,
             "html": html,
+            "text": text_content,
             "from": settings.email_from,
         }
 
@@ -184,8 +185,8 @@ async def send_waitlist_promoted_task(
 
         subject = f"🎉 Spot confirmed: {student_name} - {session_name}"
 
-        html = await email_service.render_template(
-            "waitlist_promoted.html",
+        html, text_content = await email_service.render_template(
+            "waitlist_promoted",
             caregiver_name=caregiver_name,
             student_name=student_name,
             session_name=session_name,
@@ -201,6 +202,7 @@ async def send_waitlist_promoted_task(
             "to": [to_email],
             "subject": subject,
             "html": html,
+            "text": text_content,
             "from": settings.email_from,
         }
 
@@ -252,8 +254,8 @@ async def send_signup_cancelled_task(
 
         subject = f"Cancelled: {student_name} - {session_name}"
 
-        html = await email_service.render_template(
-            "signup_cancelled.html",
+        html, text_content = await email_service.render_template(
+            "signup_cancelled",
             caregiver_name=caregiver_name,
             student_name=student_name,
             session_name=session_name,
@@ -265,6 +267,7 @@ async def send_signup_cancelled_task(
             "to": [to_email],
             "subject": subject,
             "html": html,
+            "text": text_content,
             "from": settings.email_from,
         }
 
@@ -310,7 +313,7 @@ async def send_caregiver_message_task(
     try:
         from app.lib.email import email_service
 
-        html, text = await email_service.render_template(
+        html, text_content = await email_service.render_template(
             "caregiver_message",
             caregiver_name=caregiver_name,
             subject=subject,
@@ -322,7 +325,7 @@ async def send_caregiver_message_task(
             "to": [to_email],
             "subject": subject,
             "html": html,
-            "text": text,
+            "text": text_content,
             "from": settings.email_from,
         }
 
@@ -389,12 +392,11 @@ async def send_session_cancelled_task(
             try:
                 subject = f"🚫 Cancelled: {student_name} - {session_name}"
 
-                html = await email_service.render_template(
-                    "session_cancelled.html",
+                html, text_content = await email_service.render_template(
+                    "signup_cancelled",
                     caregiver_name=caregiver_name,
                     student_name=student_name,
                     session_name=session_name,
-                    cancellation_date=cancellation_date,
                     cancellation_reason=cancellation_reason,
                     support_email=settings.email_contact,
                 )
@@ -403,6 +405,7 @@ async def send_session_cancelled_task(
                     "to": [to_email],
                     "subject": subject,
                     "html": html,
+                    "text": text_content,
                     "from": settings.email_from,
                 }
 
@@ -483,8 +486,8 @@ async def send_occurrence_cancelled_task(
             try:
                 subject = f"⚠️ Session moved: {student_name} - {session_name}"
 
-                html = await email_service.render_template(
-                    "occurrence_cancelled.html",
+                html, text_content = await email_service.render_template(
+                    "occurrence_cancelled",
                     caregiver_name=caregiver_name,
                     student_name=student_name,
                     session_name=session_name,
@@ -497,6 +500,7 @@ async def send_occurrence_cancelled_task(
                     "to": [to_email],
                     "subject": subject,
                     "html": html,
+                    "text": text_content,
                     "from": settings.email_from,
                 }
 
@@ -905,29 +909,31 @@ async def send_session_reminder_task(
     try:
         from app.lib.email import email_service
 
-        context = {
-            "caregiver_name": caregiver_name,
-            "student_name": student_name,
-            "session_name": session_name,
-            "occurrence_date": occurrence_date,
-            "days_until": days_until,
-            "portal_url": settings.PORTAL_URL,
-            "support_email": f"mailto:{settings.SUPPORT_EMAIL}",
+        subject = f"Reminder: {session_name} in {days_until} day{'s' if days_until != 1 else ''}"
+
+        html, text_content = await email_service.render_template(
+            "session_reminder",
+            caregiver_name=caregiver_name,
+            student_name=student_name,
+            session_name=session_name,
+            occurrence_date=occurrence_date,
+            days_until=days_until,
+            portal_url=settings.frontend_base_url,
+            support_email=settings.email_contact,
+        )
+
+        message = {
+            "to": [to_email],
+            "subject": subject,
+            "html": html,
+            "text": text_content,
+            "from": settings.email_from,
         }
 
-        html = await email_service.render_template(
-            "session_reminder.html", context=context
-        )
-        await email_service.send(
-            {
-                "to": [to_email],
-                "subject": f"Reminder: {session_name} in {days_until} day{'s' if days_until != 1 else ''}",
-                "html": html,
-            }
-        )
+        success = await email_service.send(message)
 
         return {
-            "success": True,
+            "success": success,
             "signup_id": signup_id,
             "to_email": to_email,
             "days_until": days_until,

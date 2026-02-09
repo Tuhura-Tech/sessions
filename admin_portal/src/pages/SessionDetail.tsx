@@ -8,7 +8,7 @@ import Sidebar from '../components/Sidebar';
 import { downloadBlob } from '../lib/export';
 import { calculateAge, getStatusColor } from '../lib/utils';
 import { adminApi } from '../services/api';
-import type { Occurrence, Session, Signup, Staff, StaffPublic } from '../types';
+import type { ChildDetails, Occurrence, Session, Signup, Staff, StaffPublic } from '../types';
 
 function dayOfWeekAsString(dayIndex: number | null): string {
 	if (dayIndex === null || dayIndex === undefined) return 'Not set';
@@ -30,6 +30,11 @@ const SessionDetail: React.FC = () => {
 	);
 	const [statusFilter, setStatusFilter] = useState<string>('');
 	const [showStaffModal, setShowStaffModal] = useState(false);
+	const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+	const [allStudents, setAllStudents] = useState<ChildDetails[]>([]);
+	const [studentSearchQuery, setStudentSearchQuery] = useState('');
+	const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+	const [addingStudent, setAddingStudent] = useState(false);
 
 	const [bulkSubject, setBulkSubject] = useState('');
 	const [bulkMessage, setBulkMessage] = useState('');
@@ -38,18 +43,21 @@ const SessionDetail: React.FC = () => {
 	const loadSessionData = useCallback(async (sessionId: string) => {
 		try {
 			setIsLoading(true);
-			const [sessionData, signupsData, occurrencesData, staffData, allStaff] = await Promise.all([
-				adminApi.getSession(sessionId),
-				adminApi.getSessionSignups(sessionId),
-				adminApi.getSessionOccurrences(sessionId),
-				adminApi.getSessionStaff(sessionId),
-				adminApi.getStaff(true),
-			]);
+			const [sessionData, signupsData, occurrencesData, staffData, allStaff, students] =
+				await Promise.all([
+					adminApi.getSession(sessionId),
+					adminApi.getSessionSignups(sessionId),
+					adminApi.getSessionOccurrences(sessionId),
+					adminApi.getSessionStaff(sessionId),
+					adminApi.getStaff(true),
+					adminApi.listChildren(),
+				]);
 			setSession(sessionData);
 			setSignups(signupsData);
 			setOccurrences(occurrencesData);
 			setAssignedStaff(staffData);
 			setAvailableStaff(allStaff);
+			setAllStudents(students);
 		} catch (error) {
 			console.error('Failed to load session data:', error);
 		} finally {
@@ -136,6 +144,34 @@ const SessionDetail: React.FC = () => {
 		} catch (error) {
 			console.error('Failed to send bulk email:', error);
 			setCommsStatus('Failed to send bulk email');
+		}
+	};
+
+	const handleAddStudent = async () => {
+		if (!id || !selectedStudent) return;
+
+		try {
+			setAddingStudent(true);
+			await adminApi.createSignup({
+				sessionId: id,
+				studentId: selectedStudent,
+				status: 'confirmed',
+			});
+
+			// Reload signups
+			const updatedSignups = await adminApi.getSessionSignups(id);
+			setSignups(updatedSignups);
+
+			// Reset and close modal
+			setSelectedStudent(null);
+			setStudentSearchQuery('');
+			setShowAddStudentModal(false);
+			alert('Student added successfully');
+		} catch (error) {
+			console.error('Failed to add student:', error);
+			alert('Failed to add student to session');
+		} finally {
+			setAddingStudent(false);
 		}
 	};
 
@@ -371,14 +407,24 @@ const SessionDetail: React.FC = () => {
 										<option value="withdrawn">Withdrawn</option>
 									</select>
 								</div>
-								<button
-									type="button"
-									onClick={handleExportSignups}
-									className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-								>
-									<Download className="mr-2 h-4 w-4" />
-									Export CSV
-								</button>
+								<div className="flex gap-2">
+									<button
+										type="button"
+										onClick={() => setShowAddStudentModal(true)}
+										className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+									>
+										<UserPlus className="mr-2 h-4 w-4" />
+										Add Student
+									</button>
+									<button
+										type="button"
+										onClick={handleExportSignups}
+										className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+									>
+										<Download className="mr-2 h-4 w-4" />
+										Export CSV
+									</button>
+								</div>
 							</div>
 
 							<div className="overflow-x-auto">
@@ -701,6 +747,117 @@ const SessionDetail: React.FC = () => {
 							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 						>
 							Close
+						</button>
+					</div>
+				</div>
+			</Modal>
+
+			{/* Add Student Modal */}
+			<Modal
+				isOpen={showAddStudentModal}
+				onClose={() => {
+					setShowAddStudentModal(false);
+					setSelectedStudent(null);
+					setStudentSearchQuery('');
+				}}
+				title="Add Student to Session"
+			>
+				<div className="space-y-4">
+					<p className="text-sm text-gray-600">
+						Search and select a student to add to this session.
+					</p>
+
+					<input
+						type="text"
+						value={studentSearchQuery}
+						onChange={(e) => setStudentSearchQuery(e.target.value)}
+						placeholder="Search by student or guardian name..."
+						className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+					/>
+
+					<div className="max-h-96 space-y-2 overflow-y-auto">
+						{allStudents
+							.filter((student) => {
+								// Filter out already signed up students
+								const alreadySignedUp = signups.some(
+									(signup) => signup.student_id === student.id && signup.status !== 'withdrawn',
+								);
+								if (alreadySignedUp) return false;
+
+								// Apply search filter
+								if (!studentSearchQuery.trim()) return true;
+								const query = studentSearchQuery.toLowerCase();
+								return (
+									student.name?.toLowerCase().includes(query) ||
+									student.caregiver?.name?.toLowerCase().includes(query) ||
+									student.caregiver?.email?.toLowerCase().includes(query)
+								);
+							})
+							.map((student) => (
+								<button
+									key={student.id}
+									type="button"
+									onClick={() => setSelectedStudent(student.id)}
+									className={`w-full rounded-lg border p-4 text-left transition-colors ${
+										selectedStudent === student.id
+											? 'border-blue-500 bg-blue-50'
+											: 'border-gray-300 bg-white hover:border-blue-500 hover:bg-blue-50'
+									}`}
+								>
+									<div className="font-medium text-gray-900">{student.name}</div>
+									<div className="text-sm text-gray-600">
+										Guardian: {student.caregiver?.name || 'Unknown'}
+									</div>
+									{student.date_of_birth && (
+										<div className="text-sm text-gray-600">
+											Age: {calculateAge(student.date_of_birth) ?? '—'}
+										</div>
+									)}
+									{student.caregiver?.email && (
+										<div className="text-xs text-gray-500">{student.caregiver.email}</div>
+									)}
+								</button>
+							))}
+						{allStudents.filter((student) => {
+							const alreadySignedUp = signups.some(
+								(signup) => signup.student_id === student.id && signup.status !== 'withdrawn',
+							);
+							if (alreadySignedUp) return false;
+							if (!studentSearchQuery.trim()) return true;
+							const query = studentSearchQuery.toLowerCase();
+							return (
+								student.name?.toLowerCase().includes(query) ||
+								student.caregiver?.name?.toLowerCase().includes(query) ||
+								student.caregiver?.email?.toLowerCase().includes(query)
+							);
+						}).length === 0 && (
+							<div className="py-8 text-center text-gray-500">
+								{studentSearchQuery.trim()
+									? 'No students found matching your search.'
+									: 'All students are already signed up for this session.'}
+							</div>
+						)}
+					</div>
+
+					<div className="flex justify-end gap-2 pt-4">
+						<button
+							type="button"
+							onClick={() => {
+								setShowAddStudentModal(false);
+								setSelectedStudent(null);
+								setStudentSearchQuery('');
+							}}
+							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={handleAddStudent}
+							disabled={!selectedStudent || addingStudent}
+							className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							{addingStudent ? 'Adding...' : 'Add Student'}
 						</button>
 					</div>
 				</div>

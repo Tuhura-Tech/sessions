@@ -78,7 +78,7 @@ class TestSendSignupConfirmationTask:
             session_name="Robotics",
             session_venue="Lab",
             session_address="123 Test St",
-            status="confirmed",
+            signup_status="confirmed",
             signup_id="abc-123",
             session_id="session-123",
         )
@@ -86,7 +86,7 @@ class TestSendSignupConfirmationTask:
         assert result["success"] is True
         assert result["to_email"] == "parent@example.com"
         assert result["signup_id"] == "abc-123"
-        assert result["status"] == "confirmed"
+        assert result["signup_status"] == "confirmed"
         assert "sent_at" in result
 
         mock_email.render_template.assert_awaited_once()
@@ -106,7 +106,7 @@ class TestSendSignupConfirmationTask:
             session_name="Art",
             session_venue="Studio",
             session_address="456 Art Ln",
-            status="waitlisted",
+            signup_status="waitlisted",
             signup_id="def-456",
             waitlist_reason="session full",
             session_id="session-456",
@@ -129,7 +129,7 @@ class TestSendSignupConfirmationTask:
             session_name="Art",
             session_venue="Studio",
             session_address="456 Art Ln",
-            status="pending",
+            signup_status="pending",
             signup_id="ghi-789",
             session_id="session-789",
         )
@@ -151,7 +151,7 @@ class TestSendSignupConfirmationTask:
             session_name="Art",
             session_venue="Studio",
             session_address="456 Art Ln",
-            status="confirmed",
+            signup_status="confirmed",
             signup_id="fail-1",
             session_id="session-fail",
         )
@@ -170,7 +170,7 @@ class TestSendSignupConfirmationTask:
             session_name="Ses",
             session_venue="V",
             session_address="A",
-            status="confirmed",
+            signup_status="confirmed",
             signup_id="err-1",
             session_id="session-err",
         )
@@ -778,8 +778,10 @@ class TestBulkPromoteWaitlistTask:
 
     @patch(DB_SESSION)
     async def test_session_not_found(self, mock_get_db: AsyncMock) -> None:
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none = MagicMock(return_value=None)
         mock_db = AsyncMock()
-        mock_db.get = AsyncMock(return_value=None)
+        mock_db.execute = AsyncMock(return_value=mock_result)
         mock_get_db.return_value = mock_db
 
         result = await bulk_promote_waitlist_task(
@@ -800,8 +802,10 @@ class TestBulkPromoteWaitlistTask:
         confirmed_2.status = "confirmed"
         mock_session.signups = [confirmed_1, confirmed_2]
 
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none = MagicMock(return_value=mock_session)
         mock_db = AsyncMock()
-        mock_db.get = AsyncMock(return_value=mock_session)
+        mock_db.execute = AsyncMock(return_value=mock_result)
         mock_get_db.return_value = mock_db
 
         result = await bulk_promote_waitlist_task(
@@ -848,8 +852,10 @@ class TestBulkPromoteWaitlistTask:
 
         mock_session.signups = [confirmed, waitlisted_1, waitlisted_2]
 
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none = MagicMock(return_value=mock_session)
         mock_db = AsyncMock()
-        mock_db.get = AsyncMock(return_value=mock_session)
+        mock_db.execute = AsyncMock(return_value=mock_result)
         mock_get_db.return_value = mock_db
 
         queue_mock = AsyncMock()

@@ -337,7 +337,7 @@ async def _queue_confirmation_email(
             session_name=session.name,
             session_venue=session_location,
             session_address=session_address,
-            status=status,
+            signup_status=status,
             signup_id=str(signup_id),
             session_id=str(session.id),
             waitlist_reason=waitlist_reason,

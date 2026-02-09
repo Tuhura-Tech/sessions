@@ -226,7 +226,7 @@ class TestAdminSignupController:
 
         assert queue.calls
         assert queue.calls[0][0] == "send_signup_confirmation_task"
-        assert queue.calls[0][1]["status"] == "waitlisted"
+        assert queue.calls[0][1]["signup_status"] == "waitlisted"
 
     async def test_update_signup_status_clears_withdrawn_at(
         self, monkeypatch: pytest.MonkeyPatch

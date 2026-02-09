@@ -171,7 +171,7 @@ class SignupController(Controller):
                         session_address=session.location.address
                         if session.location
                         else "",
-                        status="waitlisted",
+                        signup_status="waitlisted",
                         waitlist_reason=data.reason,
                         session_id=str(session.id),
                     )

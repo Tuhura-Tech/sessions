@@ -65,7 +65,7 @@ async def send_signup_confirmation_task(
     session_name: str,
     session_venue: str,
     session_address: str,
-    status: str,
+    signup_status: str,
     signup_id: str,
     session_id: str,
     waitlist_reason: str | None = None,
@@ -80,7 +80,7 @@ async def send_signup_confirmation_task(
         session_name: Name of the session
         session_venue: Venue name
         session_address: Venue address
-        status: Signup status (confirmed/waitlisted/pending)
+        signup_status: Signup status (confirmed/waitlisted/pending)
         signup_id: ID of the signup record
         waitlist_reason: Reason why student is on waitlist (if applicable)
 
@@ -92,11 +92,11 @@ async def send_signup_confirmation_task(
     try:
         from app.lib.email import email_service
 
-        # Compose email content based on status
-        if status == "confirmed":
+        # Compose email content based on signup_status
+        if signup_status == "confirmed":
             subject = f"✓ Confirmed: {student_name} - {session_name}"
             template = "signup_confirmation_confirmed"
-        elif status == "waitlisted":
+        elif signup_status == "waitlisted":
             subject = f"📋 Waitlisted: {student_name} - {session_name}"
             template = "signup_confirmation_waitlisted"
         else:
@@ -111,7 +111,7 @@ async def send_signup_confirmation_task(
             session_name=session_name,
             session_venue=session_venue,
             session_address=session_address,
-            status=status,
+            status=signup_status,
             waitlist_reason=waitlist_reason,
             support_email=settings.email_contact,
             session_id=session_id,
@@ -133,7 +133,7 @@ async def send_signup_confirmation_task(
             "success": success,
             "to_email": to_email,
             "signup_id": signup_id,
-            "status": status,
+            "signup_status": signup_status,
             "sent_at": datetime.now(tz).isoformat(),
         }
     except Exception as e:
@@ -646,8 +646,9 @@ async def process_signup_approval_task(
                 session_name=session.name,
                 session_venue=session_location.name if session_location else "TBD",
                 session_address=session_location.address if session_location else "TBD",
-                status=final_status,
+                signup_status=final_status,
                 signup_id=signup_id,
+                session_id=session_id,
                 waitlist_reason=waitlist_reason
                 if final_status == "waitlisted"
                 else None,

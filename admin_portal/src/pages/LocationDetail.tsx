@@ -9,7 +9,7 @@ import type { Session, SessionLocation } from '../types';
 function dayOfWeekAsString(dayIndex: number | null): string {
 	if (dayIndex === null || dayIndex === undefined) return '';
 	return (
-		['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex] || ''
+		['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayIndex] || ''
 	);
 }
 

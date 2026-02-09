@@ -117,7 +117,7 @@ const EditSession: React.FC = () => {
 		}
 	};
 
-	const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+	const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 	if (isLoading) {
 		return (

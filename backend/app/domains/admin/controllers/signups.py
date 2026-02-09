@@ -138,6 +138,7 @@ class SignupController(Controller):
                         session_address=session.location.address
                         if session.location
                         else "",
+                        session_id=str(session.id),
                     )
                     logger.info(
                         f"Queued waitlist promotion email for signup {signup_id}"
@@ -172,6 +173,7 @@ class SignupController(Controller):
                         else "",
                         status="waitlisted",
                         waitlist_reason=data.reason,
+                        session_id=str(session.id),
                     )
                     logger.info(
                         f"Queued waitlist demotion email for signup {signup_id}"

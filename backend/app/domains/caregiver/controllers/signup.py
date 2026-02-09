@@ -339,6 +339,7 @@ async def _queue_confirmation_email(
             session_address=session_address,
             status=status,
             signup_id=str(signup_id),
+            session_id=str(session.id),
             waitlist_reason=waitlist_reason,
         )
         logger.info(f"Queued {status} confirmation email for signup {signup_id}")

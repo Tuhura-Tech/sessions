@@ -410,7 +410,7 @@ Built with modern, industry-standard technologies:
 For questions and support:
 - Open an issue on [GitHub Issues](https://github.com/Tuhura-Tech/sessions/issues)
 - Check [Discussions](https://github.com/Tuhura-Tech/sessions/discussions) for Q&A
-- Email: support@tuhura.co.nz
+- Email: contact@tuhuratech.org.nz
 
 ---
 

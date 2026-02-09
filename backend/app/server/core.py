@@ -44,6 +44,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             StaffController,
         )
         from app.domains.caregiver.controllers import (
+            CalendarController,
+            LegacyCalendarRedirectController,
             CaregiverAuthController,
             CaregiverController,
             CaregiverSignupController,
@@ -116,6 +118,8 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             HealthController,
             PublicBlockController,
             PublicSessionController,
+            CalendarController,
+            LegacyCalendarRedirectController,
             CaregiverAuthController,
             CaregiverController,
             CaregiverSignupController,

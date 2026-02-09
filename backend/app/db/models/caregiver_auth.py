@@ -20,7 +20,10 @@ class CaregiverMagicLink(UUIDv7AuditBase):
     __tablename__ = "caregiver_magic_links"
 
     caregiver_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("caregivers.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(),
+        ForeignKey("caregivers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     token_hash: Mapped[str] = mapped_column(
         String(64), nullable=False, unique=True, index=True
@@ -41,7 +44,10 @@ class CaregiverSession(UUIDv7AuditBase):
     __tablename__ = "caregiver_sessions"
 
     caregiver_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(), ForeignKey("caregivers.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(),
+        ForeignKey("caregivers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     token_hash: Mapped[str] = mapped_column(
         String(64), nullable=False, unique=True, index=True

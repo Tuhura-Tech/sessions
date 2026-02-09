@@ -29,5 +29,8 @@ class Caregiver(UUIDv7AuditBase):
 
     # Relationships
     students: Mapped[list[Student]] = relationship(
-        "Student", back_populates="caregiver", lazy="selectin", cascade="all, delete-orphan"
+        "Student",
+        back_populates="caregiver",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )

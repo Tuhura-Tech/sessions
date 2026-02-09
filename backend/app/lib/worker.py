@@ -57,6 +57,7 @@ async def send_signup_confirmation_task(
     session_address: str,
     status: str,
     signup_id: str,
+    session_id: str,
     waitlist_reason: str | None = None,
 ) -> dict[str, Any]:
     """Send signup confirmation email when a student signs up for a session.
@@ -103,6 +104,9 @@ async def send_signup_confirmation_task(
             status=status,
             waitlist_reason=waitlist_reason,
             support_email=settings.email_contact,
+            session_id=session_id,
+            api_base_url=settings.public_base_url,
+            portal_url=settings.frontend_base_url,
         )
 
         message = {
@@ -142,6 +146,7 @@ async def send_waitlist_promoted_task(
     session_name: str,
     session_venue: str,
     session_address: str,
+    session_id: str,
 ) -> dict[str, Any]:
     """Send email when a student is promoted from waitlist to confirmed.
 
@@ -177,6 +182,9 @@ async def send_waitlist_promoted_task(
             session_venue=session_venue,
             session_address=session_address,
             support_email=settings.email_contact,
+            session_id=session_id,
+            api_base_url=settings.public_base_url,
+            portal_url=settings.frontend_base_url,
         )
 
         message = {

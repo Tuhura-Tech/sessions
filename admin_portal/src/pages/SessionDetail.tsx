@@ -29,6 +29,7 @@ const SessionDetail: React.FC = () => {
 		'signups',
 	);
 	const [statusFilter, setStatusFilter] = useState<string>('');
+	const [blockFilter, setBlockFilter] = useState<string>('');
 	const [showStaffModal, setShowStaffModal] = useState(false);
 	const [showAddStudentModal, setShowAddStudentModal] = useState(false);
 	const [allStudents, setAllStudents] = useState<ChildDetails[]>([]);
@@ -67,9 +68,15 @@ const SessionDetail: React.FC = () => {
 
 	useEffect(() => {
 		if (id) {
+			setBlockFilter('');
 			loadSessionData(id);
 		}
 	}, [id, loadSessionData]);
+
+	const filteredOccurrences = occurrences
+		.filter((occurrence) => !blockFilter || occurrence.block_name === blockFilter)
+		.slice()
+		.sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
 	const handleStatusChange = async (signupId: string, newStatus: string) => {
 		try {
@@ -518,79 +525,113 @@ const SessionDetail: React.FC = () => {
 					{activeTab === 'occurrences' && (
 						<div className="rounded-lg bg-white shadow">
 							<div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-								<h2 className="text-lg font-semibold text-gray-900">Occurrences</h2>
+								<div>
+									<h2 className="text-lg font-semibold text-gray-900">Occurrences</h2>
+									<p className="text-sm text-gray-500">
+										Showing {filteredOccurrences.length} of {occurrences.length} occurrence(s)
+									</p>
+								</div>
+								<div>
+									<label className="flex items-center gap-2">
+										<span className="text-sm text-gray-700">Filter by term:</span>
+										<select
+											value={blockFilter}
+											onChange={(e) => setBlockFilter(e.target.value)}
+											className="rounded-md border border-gray-300 py-1 pr-8 pl-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+										>
+											<option value="">All terms</option>
+											{Array.from(new Set(occurrences.map((o) => o.block_name).filter(Boolean)))
+												.sort()
+												.map((blockName) => (
+													<option key={blockName} value={blockName || ''}>
+														{blockName}
+													</option>
+												))}
+										</select>
+									</label>
+								</div>
 							</div>
-
-							<div className="overflow-x-auto">
-								<table className="min-w-full divide-y divide-gray-200">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Date
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Status
-											</th>
-											<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-												Actions
-											</th>
-										</tr>
-									</thead>
-									<tbody className="divide-y divide-gray-200 bg-white">
-										{occurrences.map((occurrence) => (
-											<tr key={occurrence.id}>
-												<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-													{new Date(occurrence.starts_at).toLocaleDateString('en-NZ', {
-														day: '2-digit',
-														month: '2-digit',
-														year: 'numeric',
-													})}
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap">
-													{occurrence.cancelled ? (
-														<span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs leading-5 font-semibold text-red-800">
-															Cancelled
-														</span>
-													) : (
-														<span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs leading-5 font-semibold text-green-800">
-															Active
-														</span>
-													)}
-												</td>
-												<td className="px-6 py-4 text-sm whitespace-nowrap">
-													<button
-														type="button"
-														onClick={() => navigate(`/attendance/${occurrence.id}`)}
-														className="mr-4 text-blue-600 hover:text-blue-900"
-													>
-														Attendance
-													</button>
-													{occurrence.cancelled ? (
-														<button
-															type="button"
-															onClick={() => handleReinstateOccurrence(occurrence.id)}
-															className="text-green-600 hover:text-green-900"
-														>
-															Reinstate
-														</button>
-													) : (
-														<button
-															type="button"
-															onClick={() => handleCancelOccurrence(occurrence.id)}
-															className="text-red-600 hover:text-red-900"
-														>
-															Cancel
-														</button>
-													)}
-												</td>
+							{filteredOccurrences.length > 0 ? (
+								<div className="overflow-x-auto">
+									<table className="min-w-full divide-y divide-gray-200">
+										<thead className="bg-gray-50">
+											<tr>
+												<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+													Date
+												</th>
+												<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+													Term/Block
+												</th>
+												<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+													Status
+												</th>
+												<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+													Actions
+												</th>
 											</tr>
-										))}
-									</tbody>
-								</table>
-								{occurrences.length === 0 && (
-									<div className="py-12 text-center text-gray-500">No occurrences available.</div>
-								)}
-							</div>
+										</thead>
+										<tbody className="divide-y divide-gray-200 bg-white">
+											{filteredOccurrences.map((occurrence) => (
+												<tr key={occurrence.id}>
+													<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+														{new Date(occurrence.starts_at).toLocaleDateString('en-NZ', {
+															day: '2-digit',
+															month: '2-digit',
+															year: 'numeric',
+														})}
+													</td>
+													<td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+														{occurrence.block_name || '—'}
+													</td>
+													<td className="px-6 py-4 whitespace-nowrap">
+														{occurrence.cancelled ? (
+															<span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs leading-5 font-semibold text-red-800">
+																Cancelled
+															</span>
+														) : (
+															<span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs leading-5 font-semibold text-green-800">
+																Active
+															</span>
+														)}
+													</td>
+													<td className="px-6 py-4 text-sm whitespace-nowrap">
+														<button
+															type="button"
+															onClick={() => navigate(`/attendance/${occurrence.id}`)}
+															className="mr-4 text-blue-600 hover:text-blue-900"
+														>
+															Attendance
+														</button>
+														{occurrence.cancelled ? (
+															<button
+																type="button"
+																onClick={() => handleReinstateOccurrence(occurrence.id)}
+																className="text-green-600 hover:text-green-900"
+															>
+																Reinstate
+															</button>
+														) : (
+															<button
+																type="button"
+																onClick={() => handleCancelOccurrence(occurrence.id)}
+																className="text-red-600 hover:text-red-900"
+															>
+																Cancel
+															</button>
+														)}
+													</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							) : (
+								<div className="py-12 text-center text-gray-500">
+									{blockFilter
+										? `No occurrences found for "${blockFilter}".`
+										: 'No occurrences available.'}
+								</div>
+							)}
 						</div>
 					)}
 

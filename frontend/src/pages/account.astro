@@ -449,9 +449,7 @@ const profileIncomplete = !user.name || !user.phone;
 		try {
 			await logout();
 			window.location.href = '/';
-		} catch (error) {
-			console.error('Logout failed:', error);
-		}
+		} catch (error) {}
 	});
 
 	// Add child modal

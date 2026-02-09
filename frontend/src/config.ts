@@ -49,7 +49,6 @@ export function getClientApiBaseUrl(): string {
 	}
 
 	// Fallback - should not reach here if Layout.astro properly sets global
-	console.warn('[Tuhura] API Base URL not found in global, using default');
 	return DEFAULT_API_URL;
 }
 

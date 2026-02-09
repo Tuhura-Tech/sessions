@@ -9,4 +9,10 @@ Session details:
 {% if session_address %}
 - Address: {{ session_address }}{% endif %}
 
+--- Add to Your Calendar ---
+Subscribe to this session's calendar to get automatic updates:
+{{ api_base_url | replace('https://', 'webcal://') | replace('http://', 'webcal://') }}/api/v1/calendar/session/{{ session_id }}
+
+Copy and paste this link into your calendar app (Google Calendar, Apple Calendar, Outlook, etc.) to subscribe.
+
 If you have questions, contact {{ support_email }}.

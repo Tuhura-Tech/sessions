@@ -80,6 +80,7 @@ class TestSendSignupConfirmationTask:
             session_address="123 Test St",
             status="confirmed",
             signup_id="abc-123",
+            session_id="session-123",
         )
 
         assert result["success"] is True
@@ -108,6 +109,7 @@ class TestSendSignupConfirmationTask:
             status="waitlisted",
             signup_id="def-456",
             waitlist_reason="session full",
+            session_id="session-456",
         )
 
         assert result["success"] is True
@@ -129,6 +131,7 @@ class TestSendSignupConfirmationTask:
             session_address="456 Art Ln",
             status="pending",
             signup_id="ghi-789",
+            session_id="session-789",
         )
 
         assert result["success"] is True
@@ -150,6 +153,7 @@ class TestSendSignupConfirmationTask:
             session_address="456 Art Ln",
             status="confirmed",
             signup_id="fail-1",
+            session_id="session-fail",
         )
 
         assert result["success"] is False
@@ -168,6 +172,7 @@ class TestSendSignupConfirmationTask:
             session_address="A",
             status="confirmed",
             signup_id="err-1",
+            session_id="session-err",
         )
 
         assert result["success"] is False

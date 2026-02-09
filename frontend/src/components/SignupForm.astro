@@ -149,7 +149,6 @@ const apiBaseUrl = getServerApiExternalBaseUrl();
 
 			try {
 				const url = `${apiBaseUrl}/api/v1/signups/${sessionId}`;
-				console.log('Signup URL:', url);
 				const res = await fetch(url, {
 					method: 'POST',
 					credentials: 'include',
@@ -157,18 +156,15 @@ const apiBaseUrl = getServerApiExternalBaseUrl();
 					body: JSON.stringify({ studentId: childId }),
 				});
 
-				console.log('Signup response status:', res.status);
 				if (!res.ok) {
 					const data = await res.json().catch(() => ({}));
 					const message = data.detail || `Error ${res.status}`;
 					throw new Error(message);
 				}
 
-				console.log('Signup successful, redirecting to donate');
 				// Success! Redirect to donate page
 				window.location.href = '/donate?from=signup';
 			} catch (error) {
-				console.error('Signup error:', error);
 				const message =
 					error instanceof Error ? error.message : 'Failed to complete signup. Please try again.';
 				errorText.textContent = message;

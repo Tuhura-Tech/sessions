@@ -96,7 +96,9 @@ class TestAdminDeleteCaregiverWithCascade:
         """Test deleting a caregiver cascades to students and their signups."""
         # Create caregiver
         caregiver = m.Caregiver(
-            email="parent.signup@test.com", name="Parent with Signups", email_verified=True
+            email="parent.signup@test.com",
+            name="Parent with Signups",
+            email_verified=True,
         )
         db_session.add(caregiver)
         await db_session.flush()

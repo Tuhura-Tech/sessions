@@ -37,6 +37,7 @@ class FakeLocation:
 @dataclass
 class FakeSession:
     name: str
+    id: str = "session-123"
     venue: str | None = None
     address: str | None = None
     location: FakeLocation | None = None

@@ -51,7 +51,9 @@ class EmailService:
     def _log_configuration(self) -> None:
         """Log email configuration status for debugging."""
         if self.dry_run:
-            logger.info("Email service in DRY_RUN mode - emails will be logged, not sent")
+            logger.info(
+                "Email service in DRY_RUN mode - emails will be logged, not sent"
+            )
         else:
             if self.api_key and self.domain:
                 logger.info(

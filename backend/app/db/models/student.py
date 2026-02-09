@@ -41,7 +41,9 @@ class Student(UUIDv7AuditBase):
 
     # Relationships
     caregiver: Mapped[Caregiver] = relationship("Caregiver", back_populates="students")
-    signups: Mapped[list[Signup]] = relationship("Signup", back_populates="student", cascade="all, delete-orphan")
+    signups: Mapped[list[Signup]] = relationship(
+        "Signup", back_populates="student", cascade="all, delete-orphan"
+    )
     attendence_records: Mapped[list[AttendanceRecord]] = relationship(
         "AttendanceRecord", back_populates="student", cascade="all, delete-orphan"
     )

@@ -1,5 +1,6 @@
 ---
 import SessionsMap from '@components/Map.astro';
+import { getServerApiExternalBaseUrl } from '../../config';
 import Layout from '../../layouts/Layout.astro';
 import { fetchBlocks, fetchSessionById } from '../../lib/api';
 
@@ -31,6 +32,7 @@ let displayTermInfo: { name: string; isCurrent: boolean; isSpecial: boolean } | 
 
 if (session?.occurrences_by_block) {
 	const isSpecialSession = session.blocks?.includes('Special');
+	console.log(session)
 
 	if (isSpecialSession) {
 		// For special sessions, show the special block
@@ -68,9 +70,12 @@ if (session?.occurrences_by_block) {
 				}
 			}
 		}
-
 	}
 }
+
+const apiBaseUrl = getServerApiExternalBaseUrl().replace(/\/+$/, '');
+const calendarUrl = session?.id ? `${apiBaseUrl}/api/v1/calendar/session/${session.id}` : null;
+const calendarWebcalUrl = calendarUrl ? calendarUrl.replace(/^https?/, 'webcal') : null;
 
 function formatOccurrenceRange(startsAt: string, endsAt: string): string {
 	// Parse ISO datetime without timezone conversion (assume NZST)
@@ -162,6 +167,53 @@ const getDayLabel = (value?: number | null): string | null =>
 								<a class="btn btn-secondary" href="/#sessions">
 									Back to sessions
 								</a>
+								{calendarWebcalUrl && calendarUrl && (
+									<div class="flex flex-wrap gap-3">
+										<a
+											class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:outline-none"
+											href={calendarWebcalUrl}
+											title="Subscribe to calendar - Add this session to your calendar app for automatic updates"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-5 w-5"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+												/>
+											</svg>
+											Subscribe to Calendar
+										</a>
+										<a
+											class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:outline-none"
+											href={calendarUrl}
+											download={`tuhura-${session.name.replace(/\s+/g, '-').toLowerCase()}.ics`}
+											title="Download calendar file (.ics) for one-time import"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-5 w-5"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+												/>
+											</svg>
+											Download .ics
+										</a>
+									</div>
+								)}
 							</div>
 						) : null
 					}
@@ -194,7 +246,6 @@ const getDayLabel = (value?: number | null): string | null =>
 											<ul class="mt-2 space-y-1 text-sm text-gray-700">
 												{displayOccurrences
 													.filter((o) => !o.cancelled)
-													.slice(0, 10)
 													.map((o) => (
 														<li class="flex gap-2">
 															<span class="mt-1.75 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300" />

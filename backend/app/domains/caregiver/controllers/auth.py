@@ -124,9 +124,9 @@ class CaregiverAuthController(Controller):
                 }
             )
 
-        # Build magic link URL
+        # Build magic link URL (points to API consume endpoint)
         consume_url = (
-            f"{settings.frontend_base_url}/auth/magic-link"
+            f"{settings.public_base_url}/api/v1/auth/magic-link/consume"
             f"?token={raw_token}&returnTo={return_to}"
         )
 

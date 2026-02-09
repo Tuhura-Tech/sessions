@@ -23,7 +23,7 @@ from app.lib.age import calculate_age, is_age_eligible
 from app.lib.settings import settings
 
 if TYPE_CHECKING:
-    pass
+    from saq import Queue
 
 logger = logging.getLogger(__name__)
 tz = ZoneInfo("Pacific/Auckland")
@@ -39,6 +39,15 @@ async def _get_db_session() -> AsyncSession:
 
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
     return session_maker()
+
+
+async def _get_task_queue(ctx: Context) -> "Queue":
+    queue = ctx.get("queue")
+    if queue is None:
+        from app.lib.deps import get_task_queue
+
+        queue = await get_task_queue()
+    return queue
 
 
 # ============================================================================
@@ -623,7 +632,8 @@ async def process_signup_approval_task(
 
         # Queue appropriate notification email
         if caregiver and caregiver.email:
-            await ctx["queue"].enqueue(
+            queue = await _get_task_queue(ctx)
+            await queue.enqueue(
                 "send_signup_confirmation_task",
                 to_email=caregiver.email,
                 caregiver_name=caregiver.name,
@@ -722,7 +732,8 @@ async def bulk_promote_waitlist_task(
                 # Queue promotion email
                 caregiver = signup.student.caregiver
                 if caregiver and caregiver.email:
-                    await ctx["queue"].enqueue(
+                    queue = await _get_task_queue(ctx)
+                    await queue.enqueue(
                         "send_waitlist_promoted_task",
                         signup_id=str(signup.id),
                         to_email=caregiver.email,
@@ -807,7 +818,8 @@ async def bulk_withdraw_signups_task(
 
                     # Queue cancellation email
                     if to_email:
-                        await ctx["queue"].enqueue(
+                        queue = await _get_task_queue(ctx)
+                        await queue.enqueue(
                             "send_signup_cancelled_task",
                             signup_id=str(signup_id),
                             to_email=to_email,

@@ -137,8 +137,8 @@ class AttendanceController(Controller):
 
         # Get valid signups for validation
         signups = await signup_service.list(
-            session_id=occurrence.session_id,
-            status=["confirmed", "waitlisted"],
+            m.Signup.session_id == occurrence.session_id,
+            m.Signup.status.in_(["confirmed", "waitlisted"]),
         )
         valid_student_ids = {signup.student_id for signup in signups}
 
@@ -147,7 +147,7 @@ class AttendanceController(Controller):
             if item.student_id not in valid_student_ids:
                 # Try to find the student's actual signup to provide better error message
                 all_signups = await signup_service.list(
-                    session_id=occurrence.session_id,
+                    m.Signup.session_id == occurrence.session_id,
                 )
                 student_signup = next(
                     (s for s in all_signups if s.student_id == item.student_id), None

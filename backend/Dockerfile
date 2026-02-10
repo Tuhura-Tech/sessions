@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 # =============================================================================
 # Distroless Production Python Container
 # =============================================================================
@@ -28,7 +28,7 @@
 ARG PYTHON_VERSION=3.13
 ARG DEBIAN_VERSION=bookworm
 ARG BUILDER_IMAGE=docker.io/python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
-ARG RUN_IMAGE=gcr.io/distroless/cc-debian12:nonroot
+ARG RUN_IMAGE=gcr.io/distroless/cc-debian12:nonroot@sha256:1460b2049b1d605cba0b45c73d5e3971dcce300cfd3b95acfe22b2f34e1f5d88
 
 # =============================================================================
 # Stage 1: Python Base
@@ -48,7 +48,7 @@ RUN apt-get update \
 # Install uv (fast Python package installer)
 # Pin to specific version for reproducible builds
 # For SHA256 pinning: COPY --from=ghcr.io/astral-sh/uv@sha256:<digest> /uv /uvx /bin/
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest@sha256:452e02b117acd2d4eb3ba81a607bed9733b101b6c49492e352b1973463389012 /uv /uvx /bin/
 
 # =============================================================================
 # Stage 2: Builder

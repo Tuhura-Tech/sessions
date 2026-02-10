@@ -145,11 +145,24 @@ class AttendanceController(Controller):
         # Validate all students belong to session and have active signups
         for item in data:
             if item.student_id not in valid_student_ids:
-                raise ValidationException(
-                    detail=f"Student {item.student_id} is not actively "
-                    "signed up for this session. "
-                    "Status must be 'confirmed' or 'waitlisted'."
+                # Try to find the student's actual signup to provide better error message
+                all_signups = await signup_service.list(
+                    session_id=occurrence.session_id,
                 )
+                student_signup = next(
+                    (s for s in all_signups if s.student_id == item.student_id), None
+                )
+                
+                if student_signup:
+                    raise ValidationException(
+                        detail=f"Student {item.student_id} has signup status "
+                        f"'{student_signup.status}' but attendance can only be marked "
+                        "for students with status 'confirmed' or 'waitlisted'."
+                    )
+                else:
+                    raise ValidationException(
+                        detail=f"Student {item.student_id} is not signed up for this session."
+                    )
 
         # Use transaction for atomicity
         async with attendance_service.repository.session.begin_nested():

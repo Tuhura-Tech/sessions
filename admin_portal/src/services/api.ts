@@ -220,8 +220,8 @@ export const adminApi = {
 
 	markAttendance: async (
 		occurrenceId: string,
-		attendance: AttendanceUpsert,
-	): Promise<AttendanceRecord> => {
+		attendance: AttendanceUpsert[],
+	): Promise<AttendanceRecord[]> => {
 		const { data } = await api.post(`/admin/occurrences/${occurrenceId}/attendance`, attendance);
 		return data;
 	},

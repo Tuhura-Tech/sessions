@@ -55,9 +55,9 @@ const AttendanceRollPage: React.FC = () => {
 		try {
 			setIsSaving(true);
 
-			for (const [, attendance] of changes) {
-				await adminApi.markAttendance(occurrenceId, attendance);
-			}
+			// Send all attendance changes in a single API call
+			const attendanceArray = Array.from(changes.values());
+			await adminApi.markAttendance(occurrenceId, attendanceArray);
 
 			setChanges(new Map());
 			await loadRoll(occurrenceId);

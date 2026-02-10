@@ -55,3 +55,28 @@ class TestAdminAttendanceSaveEndpoint:
         )
         # May be 400 or 404 depending on validation
         assert response.status_code in [HTTP_404_NOT_FOUND, 400]
+    async def test_save_attendance_expects_array(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test that attendance endpoint expects an array, not a single object."""
+        # Send single object instead of array - should fail with validation error
+        response = await client.post(
+            "/api/v1/admin/occurrences/550e8400-e29b-41d4-a716-446655440000/attendance",
+            cookies={"admin_session": admin_session_cookie},
+            json={"student_id": "550e8400-e29b-41d4-a716-446655440000", "status": "present"},
+        )
+        # Should fail with 400 validation error (expects array)
+        assert response.status_code == 400
+        assert "array" in response.text.lower() or "validation" in response.text.lower()
+
+    async def test_save_attendance_with_empty_array(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test that attendance endpoint rejects empty arrays."""
+        response = await client.post(
+            "/api/v1/admin/occurrences/550e8400-e29b-41d4-a716-446655440000/attendance",
+            cookies={"admin_session": admin_session_cookie},
+            json=[],  # Empty array should be rejected
+        )
+        # Should fail with validation error
+        assert response.status_code in [400, 404]  # 404 for invalid occurrence, 400 for empty data

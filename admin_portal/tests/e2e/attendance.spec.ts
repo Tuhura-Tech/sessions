@@ -223,14 +223,75 @@ test.describe('Attendance Tracking', () => {
 			await expect(spinner).toBeHidden();
 		}
 
-		// Try to mark attendance and save
-		const saveButton = page.locator('button:has-text("Save"), button:has-text("Submit")');
-
-		const hasEmptyState = (await page.locator('text=No students enrolled').count()) > 0;
-		if (!hasEmptyState && (await saveButton.count()) > 0) {
-			await saveButton.first().click();
-			await page.waitForLoadState('networkidle');
+		const rowCount = await page.locator('table tbody tr').count();
+		if (rowCount === 0) {
+			test.skip(true, 'No students enrolled to test attendance marking');
 		}
+
+		// Mark attendance for first student
+		const presentButton = page.locator('button:has-text("Present")').first();
+		await presentButton.scrollIntoViewIfNeeded();
+		await presentButton.click({ force: true });
+
+		// Verify save button appears after making changes
+		const saveButton = page.locator('button:has-text("Save"), button:has-text("Submit")');
+		await expect(saveButton.first()).toBeVisible();
+
+		// Click save and wait for API call
+		await saveButton.first().click();
+		await page.waitForLoadState('networkidle');
+
+		// Verify success (alert or success message)
+		page.once('dialog', async (dialog) => {
+			expect(dialog.message()).toContain('success');
+			await dialog.accept();
+		});
+	});
+
+	test('should mark attendance for multiple students', async ({ page }) => {
+		const occurrenceId = await getFirstOccurrenceId(page);
+		if (!occurrenceId) {
+			test.skip(true, 'No occurrences available for attendance roll');
+		}
+
+		await navigateTo(page, `/attendance/${occurrenceId}`);
+		await waitForAuthReady(page);
+		await waitForApiCalls(page);
+		const spinner = page.locator('.animate-spin');
+		if ((await spinner.count()) > 0) {
+			await expect(spinner).toBeHidden();
+		}
+
+		const rowCount = await page.locator('table tbody tr').count();
+		if (rowCount < 2) {
+			test.skip(true, 'Need at least 2 students to test multiple attendance marking');
+		}
+
+		// Mark attendance for first two students with different statuses
+		const presentButtons = page.locator('button:has-text("Present")');
+		const absentButtons = page.locator('button:has-text("Absent")');
+
+		// Mark first student as present
+		await presentButtons.first().scrollIntoViewIfNeeded();
+		await presentButtons.first().click({ force: true });
+
+		// Mark second student as absent
+		await absentButtons.nth(1).scrollIntoViewIfNeeded();
+		await absentButtons.nth(1).click({ force: true });
+
+		// Verify save button appears
+		const saveButton = page.locator('button:has-text("Save"), button:has-text("Submit")');
+		await expect(saveButton.first()).toBeVisible();
+
+		// Setup dialog handler before clicking save
+		page.once('dialog', async (dialog) => {
+			expect(dialog.message()).toContain('success');
+			await dialog.accept();
+		});
+
+		// Click save and wait for API call
+		await saveButton.first().click();
+		await page.waitForTimeout(1000); // Wait for API call to complete
 	});
 
 	test('should export attendance data', async ({ page }) => {

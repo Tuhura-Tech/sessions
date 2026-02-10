@@ -297,6 +297,62 @@ class TestAttendanceController:
         assert results[0].student_id == student.id
         assert results[0].status == "present"
 
+    async def test_upsert_attendance_multiple_students(self) -> None:
+        """Test upserting attendance for multiple students in a single batch."""
+        controller = make_attendance_controller()
+        occurrence = FakeOccurrence(
+            id=uuid4(),
+            session_id=uuid4(),
+            starts_at=datetime.now(UTC),
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+            cancelled=False,
+        )
+        occurrence_service = DummyOccurrenceService(occurrence)
+
+        # Create multiple students with signups
+        caregiver = FakeCaregiver(name="Caregiver A")
+        student1 = FakeStudent(id=uuid4(), name="Student A", caregiver=caregiver)
+        student2 = FakeStudent(id=uuid4(), name="Student B", caregiver=caregiver)
+        student3 = FakeStudent(id=uuid4(), name="Student C", caregiver=caregiver)
+        
+        signup1 = FakeSignup(id=uuid4(), student_id=student1.id, student=student1)
+        signup2 = FakeSignup(id=uuid4(), student_id=student2.id, student=student2)
+        signup3 = FakeSignup(id=uuid4(), student_id=student3.id, student=student3)
+        signup_service = DummySignupService([signup1, signup2, signup3])
+        attendance_service = DummyAttendanceService([])
+
+        # Upsert attendance for all three students with different statuses
+        results = await AttendanceController.upsert_attendance.fn(
+            controller,
+            occurrence_id=occurrence.id,
+            data=[
+                AttendanceUpsert(student_id=student1.id, status="present", reason=None),
+                AttendanceUpsert(student_id=student2.id, status="absent_known", reason="Sick"),
+                AttendanceUpsert(student_id=student3.id, status="absent_unknown", reason=None),
+            ],
+            occurrence_service=occurrence_service,
+            attendance_service=attendance_service,
+            signup_service=signup_service,
+        )
+
+        # Verify all three records were created
+        assert len(results) == 3
+        
+        # Check first student (present)
+        assert results[0].student_id == student1.id
+        assert results[0].status == "present"
+        assert results[0].reason is None
+        
+        # Check second student (absent with reason)
+        assert results[1].student_id == student2.id
+        assert results[1].status == "absent_known"
+        assert results[1].reason == "Sick"
+        
+        # Check third student (absent unknown)
+        assert results[2].student_id == student3.id
+        assert results[2].status == "absent_unknown"
+        assert results[2].reason is None
+
     async def test_get_attendance_history(self) -> None:
         controller = make_attendance_controller()
         record1 = FakeAttendanceRecord(

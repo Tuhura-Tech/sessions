@@ -23,7 +23,7 @@ COPY . .
 RUN VITE_PUBLIC_BASE_URL=${PUBLIC_BASE_URL} pnpm run build
 
 # Production image
-FROM docker.io/library/nginx:alpine@sha256:b0f7830b6bfaa1258f45d94c240ab668ced1b3651c8a222aefe6683447c7bf55
+FROM docker.io/library/nginx:alpine@sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba
 
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html

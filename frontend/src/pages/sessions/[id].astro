@@ -108,7 +108,9 @@ function formatOccurrenceRange(startsAt: string, endsAt: string): string {
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const getDayLabel = (value?: number | null): string | null =>
-	value === 0 || (typeof value === 'number' && value >= 0 && value <= 6) ? DAY_LABELS[value] : null;
+	value === 0 || (typeof value === 'number' && value >= 0 && value <= 6)
+		? (DAY_LABELS[value] as string)
+		: null;
 ---
 
 <Layout>

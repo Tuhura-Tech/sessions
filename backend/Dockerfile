@@ -48,7 +48,7 @@ RUN apt-get update \
 # Install uv (fast Python package installer)
 # Pin to specific version for reproducible builds
 # For SHA256 pinning: COPY --from=ghcr.io/astral-sh/uv@sha256:<digest> /uv /uvx /bin/
-COPY --from=ghcr.io/astral-sh/uv:latest@sha256:452e02b117acd2d4eb3ba81a607bed9733b101b6c49492e352b1973463389012 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest@sha256:94a23af2d50e97b87b522d3cea24aaf8a1faedec1344c952767434f69585cbf9 /uv /uvx /bin/
 
 # =============================================================================
 # Stage 2: Builder

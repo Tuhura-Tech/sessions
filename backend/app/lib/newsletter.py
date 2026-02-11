@@ -88,7 +88,10 @@ async def notify_newsletter_subscription(
             logger.info(f"Successfully subscribed {email} to newsletter")
         except httpx.HTTPStatusError as e:
             # 422 means member already exists, which is fine
-            if e.response.status_code == 422 and "already exists" in e.response.text.lower():
+            if (
+                e.response.status_code == 422
+                and "already exists" in e.response.text.lower()
+            ):
                 logger.info(f"Member {email} already subscribed to newsletter")
             else:
                 logger.error(

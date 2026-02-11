@@ -152,7 +152,7 @@ class AttendanceController(Controller):
                 student_signup = next(
                     (s for s in all_signups if s.student_id == item.student_id), None
                 )
-                
+
                 if student_signup:
                     raise ValidationException(
                         detail=f"Student {item.student_id} has signup status "

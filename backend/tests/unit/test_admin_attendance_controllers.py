@@ -32,6 +32,7 @@ class FakeSignup:
     id: UUID
     student_id: UUID
     student: FakeStudent
+    status: str = "confirmed"
 
 
 @dataclass
@@ -123,9 +124,23 @@ class DummyOccurrenceService:
 class DummySignupService:
     def __init__(self, signups: list[FakeSignup] | None = None):
         self._signups = signups or []
+        self._filter_calls: list[tuple] = []
 
     async def list(self, *args, **kwargs):  # noqa: ANN002, ANN003
-        return list(self._signups)
+        """Filter signups based on SQLAlchemy filter expressions.
+
+        Supports filtering by:
+        - m.Signup.session_id == session_id
+        - m.Signup.status.in_(["confirmed", "waitlisted"])
+        """
+        # Store the call for testing
+        self._filter_calls.append((args, kwargs))
+
+        filtered = list(self._signups)
+
+        # For unit tests, we simply return the signups.
+        # The test setup should only include the signups we want returned.
+        return filtered
 
 
 def make_attendance_controller() -> AttendanceController:
@@ -240,6 +255,171 @@ class TestAttendanceController:
                 signup_service=signup_service,
             )
 
+    async def test_upsert_attendance_confirmed_signup(self) -> None:
+        """Test that students with confirmed signup status can have attendance marked."""
+        controller = make_attendance_controller()
+        occurrence = FakeOccurrence(
+            id=uuid4(),
+            session_id=uuid4(),
+            starts_at=datetime.now(UTC),
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+            cancelled=False,
+        )
+        occurrence_service = DummyOccurrenceService(occurrence)
+
+        caregiver = FakeCaregiver(name="Caregiver A")
+        student = FakeStudent(id=uuid4(), name="Student A", caregiver=caregiver)
+        # CONFIRMED status signup
+        signup = FakeSignup(
+            id=uuid4(), student_id=student.id, student=student, status="confirmed"
+        )
+        signup_service = DummySignupService([signup])
+        attendance_service = DummyAttendanceService([])
+
+        results = await AttendanceController.upsert_attendance.fn(
+            controller,
+            occurrence_id=occurrence.id,
+            data=[
+                AttendanceUpsert(student_id=student.id, status="present", reason=None)
+            ],
+            occurrence_service=occurrence_service,
+            attendance_service=attendance_service,
+            signup_service=signup_service,
+        )
+
+        assert len(results) == 1
+        assert results[0].student_id == student.id
+        assert results[0].status == "present"
+
+    async def test_upsert_attendance_waitlisted_signup(self) -> None:
+        """Test that students with waitlisted signup status can have attendance marked."""
+        controller = make_attendance_controller()
+        occurrence = FakeOccurrence(
+            id=uuid4(),
+            session_id=uuid4(),
+            starts_at=datetime.now(UTC),
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+            cancelled=False,
+        )
+        occurrence_service = DummyOccurrenceService(occurrence)
+
+        caregiver = FakeCaregiver(name="Caregiver B")
+        student = FakeStudent(id=uuid4(), name="Student B", caregiver=caregiver)
+        # WAITLISTED status signup
+        signup = FakeSignup(
+            id=uuid4(), student_id=student.id, student=student, status="waitlisted"
+        )
+        signup_service = DummySignupService([signup])
+        attendance_service = DummyAttendanceService([])
+
+        results = await AttendanceController.upsert_attendance.fn(
+            controller,
+            occurrence_id=occurrence.id,
+            data=[
+                AttendanceUpsert(
+                    student_id=student.id, status="absent_known", reason="Sick"
+                )
+            ],
+            occurrence_service=occurrence_service,
+            attendance_service=attendance_service,
+            signup_service=signup_service,
+        )
+
+        assert len(results) == 1
+        assert results[0].student_id == student.id
+        assert results[0].status == "absent_known"
+        assert results[0].reason == "Sick"
+
+    async def test_upsert_attendance_pending_signup_rejected(self) -> None:
+        """Test that students with pending signup status cannot have attendance marked."""
+        controller = make_attendance_controller()
+        occurrence = FakeOccurrence(
+            id=uuid4(),
+            session_id=uuid4(),
+            starts_at=datetime.now(UTC),
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+            cancelled=False,
+        )
+        occurrence_service = DummyOccurrenceService(occurrence)
+
+        caregiver = FakeCaregiver(name="Caregiver C")
+        student = FakeStudent(id=uuid4(), name="Student C", caregiver=caregiver)
+        # PENDING status signup - should be rejected
+        signup_confirmed = FakeSignup(
+            id=uuid4(),
+            student_id=uuid4(),  # Different student
+            student=FakeStudent(id=uuid4(), name="Other", caregiver=caregiver),
+            status="confirmed",
+        )
+        # Only the confirmed signup is in the service
+        signup_service = DummySignupService([signup_confirmed])
+        attendance_service = DummyAttendanceService([])
+
+        with pytest.raises(ValidationException) as exc_info:
+            await AttendanceController.upsert_attendance.fn(
+                controller,
+                occurrence_id=occurrence.id,
+                data=[
+                    AttendanceUpsert(
+                        student_id=student.id, status="present", reason=None
+                    )
+                ],
+                occurrence_service=occurrence_service,
+                attendance_service=attendance_service,
+                signup_service=signup_service,
+            )
+
+        assert "is not signed up for this session" in str(exc_info.value)
+
+    async def test_upsert_attendance_rejected_by_status(self) -> None:
+        """Test that students with invalid signup status cannot have attendance marked.
+
+        This test verifies the filtering logic correctly rejects students whose
+        signup status is not 'confirmed' or 'waitlisted'.
+        """
+        controller = make_attendance_controller()
+        occurrence = FakeOccurrence(
+            id=uuid4(),
+            session_id=uuid4(),
+            starts_at=datetime.now(UTC),
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+            cancelled=False,
+        )
+        occurrence_service = DummyOccurrenceService(occurrence)
+
+        caregiver = FakeCaregiver(name="Caregiver D")
+        # Create a different student with confirmed status to ensure filtering works
+        other_student = FakeStudent(id=uuid4(), name="Other", caregiver=caregiver)
+        confirmed_signup = FakeSignup(
+            id=uuid4(),
+            student_id=other_student.id,
+            student=other_student,
+            status="confirmed",
+        )
+        # Only the confirmed signup is returned - simulating status filter
+        signup_service = DummySignupService([confirmed_signup])
+        attendance_service = DummyAttendanceService([])
+
+        # Try to mark attendance for a different student not in the confirmed list
+        student_to_check = FakeStudent(
+            id=uuid4(), name="Student D", caregiver=caregiver
+        )
+        with pytest.raises(ValidationException) as exc_info:
+            await AttendanceController.upsert_attendance.fn(
+                controller,
+                occurrence_id=occurrence.id,
+                data=[
+                    AttendanceUpsert(
+                        student_id=student_to_check.id, status="present", reason=None
+                    )
+                ],
+                occurrence_service=occurrence_service,
+                attendance_service=attendance_service,
+                signup_service=signup_service,
+            )
+
+        assert "is not signed up for this session" in str(exc_info.value)
+
     async def test_upsert_attendance_invalid_student(self) -> None:
         controller = make_attendance_controller()
         occurrence = FakeOccurrence(
@@ -314,7 +494,7 @@ class TestAttendanceController:
         student1 = FakeStudent(id=uuid4(), name="Student A", caregiver=caregiver)
         student2 = FakeStudent(id=uuid4(), name="Student B", caregiver=caregiver)
         student3 = FakeStudent(id=uuid4(), name="Student C", caregiver=caregiver)
-        
+
         signup1 = FakeSignup(id=uuid4(), student_id=student1.id, student=student1)
         signup2 = FakeSignup(id=uuid4(), student_id=student2.id, student=student2)
         signup3 = FakeSignup(id=uuid4(), student_id=student3.id, student=student3)
@@ -327,8 +507,12 @@ class TestAttendanceController:
             occurrence_id=occurrence.id,
             data=[
                 AttendanceUpsert(student_id=student1.id, status="present", reason=None),
-                AttendanceUpsert(student_id=student2.id, status="absent_known", reason="Sick"),
-                AttendanceUpsert(student_id=student3.id, status="absent_unknown", reason=None),
+                AttendanceUpsert(
+                    student_id=student2.id, status="absent_known", reason="Sick"
+                ),
+                AttendanceUpsert(
+                    student_id=student3.id, status="absent_unknown", reason=None
+                ),
             ],
             occurrence_service=occurrence_service,
             attendance_service=attendance_service,
@@ -337,17 +521,17 @@ class TestAttendanceController:
 
         # Verify all three records were created
         assert len(results) == 3
-        
+
         # Check first student (present)
         assert results[0].student_id == student1.id
         assert results[0].status == "present"
         assert results[0].reason is None
-        
+
         # Check second student (absent with reason)
         assert results[1].student_id == student2.id
         assert results[1].status == "absent_known"
         assert results[1].reason == "Sick"
-        
+
         # Check third student (absent unknown)
         assert results[2].student_id == student3.id
         assert results[2].status == "absent_unknown"

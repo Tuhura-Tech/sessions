@@ -37,7 +37,8 @@ class SignupController(Controller):
         # enable to filter by region, by min age, by max_age and by location
         load=[
             selectinload(m.Signup.student).options(
-                joinedload(m.Student.signups, innerjoin=True)
+                joinedload(m.Student.caregiver),
+                joinedload(m.Student.signups, innerjoin=True),
             ),
         ],
     )
@@ -62,6 +63,8 @@ class SignupController(Controller):
     ) -> Signup:
         """Create a new signup."""
         signup = await signup_service.create(data)
+        # Refresh to load relationships (student, student.caregiver)
+        signup = await signup_service.get(signup.id)
         return signup_service.to_schema(signup, schema_type=Signup)
 
     @patch("/{signup_id:uuid}")

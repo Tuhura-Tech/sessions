@@ -5,10 +5,14 @@ Provides shared fixtures for all endpoint tests including database sessions,
 test client, and helper functions for common test operations.
 """
 
+from datetime import date
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
+    Block,
     Caregiver,
+    ExclusionDate,
     Session as SessionModel,
     Location,
     Student,
@@ -67,6 +71,35 @@ async def create_test_location(
     return location
 
 
+async def create_test_block(
+    db_session: AsyncSession,
+    year: int = 2026,
+    name: str = "Test Block",
+    block_type: str = "special",
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> Block:
+    """Create a test block."""
+    from datetime import date
+
+    if not start_date:
+        start_date = date(year, 1, 15)
+    if not end_date:
+        end_date = date(year, 3, 31)
+
+    block = Block(
+        year=year,
+        name=name,
+        block_type=block_type,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    db_session.add(block)
+    await db_session.flush()
+    await db_session.commit()
+    return block
+
+
 async def create_test_session(
     db_session: AsyncSession,
     location: Location | None = None,
@@ -77,12 +110,17 @@ async def create_test_session(
     session_type: str = "special",
     day_of_week: int | None = None,
     archived: bool = False,
+    capacity: int = 20,
 ) -> SessionModel:
     """Create a test session."""
     from datetime import time
 
     if not location:
         location = await create_test_location(db_session)
+
+    # Default day_of_week to 1 (Monday) if not provided
+    if day_of_week is None:
+        day_of_week = 1
 
     session = SessionModel(
         name=name,
@@ -94,7 +132,7 @@ async def create_test_session(
         day_of_week=day_of_week,
         start_time=time(9, 0),
         end_time=time(17, 0),
-        capacity=20,
+        capacity=capacity,
         archived=archived,
     )
     db_session.add(session)
@@ -123,6 +161,30 @@ async def create_test_student(
     await db_session.flush()
     await db_session.commit()
     return student
+
+
+async def create_test_exclusion_date(
+    db_session: AsyncSession,
+    date: date | None = None,
+    year: int | None = None,
+    reason: str = "Holiday",
+) -> ExclusionDate:
+    """Create a test exclusion date."""
+    from datetime import date as date_type
+    from app.db import models as m
+
+    if not date:
+        date = date_type(2025, 12, 25)
+
+    # Extract year from date if not provided
+    if not year:
+        year = date.year
+
+    exclusion = m.ExclusionDate(year=year, date=date, reason=reason)
+    db_session.add(exclusion)
+    await db_session.flush()
+    await db_session.commit()
+    return exclusion
 
 
 async def create_magic_link(

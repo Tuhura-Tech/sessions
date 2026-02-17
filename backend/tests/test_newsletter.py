@@ -10,23 +10,34 @@ pytestmark = pytest.mark.anyio
 async def test_newsletter_subscription_with_configured_webhook(mocker):
     """Test newsletter subscription when webhook is configured."""
 
-    # Mock httpx.AsyncClient
+    # Mock httpx response
     mock_response = MagicMock()
     mock_response.status_code = 201
     mock_response.json.return_value = {"members": [{"id": "123"}]}
+    mock_response.raise_for_status = MagicMock()
 
-    mock_client = AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mock_client.__aexit__.return_value = None
-    mock_client.post = AsyncMock(return_value=mock_response)
+    # Create mock for the post method
+    mock_post = AsyncMock(return_value=mock_response)
 
-    mocker.patch("httpx.AsyncClient", return_value=mock_client)
+    # Create mock client instance to be returned from __aenter__
+    mock_client = MagicMock()
+    mock_client.post = mock_post
+
+    # Mock the AsyncClient as a callable that returns an async context manager
+    mock_async_client_class = MagicMock()
+    mock_async_client_context = MagicMock()
+    mock_async_client_context.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_async_client_context.__aexit__ = AsyncMock(return_value=None)
+    mock_async_client_class.return_value = mock_async_client_context
+
+    mocker.patch("httpx.AsyncClient", mock_async_client_class)
     mocker.patch(
         "app.lib.newsletter.settings.newsletter_webhook_url",
         "https://example.com/ghost/api/admin",
     )
     mocker.patch(
-        "app.lib.newsletter.settings.newsletter_webhook_token", "test_token_123"
+        "app.lib.newsletter.settings.newsletter_webhook_token",
+        "test_key_id:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",  # noqa: E501
     )
     mocker.patch("app.lib.newsletter.settings.email_dry_run", False)
 
@@ -35,9 +46,9 @@ async def test_newsletter_subscription_with_configured_webhook(mocker):
     # Call newsletter subscription
     await notify_newsletter_subscription(email="test@example.com", name="Test User")
 
-    # Verify HTTP client was called
-    assert mock_client.post.called
-    call_args = mock_client.post.call_args
+    # Verify HTTP POST was called
+    assert mock_post.called, "Expected mock_post to be called"
+    call_args = mock_post.call_args
 
     # Verify URL
     assert "ghost/api/admin/members" in call_args[0][0]

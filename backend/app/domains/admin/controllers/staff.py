@@ -4,6 +4,7 @@ import datetime
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers
 from litestar import Controller, get, patch, post
 from litestar import delete as http_delete
@@ -71,9 +72,10 @@ class StaffController(Controller):
         staff_service: StaffService,
     ) -> Staff:
         """Get a single staff member by ID."""
-        staff = await staff_service.get(staff_id)
-        if not staff:
-            raise NotFoundException(detail="Staff not found")
+        try:
+            staff = await staff_service.get(staff_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Staff not found") from exc
         return staff_service.to_schema(staff, schema_type=Staff)
 
     @post("/")
@@ -149,9 +151,10 @@ class StaffController(Controller):
         elif "active" in staff_data and staff_data["active"]:
             staff_data["deactivated_at"] = None
 
-        staff = await staff_service.update(staff_data, staff_id)
-        if not staff:
-            raise NotFoundException(detail="Staff not found")
+        try:
+            staff = await staff_service.update(staff_data, staff_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Staff not found") from exc
 
         return staff_service.to_schema(staff, schema_type=Staff)
 

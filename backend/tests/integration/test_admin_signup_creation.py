@@ -251,10 +251,7 @@ class TestAdminSignupCreation:
         )
 
         # Should require authentication
-        assert response.status_code in (
-            status_codes.HTTP_401_UNAUTHORIZED,
-            status_codes.HTTP_403_FORBIDDEN,
-        )
+        assert response.status_code == status_codes.HTTP_401_UNAUTHORIZED
 
     async def test_create_signup_invalid_student_fails(
         self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession

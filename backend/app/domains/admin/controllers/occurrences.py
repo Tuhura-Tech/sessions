@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers
 from litestar import Controller, get, patch, post
 from litestar.exceptions import NotFoundException
@@ -39,9 +40,10 @@ class OccurrenceController(Controller):
         occurrence_service: OccurrenceService,
     ) -> Occurrence:
         """Get a single occurrence by ID."""
-        occurrence = await occurrence_service.get(occurrence_id)
-        if not occurrence:
-            raise NotFoundException(detail="Occurrence not found")
+        try:
+            occurrence = await occurrence_service.get(occurrence_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Occurrence not found") from exc
         return occurrence_service.to_schema(occurrence, schema_type=Occurrence)
 
     @patch("/{occurrence_id:uuid}")
@@ -52,11 +54,12 @@ class OccurrenceController(Controller):
         occurrence_service: OccurrenceService,
     ) -> Occurrence:
         """Update an existing occurrence."""
-        occurrence = await occurrence_service.update(
-            data.model_dump(exclude_unset=True), occurrence_id
-        )
-        if not occurrence:
-            raise NotFoundException(detail="Occurrence not found")
+        try:
+            occurrence = await occurrence_service.update(
+                data.model_dump(exclude_unset=True), occurrence_id
+            )
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Occurrence not found") from exc
         return occurrence_service.to_schema(occurrence, schema_type=Occurrence)
 
     @post("/")
@@ -91,12 +94,13 @@ class OccurrenceController(Controller):
             cancellation_reason: Optional reason for cancellation (only used if cancelled=True)
         """
         # Get the occurrence with session loaded
-        occurrence = await occurrence_service.get(
-            occurrence_id,
-            load=[selectinload(m.Occurrence.session)],
-        )
-        if not occurrence:
-            raise NotFoundException(detail="Occurrence not found")
+        try:
+            occurrence = await occurrence_service.get(
+                occurrence_id,
+                load=[selectinload(m.Occurrence.session)],
+            )
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Occurrence not found") from exc
 
         occurrence_data = {
             "cancelled": cancelled,

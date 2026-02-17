@@ -4,9 +4,12 @@ from litestar.config.cors import CORSConfig
 from litestar.openapi.config import OpenAPIConfig
 from litestar.openapi.plugins import ScalarRenderPlugin
 from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
+from litestar.repository.exceptions import RepositoryError
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 
 from app.db import models as m
 from datetime import datetime
+from app.lib.exceptions import ApplicationError, exception_to_http_response
 
 
 class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
@@ -140,5 +143,12 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         ]
 
         app_config.debug = True
+
+        # Register exception handlers
+        app_config.exception_handlers = {
+            RepositoryError: exception_to_http_response,
+            ApplicationError: exception_to_http_response,
+            AlchemyNotFoundError: exception_to_http_response,
+        }
 
         return app_config

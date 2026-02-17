@@ -1,94 +1,274 @@
 """
 Integration tests for admin caregiver management endpoints.
 
-Tests for caregiver CRUD operations in the admin panel.
+Tests for caregiver CRUD operations with proper authentication and data verification.
 """
 
 import pytest
-from litestar.status_codes import HTTP_200_OK, HTTP_404_NOT_FOUND
+from httpx import AsyncClient
+from litestar.status_codes import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_404_NOT_FOUND,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.integration.test_fixtures import create_test_caregiver
 
-
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
 
-class TestAdminCaregiverListEndpoint:
+class TestAdminCaregiverList:
     """Test admin caregiver listing endpoint."""
 
-    async def test_list_caregivers(self, test_client):
-        """Test GET /api/v1/admin/caregivers lists all caregivers."""
-        response = await test_client.get("/api/v1/admin/caregivers/")
-
-        # Expect 200, 401, or 403
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+    async def test_list_caregivers_empty(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test listing caregivers when none exist."""
+        response = await client.get(
+            "/api/v1/admin/caregivers/",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, dict)
+        # Should have items list (even if empty)
+        assert "items" in data or isinstance(data, list)
 
     async def test_list_caregivers_with_data(
-        self, test_client, db_session: AsyncSession
-    ):
-        """Test caregiver list includes created caregivers."""
-        await create_test_caregiver(db_session)
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test listing caregivers returns all created caregivers."""
+        # Create multiple caregivers
+        caregiver1 = await create_test_caregiver(
+            db_session, email="test1@example.com", name="Caregiver 1"
+        )
+        caregiver2 = await create_test_caregiver(
+            db_session, email="test2@example.com", name="Caregiver 2"
+        )
 
-        response = await test_client.get("/api/v1/admin/caregivers/")
+        response = await client.get(
+            "/api/v1/admin/caregivers/",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
 
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        # Extract items - handle both dict with "items" and direct list
+        items = data.get("items", data) if isinstance(data, dict) else data
+        assert len(items) >= 2
+
+        # Verify caregivers are in list
+        emails = [item.get("email") for item in items]
+        assert caregiver1.email in emails
+        assert caregiver2.email in emails
+
+    async def test_list_caregivers_without_auth(self, client: AsyncClient) -> None:
+        """Test listing caregivers without authentication fails."""
+        response = await client.get("/api/v1/admin/caregivers/")
+        # Should redirect or return 401/403
+        assert response.status_code in [302, 401, 403]
 
 
-@pytest.mark.integration
-class TestAdminCaregiverCreateEndpoint:
+class TestAdminCaregiverCreate:
     """Test admin caregiver creation endpoint."""
 
-    async def test_create_caregiver(self, test_client):
-        """Test POST /api/v1/admin/caregivers creates a caregiver."""
-        response = await test_client.post(
+    async def test_create_caregiver_success(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test creating a new caregiver with all required fields."""
+        response = await client.post(
+            "/api/v1/admin/caregivers/",
+            cookies={"admin_session": admin_session_cookie},
+            json={
+                "email": "newcaregiver@example.com",
+                "name": "New Caregiver",
+                "phone": "555-1234",
+                "emailVerified": True,
+            },
+        )
+
+        assert response.status_code == HTTP_201_CREATED
+        data = response.json()
+        assert data["email"] == "newcaregiver@example.com"
+        assert data["name"] == "New Caregiver"
+        assert "id" in data
+
+    async def test_create_caregiver_without_auth(self, client: AsyncClient) -> None:
+        """Test creating a caregiver without authentication fails."""
+        response = await client.post(
             "/api/v1/admin/caregivers/",
             json={
                 "email": "newcaregiver@example.com",
                 "name": "New Caregiver",
             },
         )
+        # Should redirect or return 401/403
+        assert response.status_code in [302, 401, 403]
 
-        # Expect 200/201 or auth/validation error
-        assert response.status_code in (200, 201, 400, 401, 403)
-
-
-@pytest.mark.integration
-class TestAdminCaregiverDetailEndpoint:
-    """Test admin caregiver detail endpoint."""
-
-    async def test_get_caregiver(self, test_client):
-        """Test GET /api/v1/admin/caregivers/{id} gets caregiver details."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.get(f"/api/v1/admin/caregivers/{fake_id}")
-
-        # Expect 200, 404, or auth error
-        assert response.status_code in (HTTP_200_OK, 400, 401, 403, HTTP_404_NOT_FOUND)
-
-
-@pytest.mark.integration
-class TestAdminCaregiverUpdateEndpoint:
-    """Test admin caregiver update endpoint."""
-
-    async def test_update_caregiver(self, test_client):
-        """Test PATCH /api/v1/admin/caregivers/{id} updates caregiver."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.patch(
-            f"/api/v1/admin/caregivers/{fake_id}", json={"name": "Updated Caregiver"}
+    async def test_create_caregiver_minimal(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test creating a caregiver with minimal fields succeeds."""
+        response = await client.post(
+            "/api/v1/admin/caregivers/",
+            cookies={"admin_session": admin_session_cookie},
+            json={
+                "email": "minimal@example.com",
+            },
         )
 
-        # Expect 200, 404, or auth error
-        assert response.status_code in (200, 400, 401, 403, 404)
+        assert response.status_code == HTTP_201_CREATED
+        data = response.json()
+        assert data["email"] == "minimal@example.com"
 
 
-@pytest.mark.integration
-class TestAdminCaregiverDeleteEndpoint:
-    """Test admin caregiver deletion endpoint."""
+class TestAdminCaregiverGet:
+    """Test retrieving a specific caregiver."""
 
-    async def test_delete_caregiver(self, test_client):
-        """Test DELETE /api/v1/admin/caregivers/{id} deletes caregiver."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.delete(f"/api/v1/admin/caregivers/{fake_id}")
+    async def test_get_caregiver(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test retrieving a caregiver by ID returns all fields."""
+        caregiver = await create_test_caregiver(
+            db_session, email="get@example.com", name="Test Caregiver"
+        )
 
-        # Expect 204, 404, 405, or auth error
-        assert response.status_code in (200, 204, 401, 403, 404, 405)
+        response = await client.get(
+            f"/api/v1/admin/caregivers/{caregiver.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["email"] == "get@example.com"
+        assert data["name"] == "Test Caregiver"
+        assert str(data["id"]) == str(caregiver.id)
+
+    async def test_get_nonexistent_caregiver(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test retrieving non-existent caregiver returns 404."""
+        response = await client.get(
+            "/api/v1/admin/caregivers/00000000-0000-0000-0000-000000000000",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND
+
+
+class TestAdminCaregiverUpdate:
+    """Test updating a caregiver."""
+
+    async def test_update_caregiver_name(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test updating caregiver name succeeds."""
+        caregiver = await create_test_caregiver(
+            db_session, email="update@example.com", name="Original Name"
+        )
+
+        response = await client.patch(
+            f"/api/v1/admin/caregivers/{caregiver.id}",
+            cookies={"admin_session": admin_session_cookie},
+            json={"name": "Updated Name"},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["name"] == "Updated Name"
+        assert data["email"] == "update@example.com"  # Should remain unchanged
+
+    async def test_update_caregiver_email(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test updating caregiver email succeeds."""
+        caregiver = await create_test_caregiver(
+            db_session, email="old@example.com", name="Test"
+        )
+
+        response = await client.patch(
+            f"/api/v1/admin/caregivers/{caregiver.id}",
+            cookies={"admin_session": admin_session_cookie},
+            json={"email": "new@example.com"},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["email"] == "new@example.com"
+
+    async def test_update_nonexistent_caregiver(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test updating non-existent caregiver returns 404."""
+        response = await client.patch(
+            "/api/v1/admin/caregivers/00000000-0000-0000-0000-000000000000",
+            cookies={"admin_session": admin_session_cookie},
+            json={"name": "Updated"},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND
+
+
+class TestAdminCaregiverDelete:
+    """Test deleting a caregiver."""
+
+    async def test_delete_caregiver(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test deleting a caregiver succeeds."""
+        caregiver = await create_test_caregiver(
+            db_session, email="delete@example.com", name="To Delete"
+        )
+
+        response = await client.delete(
+            f"/api/v1/admin/caregivers/{caregiver.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_200_OK
+
+        # Verify deletion
+        get_response = await client.get(
+            f"/api/v1/admin/caregivers/{caregiver.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert get_response.status_code == HTTP_404_NOT_FOUND
+
+    async def test_delete_nonexistent_caregiver(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test deleting non-existent caregiver returns 404."""
+        response = await client.delete(
+            "/api/v1/admin/caregivers/00000000-0000-0000-0000-000000000000",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND
+
+
+class TestAdminCaregiverStudents:
+    """Test listing caregiver's students."""
+
+    async def test_list_caregiver_students(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test retrieving students for a caregiver."""
+        caregiver = await create_test_caregiver(db_session, email="parent@example.com")
+
+        response = await client.get(
+            f"/api/v1/admin/caregivers/{caregiver.id}/students",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        # Should at minimum be a list or dict with items
+        assert isinstance(data, (dict, list))
+
+    async def test_list_nonexistent_caregiver_students(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test retrieving students for non-existent caregiver returns 404."""
+        response = await client.get(
+            "/api/v1/admin/caregivers/00000000-0000-0000-0000-000000000000/students",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND

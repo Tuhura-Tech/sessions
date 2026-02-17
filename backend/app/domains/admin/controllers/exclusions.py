@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from litestar import Controller, delete, get, patch, post
 from litestar.exceptions import NotFoundException
@@ -63,7 +64,10 @@ class ExclusionController(Controller):
         exclusion_id: UUID,
     ) -> ExclusionDate:
         """Get a specific exclusion date by ID."""
-        exclusion = await exclusion_service.get(exclusion_id)
+        try:
+            exclusion = await exclusion_service.get(exclusion_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Exclusion date not found")
         if not exclusion:
             raise NotFoundException(detail="Exclusion date not found")
 
@@ -79,9 +83,12 @@ class ExclusionController(Controller):
         data: ExclusionDateUpdate,
     ) -> ExclusionDate:
         """Update an existing exclusion date."""
-        exclusion = await exclusion_service.update(
-            data.model_dump(exclude_unset=True), exclusion_id
-        )
+        try:
+            exclusion = await exclusion_service.update(
+                data.model_dump(exclude_unset=True), exclusion_id
+            )
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Exclusion date not found")
         if not exclusion:
             raise NotFoundException(detail="Exclusion date not found")
         return exclusion_service.to_schema(exclusion, schema_type=ExclusionDate)
@@ -97,7 +104,7 @@ class ExclusionController(Controller):
         exclusion_id: UUID,
     ) -> None:
         """Delete an exclusion date."""
-        exclusion = await exclusion_service.get(exclusion_id)
-        if not exclusion:
-            raise NotFoundException(detail="Exclusion date not found")
-        await exclusion_service.delete(exclusion_id)
+        try:
+            await exclusion_service.delete(exclusion_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Exclusion date not found") from exc

@@ -1,82 +1,238 @@
 """
 Integration tests for admin session management endpoints.
 
-Tests for session CRUD operations in the admin panel.
+Tests for session CRUD operations with proper authentication and data verification.
 """
 
 import pytest
-from litestar.status_codes import HTTP_200_OK
+from httpx import AsyncClient
+from litestar.status_codes import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_404_NOT_FOUND,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.integration.test_fixtures import create_test_location, create_test_session
-
+from tests.integration.test_fixtures import (
+    create_test_block,
+    create_test_location,
+    create_test_session,
+)
 
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
 
-class TestAdminSessionListEndpoint:
+class TestAdminSessionList:
     """Test admin session listing endpoint."""
 
-    async def test_list_sessions(self, test_client):
-        """Test GET /api/v1/admin/sessions lists all sessions."""
-        response = await test_client.get("/api/v1/admin/sessions/")
+    async def test_list_sessions_empty(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test listing sessions when none exist."""
+        response = await client.get(
+            "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, dict)
+        assert "items" in data or isinstance(data, list)
 
-        # Expect 200, 401, or 403
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+    async def test_list_sessions_with_data(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test listing sessions returns all created sessions."""
+        location = await create_test_location(db_session, name="Test Location")
+        session1 = await create_test_session(
+            db_session, location=location, name="Session 1"
+        )
+        session2 = await create_test_session(
+            db_session, location=location, name="Session 2"
+        )
 
-    async def test_list_sessions_with_data(self, test_client, db_session: AsyncSession):
-        """Test session list includes created sessions."""
-        location = await create_test_location(db_session)
-        await create_test_session(db_session, location=location)
+        response = await client.get(
+            "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
 
-        response = await test_client.get("/api/v1/admin/sessions/")
+        items = data.get("items", data) if isinstance(data, dict) else data
+        assert len(items) >= 2
 
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        names = [item.get("name") for item in items]
+        assert session1.name in names
+        assert session2.name in names
+
+    async def test_list_sessions_without_auth(self, client: AsyncClient) -> None:
+        """Test listing sessions without authentication fails."""
+        response = await client.get("/api/v1/admin/sessions/")
+        assert response.status_code in [302, 401, 403]
 
 
-@pytest.mark.integration
-class TestAdminSessionCreateEndpoint:
+class TestAdminSessionCreate:
     """Test admin session creation endpoint."""
 
-    async def test_create_session(self, test_client, db_session: AsyncSession):
-        """Test POST /api/v1/admin/sessions creates a session."""
+    async def test_create_session_success(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test creating a new session with all required fields."""
         location = await create_test_location(db_session)
+        block = await create_test_block(db_session, year=2025, name="Block 1")
 
-        response = await test_client.post(
+        response = await client.post(
             "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
             json={
                 "name": "New Session",
-                "location_id": str(location.id),
+                "sessionType": "term",
+                "year": 2025,
+                "dayOfWeek": 1,
+                "startTime": "09:00:00",
+                "endTime": "10:00:00",
+                "ageLower": 5,
+                "ageUpper": 8,
+                "capacity": 15,
+                "locationId": str(location.id),
+                "blocks": [str(block.id)],
+                "whatToBring": "Water bottle",
+                "prerequisites": "None",
             },
         )
 
-        # Expect 200/201 or auth/validation error
-        assert response.status_code in (200, 201, 400, 401, 403)
+        assert response.status_code == HTTP_201_CREATED
+        data = response.json()
+        assert data["name"] == "New Session"
+        assert data["capacity"] == 15
+        assert data["year"] == 2025
+        assert "id" in data
+
+    async def test_create_session_without_auth(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Test creating a session without authentication fails."""
+        location = await create_test_location(db_session)
+        response = await client.post(
+            "/api/v1/admin/sessions/",
+            json={
+                "name": "New Session",
+                "locationId": str(location.id),
+            },
+        )
+        assert response.status_code in [302, 401, 403]
 
 
-@pytest.mark.integration
-class TestAdminSessionUpdateEndpoint:
-    """Test admin session update endpoint."""
+class TestAdminSessionGet:
+    """Test retrieving a specific session."""
 
-    async def test_update_session(self, test_client):
-        """Test PATCH /api/v1/admin/sessions/{id} updates session."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.patch(
-            f"/api/v1/admin/sessions/{fake_id}", json={"name": "Updated Session"}
+    async def test_get_session(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test retrieving a session by ID returns all fields."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(
+            db_session, location=location, name="Get Test Session"
         )
 
-        # Expect 200, 404, or auth error
-        assert response.status_code in (200, 400, 401, 403, 404)
+        response = await client.get(
+            f"/api/v1/admin/sessions/{session.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["name"] == "Get Test Session"
+        assert str(data["id"]) == str(session.id)
+        assert data["year"] == session.year
+        assert "capacity" in data
+
+    async def test_get_nonexistent_session(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test retrieving non-existent session returns 404."""
+        response = await client.get(
+            "/api/v1/admin/sessions/00000000-0000-0000-0000-000000000000",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND
 
 
-@pytest.mark.integration
-class TestAdminSessionDeleteEndpoint:
-    """Test admin session deletion endpoint."""
+class TestAdminSessionUpdate:
+    """Test updating a session."""
 
-    async def test_delete_session(self, test_client):
-        """Test DELETE /api/v1/admin/sessions/{id} deletes session."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.delete(f"/api/v1/admin/sessions/{fake_id}")
+    async def test_update_session_name(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test updating session name succeeds."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(
+            db_session, location=location, name="Original Name"
+        )
 
-        # Expect 204, 404, 405, or auth error
-        assert response.status_code in (200, 204, 401, 403, 404, 405)
+        response = await client.patch(
+            f"/api/v1/admin/sessions/{session.id}",
+            cookies={"admin_session": admin_session_cookie},
+            json={"name": "Updated Name"},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["name"] == "Updated Name"
+
+    async def test_update_session_capacity(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test updating session capacity succeeds."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(db_session, location=location, capacity=20)
+
+        response = await client.patch(
+            f"/api/v1/admin/sessions/{session.id}",
+            cookies={"admin_session": admin_session_cookie},
+            json={"capacity": 25},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["capacity"] == 25
+
+    async def test_update_nonexistent_session(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test updating non-existent session returns 404."""
+        response = await client.patch(
+            "/api/v1/admin/sessions/00000000-0000-0000-0000-000000000000",
+            cookies={"admin_session": admin_session_cookie},
+            json={"name": "Updated"},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND
+
+
+class TestAdminSessionOccurrences:
+    """Test session occurrences retrieval."""
+
+    async def test_list_session_occurrences(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test retrieving occurrences for a session."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(db_session, location=location)
+
+        response = await client.get(
+            f"/api/v1/admin/sessions/{session.id}/occurrences",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, (dict, list))
+
+    async def test_list_nonexistent_session_occurrences(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test retrieving occurrences for non-existent session returns 404."""
+        response = await client.get(
+            "/api/v1/admin/sessions/00000000-0000-0000-0000-000000000000/occurrences",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert response.status_code == HTTP_404_NOT_FOUND

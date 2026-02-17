@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from litestar.exceptions import NotFoundException, ValidationException
 
 from app.domains.admin.controllers.attendance import (
@@ -112,10 +113,10 @@ class DummyOccurrenceService:
         self._occurrence = occurrence
         self._occurrences: list[FakeOccurrence] = []
 
-    async def get(self, occurrence_id: UUID, *args, **kwargs) -> FakeOccurrence | None:
+    async def get(self, occurrence_id: UUID, *args, **kwargs) -> FakeOccurrence:
         if self._occurrence and self._occurrence.id == occurrence_id:
             return self._occurrence
-        return None
+        raise AlchemyNotFoundError("Occurrence not found")
 
     async def list(self, *args, **kwargs):  # noqa: ANN002, ANN003
         return list(self._occurrences)
@@ -131,15 +132,17 @@ class DummySignupService:
 
         Supports filtering by:
         - m.Signup.session_id == session_id
-        - m.Signup.status.in_(["confirmed", "waitlisted"])
+        - m.Signup.status == "confirmed"
         """
         # Store the call for testing
         self._filter_calls.append((args, kwargs))
 
         filtered = list(self._signups)
 
-        # For unit tests, we simply return the signups.
-        # The test setup should only include the signups we want returned.
+        # If status filtering is present, return only confirmed signups.
+        if len(args) >= 2:
+            return [signup for signup in filtered if signup.status == "confirmed"]
+
         return filtered
 
 
@@ -292,7 +295,7 @@ class TestAttendanceController:
         assert results[0].status == "present"
 
     async def test_upsert_attendance_waitlisted_signup(self) -> None:
-        """Test that students with waitlisted signup status can have attendance marked."""
+        """Test that waitlisted students cannot have attendance marked."""
         controller = make_attendance_controller()
         occurrence = FakeOccurrence(
             id=uuid4(),
@@ -305,30 +308,29 @@ class TestAttendanceController:
 
         caregiver = FakeCaregiver(name="Caregiver B")
         student = FakeStudent(id=uuid4(), name="Student B", caregiver=caregiver)
-        # WAITLISTED status signup
+        # WAITLISTED status signup should be rejected
         signup = FakeSignup(
             id=uuid4(), student_id=student.id, student=student, status="waitlisted"
         )
         signup_service = DummySignupService([signup])
         attendance_service = DummyAttendanceService([])
 
-        results = await AttendanceController.upsert_attendance.fn(
-            controller,
-            occurrence_id=occurrence.id,
-            data=[
-                AttendanceUpsert(
-                    student_id=student.id, status="absent_known", reason="Sick"
-                )
-            ],
-            occurrence_service=occurrence_service,
-            attendance_service=attendance_service,
-            signup_service=signup_service,
-        )
+        with pytest.raises(ValidationException) as exc_info:
+            await AttendanceController.upsert_attendance.fn(
+                controller,
+                occurrence_id=occurrence.id,
+                data=[
+                    AttendanceUpsert(
+                        student_id=student.id, status="absent_known", reason="Sick"
+                    )
+                ],
+                occurrence_service=occurrence_service,
+                attendance_service=attendance_service,
+                signup_service=signup_service,
+            )
 
-        assert len(results) == 1
-        assert results[0].student_id == student.id
-        assert results[0].status == "absent_known"
-        assert results[0].reason == "Sick"
+        assert "waitlisted" in str(exc_info.value).lower()
+        assert "confirmed" in str(exc_info.value).lower()
 
     async def test_upsert_attendance_pending_signup_rejected(self) -> None:
         """Test that students with pending signup status cannot have attendance marked."""

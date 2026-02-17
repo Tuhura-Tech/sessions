@@ -380,8 +380,8 @@ async def send_session_cancelled_task(
                 f"""
                 SELECT DISTINCT c.email, c.name, s.name
                 FROM {m.Signup.__tablename__} su
-                JOIN {m.Caregiver.__tablename__} c ON su.caregiver_id = c.id
                 JOIN {m.Student.__tablename__} s ON su.student_id = s.id
+                JOIN {m.Caregiver.__tablename__} c ON s.caregiver_id = c.id
                 WHERE su.session_id = :session_id AND su.status = 'confirmed'
                 """
             ),
@@ -474,8 +474,8 @@ async def send_occurrence_cancelled_task(
                 f"""
                 SELECT DISTINCT c.email, c.name, s.name
                 FROM {m.Signup.__tablename__} su
-                JOIN {m.Caregiver.__tablename__} c ON su.caregiver_id = c.id
                 JOIN {m.Student.__tablename__} s ON su.student_id = s.id
+                JOIN {m.Caregiver.__tablename__} c ON s.caregiver_id = c.id
                 WHERE su.session_id = :session_id AND su.status = 'confirmed'
                 """
             ),
@@ -815,13 +815,15 @@ async def bulk_withdraw_signups_task(
     try:
         # Get all non-withdrawn signups
         result = await db.execute(
-            text(f"""
+            text(
+                f"""
             SELECT su.id, c.email, c.name, s.name
             FROM {m.Signup.__tablename__} su
-            JOIN {m.Caregiver.__tablename__} c ON su.caregiver_id = c.id
             JOIN {m.Student.__tablename__} s ON su.student_id = s.id
+            JOIN {m.Caregiver.__tablename__} c ON s.caregiver_id = c.id
             WHERE su.session_id = :session_id AND su.status != 'withdrawn'
-            """),
+            """
+            ),
             {"session_id": session_id},
         )
 
@@ -1018,7 +1020,8 @@ async def process_session_reminders_task(
             if row.occurrence_rank != 1:
                 continue
 
-            occurrence_date = row.starts_at.date()
+            # Convert to NZ timezone before extracting date
+            occurrence_date = row.starts_at.astimezone(tz).date()
             days_until = (occurrence_date - today).days
 
             # Send reminders for 7 days and 1 day before

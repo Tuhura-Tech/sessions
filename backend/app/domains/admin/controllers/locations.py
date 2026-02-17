@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, get, patch, post
@@ -96,11 +97,12 @@ class LocationController(Controller):
         data: LocationUpdate,
     ) -> Location:
         """Update an existing location."""
-        loc = await location_service.update(
-            data.model_dump(exclude_unset=True), location_id
-        )
-        if not loc:
-            raise NotFoundException(detail="Location not found")
+        try:
+            loc = await location_service.update(
+                data.model_dump(exclude_unset=True), location_id
+            )
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Location not found") from exc
         return location_service.to_schema(loc, schema_type=Location)
 
     @get(
@@ -117,9 +119,10 @@ class LocationController(Controller):
     ) -> service.OffsetPagination[Session]:
         """Get all sessions for a specific location."""
         # Verify location exists
-        loc = await location_service.get(location_id)
-        if not loc:
-            raise NotFoundException(detail="Location not found")
+        try:
+            await location_service.get(location_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Location not found") from exc
 
         # Get sessions for this location
         filters = [m.Session.location_id == location_id]

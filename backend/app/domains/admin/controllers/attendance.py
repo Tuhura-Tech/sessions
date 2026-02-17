@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers
 from litestar import Controller, get, post
 from litestar.di import Provide
@@ -56,16 +57,19 @@ class AttendanceController(Controller):
         Returns all students signed up for the session with their current
         attendance status for this occurrence.
         """
-        occurrence = await occurrence_service.get(
-            occurrence_id, load=[selectinload(m.Occurrence.session)]
-        )
-        if not occurrence:
-            raise NotFoundException(detail="Occurrence not found")
+        try:
+            occurrence = await occurrence_service.get(
+                occurrence_id, load=[selectinload(m.Occurrence.session)]
+            )
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Occurrence not found") from exc
 
         # Get all data in single query with joins
+        # Only include confirmed students for attendance roll
+        # (waitlisted students cannot attend, only confirmed students can)
         signups = await signup_service.list(
             m.Signup.session_id == occurrence.session_id,
-            m.Signup.status.in_(["confirmed", "waitlisted"]),
+            m.Signup.status == "confirmed",
             load=[
                 selectinload(m.Signup.student).selectinload(m.Student.caregiver),
             ],
@@ -124,9 +128,10 @@ class AttendanceController(Controller):
             raise ValidationException(detail="Attendance data cannot be empty")
 
         # Get occurrence with validation
-        occurrence = await occurrence_service.get(occurrence_id)
-        if not occurrence:
-            raise NotFoundException(detail="Occurrence not found")
+        try:
+            occurrence = await occurrence_service.get(occurrence_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Occurrence not found") from exc
 
         # Block attendance on cancelled occurrences
         if occurrence.cancelled:
@@ -136,9 +141,10 @@ class AttendanceController(Controller):
             )
 
         # Get valid signups for validation
+        # Only confirmed students can have attendance marked (not waitlisted)
         signups = await signup_service.list(
             m.Signup.session_id == occurrence.session_id,
-            m.Signup.status.in_(["confirmed", "waitlisted"]),
+            m.Signup.status == "confirmed",
         )
         valid_student_ids = {signup.student_id for signup in signups}
 
@@ -157,7 +163,7 @@ class AttendanceController(Controller):
                     raise ValidationException(
                         detail=f"Student {item.student_id} has signup status "
                         f"'{student_signup.status}' but attendance can only be marked "
-                        "for students with status 'confirmed' or 'waitlisted'."
+                        "for students with status 'confirmed'."
                     )
                 else:
                     raise ValidationException(
@@ -384,7 +390,7 @@ class AttendanceStatsController(Controller):
 
         signups = await signup_service.list(
             session_id=session_id,
-            status=["confirmed", "waitlisted"],
+            status="confirmed",
             load=[selectinload(m.Signup.student)],
         )
 

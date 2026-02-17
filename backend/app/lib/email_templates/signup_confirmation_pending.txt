@@ -1,0 +1,36 @@
+SIGNUP PENDING REVIEW FOR {{ session_name }}
+==========================================
+
+Hi {{ caregiver_name }},
+
+Thank you for signing up {{ student_name }} for {{ session_name }}.
+
+--- Signup Status ---
+⏳ PENDING REVIEW
+
+Your signup has been received and is currently being reviewed by our team. 
+We'll confirm your place or add you to the waitlist within 24-48 hours.
+
+You'll receive another email once your signup status is updated.
+
+--- Session Details ---
+Student: {{ student_name }}
+Session: {{ session_name }}
+{% if session_venue %}Location: {{ session_venue }}{% endif %}
+{% if session_address %}Address: {{ session_address }}{% endif %}
+
+--- What Happens Next ---
+• Our team will review your signup request
+• You'll receive an email update within 24-48 hours
+• Your status will be either "confirmed" or "waitlisted"
+• You can withdraw the signup anytime from your account
+
+--- Need to Make Changes? ---
+You can withdraw this signup at any time from your account dashboard.
+
+Manage your signups: {{ portal_url }}/dashboard
+
+---
+Tūhura
+{% if support_email %}Contact: {{ support_email }}{% endif %}
+Visit: https://tuhuratech.org.nz/

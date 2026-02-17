@@ -66,7 +66,10 @@ class StudentController(Controller):
         student_service: StudentService,
     ) -> Student:
         """Get a single student by ID."""
-        student = await student_service.get(student_id)
+        try:
+            student = await student_service.get(student_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Student not found")
         if not student:
             raise NotFoundException(detail="Student not found")
         return student_service.to_schema(student, schema_type=Student)
@@ -91,9 +94,12 @@ class StudentController(Controller):
         student_service: StudentService,
     ) -> Student:
         """Update an existing student."""
-        student = await student_service.update(
-            data.model_dump(exclude_unset=True), student_id
-        )
+        try:
+            student = await student_service.update(
+                data.model_dump(exclude_unset=True), student_id
+            )
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Student not found")
         if not student:
             raise NotFoundException(detail="Student not found")
         return student_service.to_schema(student, schema_type=Student)
@@ -117,7 +123,10 @@ class StudentController(Controller):
         student_service: StudentService,
     ) -> service.OffsetPagination[Signup]:
         """Get all signup IDs for a specific student."""
-        student = await student_service.get(student_id)
+        try:
+            student = await student_service.get(student_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Student not found")
         if not student:
             raise NotFoundException(detail="Student not found")
 

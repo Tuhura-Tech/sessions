@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 from httpx import AsyncClient
-from litestar.status_codes import HTTP_200_OK, HTTP_404_NOT_FOUND
+from litestar.status_codes import (
+    HTTP_200_OK,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
+)
 
 from tests.factories import CaregiverFactory
 
@@ -17,7 +21,7 @@ class TestAdminCaregiverManagement:
     async def test_list_caregivers_requires_auth(self, client: AsyncClient) -> None:
         """Test that caregiver list requires authentication."""
         response = await client.get("/api/v1/admin/caregivers/")
-        assert response.status_code in [401, 403]
+        assert response.status_code == HTTP_401_UNAUTHORIZED
 
     async def test_list_caregivers_with_auth(
         self, admin_session_cookie: str, client: AsyncClient, db_session
@@ -47,7 +51,7 @@ class TestAdminCaregiverManagement:
         await db_session.commit()
 
         response = await client.get(f"/api/v1/admin/caregivers/{caregiver.id}")
-        assert response.status_code in [401, 403]
+        assert response.status_code == HTTP_401_UNAUTHORIZED
 
     async def test_get_caregiver_with_auth(
         self, admin_session_cookie: str, client: AsyncClient, db_session

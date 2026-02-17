@@ -7,6 +7,7 @@ from io import StringIO
 from typing import AsyncIterator
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, get, patch, post
@@ -114,7 +115,10 @@ class SessionController(Controller):
         session_service: SessionService,
     ) -> Session:
         """Get a single session by ID."""
-        session = await session_service.get(session_id)
+        try:
+            session = await session_service.get(session_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Session not found")
         if not session:
             raise NotFoundException(detail="Session not found")
         return session_service.to_schema(session, schema_type=Session)
@@ -175,9 +179,12 @@ class SessionController(Controller):
         session_service: SessionService,
     ) -> Session:
         """Update an existing session."""
-        session = await session_service.update(
-            data.model_dump(exclude_unset=True), session_id
-        )
+        try:
+            session = await session_service.update(
+                data.model_dump(exclude_unset=True), session_id
+            )
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Session not found")
         if not session:
             raise NotFoundException(detail="Session not found")
         return session_service.to_schema(session, schema_type=Session)
@@ -204,7 +211,10 @@ class SessionController(Controller):
         session_service: SessionService,
     ) -> service.OffsetPagination[Occurrence]:
         """Get occurrences for a session with eager loading to avoid N+1 queries."""
-        session = await session_service.get(session_id)
+        try:
+            session = await session_service.get(session_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Session not found")
         if not session:
             raise NotFoundException(detail="Session not found")
 

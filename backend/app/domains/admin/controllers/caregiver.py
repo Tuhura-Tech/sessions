@@ -67,7 +67,10 @@ class CaregiverController(Controller):
         caregiver_service: CaregiverService,
     ) -> Caregiver:
         """Get a single caregiver by ID."""
-        caregiver = await caregiver_service.get(caregiver_id)
+        try:
+            caregiver = await caregiver_service.get(caregiver_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Caregiver not found")
         if not caregiver:
             raise NotFoundException(detail="Caregiver not found")
         return caregiver_service.to_schema(caregiver, schema_type=Caregiver)
@@ -97,9 +100,12 @@ class CaregiverController(Controller):
         caregiver_service: CaregiverService,
     ) -> Caregiver:
         """Update an existing caregiver."""
-        caregiver = await caregiver_service.update(
-            data.model_dump(exclude_unset=True), caregiver_id
-        )
+        try:
+            caregiver = await caregiver_service.update(
+                data.model_dump(exclude_unset=True), caregiver_id
+            )
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Caregiver not found")
         if not caregiver:
             raise NotFoundException(detail="Caregiver not found")
         return caregiver_service.to_schema(caregiver, schema_type=Caregiver)
@@ -124,7 +130,10 @@ class CaregiverController(Controller):
         caregiver_service: CaregiverService,
     ) -> dict:
         """Send an email message to a caregiver."""
-        caregiver = await caregiver_service.get(caregiver_id)
+        try:
+            caregiver = await caregiver_service.get(caregiver_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Caregiver not found")
         if not caregiver:
             raise NotFoundException(detail="Caregiver not found")
 
@@ -146,7 +155,10 @@ class CaregiverController(Controller):
         caregiver_service: CaregiverService,
     ) -> service.OffsetPagination[Student]:
         """List all students associated with a caregiver."""
-        caregiver = await caregiver_service.get(caregiver_id)
+        try:
+            caregiver = await caregiver_service.get(caregiver_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Caregiver not found")
         if caregiver is None:
             raise NotFoundException(detail="Caregiver not found")
         return caregiver_service.to_schema(caregiver.students, schema_type=Student)

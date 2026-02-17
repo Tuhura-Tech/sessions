@@ -5,9 +5,10 @@ import logging
 from uuid import UUID
 
 from advanced_alchemy.extensions.litestar import providers
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from litestar import Controller, get, patch, post
 from litestar.exceptions import NotFoundException
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 
 from app.db import models as m
 from app.domains.admin.guards import admin_session_guard
@@ -34,12 +35,10 @@ class SignupController(Controller):
     dependencies = providers.create_service_dependencies(
         SignupService,
         "signup_service",
-        # enable to filter by region, by min age, by max_age and by location
+        # Default loading strategy - load student and session relationships
         load=[
-            selectinload(m.Signup.student).options(
-                joinedload(m.Student.caregiver),
-                joinedload(m.Student.signups, innerjoin=True),
-            ),
+            selectinload(m.Signup.student).selectinload(m.Student.caregiver),
+            selectinload(m.Signup.session).selectinload(m.Session.location),
         ],
     )
 
@@ -50,7 +49,10 @@ class SignupController(Controller):
         signup_service: SignupService,
     ) -> SignupStudent:
         """Get a single signup by ID."""
-        signup = await signup_service.get(signup_id)
+        try:
+            signup = await signup_service.get(signup_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Signup not found")
         if not signup:
             raise NotFoundException(detail="Signup not found")
         return signup_service.to_schema(signup, schema_type=SignupStudent)
@@ -64,7 +66,10 @@ class SignupController(Controller):
         """Create a new signup."""
         signup = await signup_service.create(data)
         # Refresh to load relationships (student, student.caregiver)
-        signup = await signup_service.get(signup.id)
+        try:
+            signup = await signup_service.get(signup.id)
+        except AlchemyNotFoundError:
+            pass  # Use the created object if refresh fails
         return signup_service.to_schema(signup, schema_type=Signup)
 
     @patch("/{signup_id:uuid}")
@@ -79,7 +84,12 @@ class SignupController(Controller):
         if data.status == SignupStatus.WITHDRAWN:
             signup_data["withdrawn_at"] = datetime.datetime.now(datetime.timezone.utc)
 
-        signup = await signup_service.update(signup_data, signup_id)
+        try:
+            signup = await signup_service.update(signup_data, signup_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Signup not found")
+        if not signup:
+            raise NotFoundException(detail="Signup not found")
         if not signup:
             raise NotFoundException(detail="Signup not found")
         return signup_service.to_schema(signup, schema_type=SignupStudent)
@@ -97,14 +107,11 @@ class SignupController(Controller):
         someone from waitlist to confirmed or vice versa. Optionally notifies
         the caregiver and records a reason for the change.
         """
-        # Get the signup with all related data
-        signup = await signup_service.get(
-            signup_id,
-            load=[
-                selectinload(m.Signup.student).selectinload(m.Student.caregiver),
-                selectinload(m.Signup.session),
-            ],
-        )
+        # Get the signup (will use default load options from controller dependencies)
+        try:
+            signup = await signup_service.get(signup_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Signup not found")
         if not signup:
             raise NotFoundException(detail="Signup not found")
 

@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from litestar.exceptions import NotFoundException
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 
 from app.domains.admin.controllers.occurrences import OccurrenceController
 from app.domains.admin.schemas.occurrence import OccurrenceCreate, OccurrenceUpdate
@@ -42,6 +43,8 @@ class DummyOccurrenceService:
         self.updated: list[dict] = []
 
     async def get(self, *_args, **_kwargs):  # noqa: ANN002, ANN003
+        if self._occurrence is None:
+            raise AlchemyNotFoundError("Occurrence not found")
         return self._occurrence
 
     async def create(self, data: OccurrenceCreate):
@@ -49,9 +52,9 @@ class DummyOccurrenceService:
         return self._occurrence or data
 
     async def update(self, data: dict, _occurrence_id: UUID):
-        self.updated.append(data)
         if self._occurrence is None:
-            return None
+            raise AlchemyNotFoundError("Occurrence not found")
+        self.updated.append(data)
         for key, value in data.items():
             setattr(self._occurrence, key, value)
         return self._occurrence

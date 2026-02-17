@@ -8,7 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from advanced_alchemy.exceptions import DuplicateKeyError, IntegrityError
+from advanced_alchemy.exceptions import (
+    DuplicateKeyError,
+    IntegrityError,
+    NotFoundError as AlchemyNotFoundError,
+)
 from litestar.exceptions import (
     ClientException,
     HTTPException,
@@ -138,7 +142,7 @@ def create_exception_response(
 
 def exception_to_http_response(
     request: Request[Any, Any, Any],
-    exc: ApplicationError | RepositoryError,
+    exc: ApplicationError | RepositoryError | AlchemyNotFoundError,
 ) -> Response[Any]:
     """Transform repository exceptions to HTTP exceptions.
 
@@ -150,7 +154,7 @@ def exception_to_http_response(
         Exception response appropriate to the type of original exception.
     """
     http_exc: type[HTTPException]
-    if isinstance(exc, NotFoundError):
+    if isinstance(exc, (NotFoundError, AlchemyNotFoundError)):
         http_exc = NotFoundException
     elif isinstance(
         exc, ConflictError | RepositoryError | IntegrityError | DuplicateKeyError

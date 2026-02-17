@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
 from litestar import Controller, get, patch, post
@@ -60,7 +61,10 @@ class BlockController(Controller):
         block_id: UUID,
     ) -> Block:
         """Get a specific block by ID."""
-        blk = await block_service.get(block_id)
+        try:
+            blk = await block_service.get(block_id)
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Block not found")
         if not blk:
             raise NotFoundException(detail="Block not found")
 
@@ -74,7 +78,12 @@ class BlockController(Controller):
         data: BlockUpdate,
     ) -> Block:
         """Update an existing block."""
-        blk = await block_service.update(data.model_dump(exclude_unset=True), block_id)
+        try:
+            blk = await block_service.update(
+                data.model_dump(exclude_unset=True), block_id
+            )
+        except AlchemyNotFoundError:
+            raise NotFoundException(detail="Block not found")
         if not blk:
             raise NotFoundException(detail="Block not found")
         return block_service.to_schema(blk, schema_type=Block)

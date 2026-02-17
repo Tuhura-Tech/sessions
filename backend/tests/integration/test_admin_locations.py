@@ -1,12 +1,19 @@
 """
 Integration tests for admin location management endpoints.
 
-Tests for location CRUD operations in the admin panel.
+Tests location list, get, create, update, and session listings
+with proper authentication, HTTP status codes, and payload validation.
 """
 
 import pytest
-from litestar.status_codes import HTTP_200_OK
+from httpx import AsyncClient
+from litestar.status_codes import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_404_NOT_FOUND,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
 
 from tests.integration.test_fixtures import (
     create_test_location,
@@ -17,172 +24,183 @@ from tests.integration.test_fixtures import (
 pytestmark = [pytest.mark.anyio, pytest.mark.integration]
 
 
-class TestAdminLocationListEndpoint:
-    """Test admin location listing endpoint."""
+class TestAdminLocationList:
+    """Test admin location listing."""
 
-    async def test_list_locations(self, test_client):
-        """Test GET /api/v1/admin/locations lists all locations."""
-        response = await test_client.get("/api/v1/admin/locations/")
+    async def test_list_locations_includes_created(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test listing locations includes created locations and total count."""
+        location = await create_test_location(db_session)
 
-        # Expect 200, 401, or 403
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        response = await client.get(
+            "/api/v1/admin/locations/",
+            cookies={"admin_session": admin_session_cookie},
+        )
 
-    async def test_list_locations_with_data(
-        self, test_client, db_session: AsyncSession
-    ):
-        """Test location list includes created locations."""
-        await create_test_location(db_session)
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert "items" in data
+        assert "total" in data
+        assert any(item["id"] == str(location.id) for item in data["items"])
+        assert data["total"] >= 1
 
-        response = await test_client.get("/api/v1/admin/locations/")
+    async def test_list_locations_without_auth(self, client: AsyncClient) -> None:
+        """Test listing locations without authentication fails."""
+        response = await client.get("/api/v1/admin/locations/")
+        assert response.status_code in [302, 401, 403]
 
-        assert response.status_code in (HTTP_200_OK, 401, 403)
 
+class TestAdminLocationCreate:
+    """Test admin location creation."""
 
-@pytest.mark.integration
-class TestAdminLocationCreateEndpoint:
-    """Test admin location creation endpoint."""
+    async def test_create_location_success(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test creating a new location succeeds."""
+        payload = {
+            "name": "New Location",
+            "address": "456 New St",
+            "region": "Test Region",
+            "lat": -41.2865,
+            "lng": 174.7762,
+            "contactName": "Contact",
+            "contactEmail": "contact@example.com",
+        }
 
-    async def test_create_location(self, test_client):
-        """Test POST /api/v1/admin/locations creates a location."""
-        response = await test_client.post(
+        response = await client.post(
+            "/api/v1/admin/locations/",
+            json=payload,
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_201_CREATED
+        data = response.json()
+        assert data["name"] == "New Location"
+        assert data["address"] == "456 New St"
+        assert data["region"] == "Test Region"
+        assert data.get("contactName") or data.get("contact_name") == "Contact"
+        assert (
+            data.get("contactEmail")
+            or data.get("contact_email") == "contact@example.com"
+        )
+        assert "id" in data
+
+    async def test_create_location_without_auth(self, client: AsyncClient) -> None:
+        """Test creating location without authentication fails."""
+        response = await client.post(
             "/api/v1/admin/locations/",
             json={
                 "name": "New Location",
                 "address": "456 New St",
+                "region": "Test Region",
+                "lat": -41.2865,
+                "lng": 174.7762,
+                "contactName": "Contact",
+                "contactEmail": "contact@example.com",
             },
         )
-
-        # Expect 200/201 or auth/validation error
-        assert response.status_code in (200, 201, 400, 401, 403)
+        assert response.status_code in [302, 401, 403]
 
 
-@pytest.mark.integration
-class TestAdminLocationUpdateEndpoint:
-    """Test admin location update endpoint."""
+class TestAdminLocationUpdate:
+    """Test admin location updates."""
 
-    async def test_update_location(self, test_client):
-        """Test PATCH /api/v1/admin/locations/{id} updates location."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.patch(
-            f"/api/v1/admin/locations/{fake_id}", json={"name": "Updated Location"}
+    async def test_update_location_name(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test updating location name returns modified data."""
+        location = await create_test_location(db_session, name="Old Name")
+
+        response = await client.patch(
+            f"/api/v1/admin/locations/{location.id}",
+            json={"name": "Updated Location"},
+            cookies={"admin_session": admin_session_cookie},
         )
 
-        # Expect 200, 404, or auth error
-        assert response.status_code in (200, 400, 401, 403, 404)
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        assert data["id"] == str(location.id)
+        assert data["name"] == "Updated Location"
 
-
-@pytest.mark.integration
-class TestAdminLocationDeleteEndpoint:
-    """Test admin location deletion endpoint."""
-
-    async def test_delete_location(self, test_client):
-        """Test DELETE /api/v1/admin/locations/{id} deletes location."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.delete(f"/api/v1/admin/locations/{fake_id}")
-
-        # Expect 204, 404, 405, or auth error
-        assert response.status_code in (200, 204, 401, 403, 404, 405)
-
-
-@pytest.mark.integration
-class TestAdminLocationSessionsEndpoint:
-    """Test admin location sessions listing endpoint."""
-
-    async def test_get_location_sessions_not_found(self, test_client):
-        """Test GET /api/v1/admin/locations/{id}/sessions with invalid ID."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await test_client.get(f"/api/v1/admin/locations/{fake_id}/sessions")
-
-        # Expect 404 or auth error
-        assert response.status_code in (401, 403, 404)
-
-    async def test_get_location_sessions_empty(
-        self, test_client, db_session: AsyncSession
-    ):
-        """Test GET /api/v1/admin/locations/{id}/sessions with no sessions."""
-        location = await create_test_location(db_session)
-
-        response = await test_client.get(
-            f"/api/v1/admin/locations/{location.id}/sessions"
+    async def test_update_location_not_found(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test updating nonexistent location returns 404."""
+        response = await client.patch(
+            f"/api/v1/admin/locations/{uuid4()}",
+            json={"name": "Updated Location"},
+            cookies={"admin_session": admin_session_cookie},
         )
 
-        # Expect 200 with empty list or auth error
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        assert response.status_code == HTTP_404_NOT_FOUND
 
-        if response.status_code == HTTP_200_OK:
-            data = response.json()
-            assert "items" in data
-            assert isinstance(data["items"], list)
+    async def test_update_location_without_auth(self, client: AsyncClient) -> None:
+        """Test updating location without authentication fails."""
+        response = await client.patch(
+            f"/api/v1/admin/locations/{uuid4()}",
+            json={"name": "Updated Location"},
+        )
+        assert response.status_code in [302, 401, 403]
 
-    async def test_get_location_sessions_with_data(
-        self, test_client, db_session: AsyncSession
-    ):
-        """Test GET /api/v1/admin/locations/{id}/sessions returns sessions."""
-        location = await create_test_location(db_session)
-        session = await create_test_session(db_session, location=location)
 
-        response = await test_client.get(
-            f"/api/v1/admin/locations/{location.id}/sessions"
+class TestAdminLocationSessions:
+    """Test location sessions listing."""
+
+    async def test_get_location_sessions_not_found(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test getting sessions for nonexistent location returns 404."""
+        response = await client.get(
+            f"/api/v1/admin/locations/{uuid4()}/sessions",
+            cookies={"admin_session": admin_session_cookie},
         )
 
-        # Expect 200 or auth error
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        assert response.status_code == HTTP_404_NOT_FOUND
 
-        if response.status_code == HTTP_200_OK:
-            data = response.json()
-            assert "items" in data
-            assert isinstance(data["items"], list)
-            # Should have at least one session
-            if len(data["items"]) > 0:
-                assert data["items"][0]["id"] == str(session.id)
-
-    async def test_get_location_sessions_exclude_archived(
-        self, test_client, db_session: AsyncSession
-    ):
-        """Test that archived sessions are excluded by default."""
+    async def test_get_location_sessions_excludes_archived_by_default(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test default listing excludes archived sessions."""
         location = await create_test_location(db_session)
-        # Create active session
         active_session = await create_test_session(db_session, location=location)
-        # Create archived session
         archived_session = await create_test_session(
             db_session, location=location, archived=True
         )
 
-        response = await test_client.get(
-            f"/api/v1/admin/locations/{location.id}/sessions"
+        response = await client.get(
+            f"/api/v1/admin/locations/{location.id}/sessions",
+            cookies={"admin_session": admin_session_cookie},
         )
 
-        # Expect 200 or auth error
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        session_ids = {item["id"] for item in data["items"]}
+        assert str(active_session.id) in session_ids
+        assert str(archived_session.id) not in session_ids
 
-        if response.status_code == HTTP_200_OK:
-            data = response.json()
-            session_ids = [s["id"] for s in data["items"]]
-
-            # Should include active session
-            assert str(active_session.id) in session_ids
-            # Should exclude archived session by default
-            assert str(archived_session.id) not in session_ids
-
-    async def test_get_location_sessions_include_archived(
-        self, test_client, db_session: AsyncSession
-    ):
-        """Test that archived sessions are included when requested."""
+    async def test_get_location_sessions_includes_archived_when_requested(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test include_archived=true returns archived sessions."""
         location = await create_test_location(db_session)
         archived_session = await create_test_session(
             db_session, location=location, archived=True
         )
 
-        response = await test_client.get(
-            f"/api/v1/admin/locations/{location.id}/sessions?include_archived=true"
+        response = await client.get(
+            f"/api/v1/admin/locations/{location.id}/sessions?include_archived=true",
+            cookies={"admin_session": admin_session_cookie},
         )
 
-        # Expect 200 or auth error
-        assert response.status_code in (HTTP_200_OK, 401, 403)
+        assert response.status_code == HTTP_200_OK
+        data = response.json()
+        session_ids = {item["id"] for item in data["items"]}
+        assert str(archived_session.id) in session_ids
 
-        if response.status_code == HTTP_200_OK:
-            data = response.json()
-            session_ids = [s["id"] for s in data["items"]]
-
-            # Should include archived session
-            assert str(archived_session.id) in session_ids
+    async def test_get_location_sessions_without_auth(
+        self, client: AsyncClient
+    ) -> None:
+        """Test getting location sessions without authentication fails."""
+        response = await client.get(f"/api/v1/admin/locations/{uuid4()}/sessions")
+        assert response.status_code in [302, 401, 403]

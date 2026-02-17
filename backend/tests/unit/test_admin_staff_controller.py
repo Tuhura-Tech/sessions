@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 import pytest
 from litestar.exceptions import NotFoundException, ValidationException
 from sqlalchemy.exc import IntegrityError
+from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 
 from app.domains.admin.controllers.staff import SessionStaffController, StaffController
 from app.domains.admin.schemas.staff import (
@@ -81,6 +82,8 @@ class DummyStaffService:
         return list(self._list_results)
 
     async def get(self, _id):  # noqa: ANN001
+        if self._staff is None:
+            raise AlchemyNotFoundError("Staff not found")
         return self._staff
 
     async def create(self, data: dict):
@@ -95,9 +98,9 @@ class DummyStaffService:
         return self._staff
 
     async def update(self, data: dict, _id):  # noqa: ANN001
-        self.updated.append(data)
         if not self._staff:
-            return None
+            raise AlchemyNotFoundError("Staff not found")
+        self.updated.append(data)
         for key, value in data.items():
             setattr(self._staff, key, value)
         return self._staff

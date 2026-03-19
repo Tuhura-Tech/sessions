@@ -232,5 +232,5 @@ class SessionUpdate(CamelizedBaseSchema):
 
 
 class SessionEmail(CamelizedBaseSchema):
-    title: str
-    body: str
+    subject: str
+    message: str

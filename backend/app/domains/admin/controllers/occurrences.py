@@ -13,6 +13,7 @@ from app.db import models as m
 from app.domains.admin.guards import admin_session_guard
 from app.domains.admin.schemas.occurrence import (
     Occurrence,
+    OccurrenceCancellation,
     OccurrenceCreate,
     OccurrenceUpdate,
 )
@@ -76,9 +77,8 @@ class OccurrenceController(Controller):
     async def toggle_cancel_occurrence(
         self,
         occurrence_id: UUID,
+        data: OccurrenceCancellation,
         occurrence_service: OccurrenceService,
-        cancelled: bool = False,
-        cancellation_reason: str | None = None,
     ) -> Occurrence:
         """Cancel or reinstate an occurrence.
 
@@ -89,9 +89,8 @@ class OccurrenceController(Controller):
 
         Args:
             occurrence_id: The UUID of the occurrence to update
+            data: Cancellation data (cancelled status and optional reason)
             occurrence_service: Injected occurrence service
-            cancelled: True to cancel, False to reinstate
-            cancellation_reason: Optional reason for cancellation (only used if cancelled=True)
         """
         # Get the occurrence with session loaded
         try:
@@ -103,14 +102,14 @@ class OccurrenceController(Controller):
             raise NotFoundException(detail="Occurrence not found") from exc
 
         occurrence_data = {
-            "cancelled": cancelled,
-            "cancellation_reason": cancellation_reason,
+            "cancelled": data.cancelled,
+            "cancellation_reason": data.cancellation_reason,
         }
 
         occurrence = await occurrence_service.update(occurrence_data, occurrence_id)
 
         # Queue notification emails if cancelling
-        if cancelled:
+        if data.cancelled:
             try:
                 queue = await get_task_queue()
                 await queue.enqueue(
@@ -119,7 +118,7 @@ class OccurrenceController(Controller):
                     session_id=str(occurrence.session.id),
                     session_name=occurrence.session.name,
                     occurrence_date=occurrence.starts_at.isoformat(),
-                    cancellation_reason=cancellation_reason,
+                    cancellation_reason=data.cancellation_reason,
                 )
                 logger.info(
                     f"Queued occurrence cancellation emails for occurrence {occurrence_id}"

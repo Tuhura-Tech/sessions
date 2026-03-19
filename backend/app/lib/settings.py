@@ -107,6 +107,7 @@ _BACKGROUND_TASKS = [
     "app.lib.worker.send_waitlist_promoted_task",
     "app.lib.worker.send_signup_cancelled_task",
     "app.lib.worker.send_caregiver_message_task",
+    "app.lib.worker.send_session_bulk_email_task",
     "app.lib.worker.send_session_cancelled_task",
     "app.lib.worker.send_occurrence_cancelled_task",
     "app.lib.worker.process_signup_approval_task",

@@ -350,12 +350,47 @@ class TestAdminSessionController:
         assert "Occurrence ID" in output
         assert "Student" in output
 
-    async def test_email_session(self):
+    async def test_email_session(self, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
         controller = make_controller()
-        session_service = DummySessionService(session=SimpleNamespace(id=uuid4()))
+        session_id = uuid4()
+        session_service = DummySessionService(session=SimpleNamespace(id=session_id))
+
+        # Mock the get_task_queue function at the import location
+        mock_queue = AsyncMock()
+        mock_queue.enqueue = AsyncMock()
+
+        async def mock_get_task_queue():
+            return mock_queue
+
+        monkeypatch.setattr("app.lib.deps.get_task_queue", mock_get_task_queue)
+
+        # Mock the database query for counting confirmed signups
+        mock_result = MagicMock()
+        mock_result.scalar_one.return_value = 5
+
+        async def mock_execute(_stmt):
+            return mock_result
+
+        # Set up the signups.repository.session with the mock execute
+        mock_session = MagicMock()
+        mock_session.execute = mock_execute
+
+        mock_repository = MagicMock()
+        mock_repository.session = mock_session
+
+        session_service.signups.repository = mock_repository
 
         result = await SessionController.email_session.fn(
-            controller, uuid4(), session_service, data=SimpleNamespace()
+            controller,
+            session_id,
+            session_service,
+            data=SimpleNamespace(subject="Test", message="Test message"),
         )
 
-        assert result is None
+        # Verify the result contains enqueued count
+        assert result == {"enqueued": 5}
+
+        # Verify that the task was enqueued
+        mock_queue.enqueue.assert_awaited_once()

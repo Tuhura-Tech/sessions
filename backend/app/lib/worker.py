@@ -345,6 +345,92 @@ async def send_caregiver_message_task(
         }
 
 
+async def send_session_bulk_email_task(
+    ctx: Context,
+    *,
+    session_id: str,
+    subject: str,
+    message: str,
+) -> dict[str, Any]:
+    """Send bulk email to all confirmed signups in a session.
+
+    Args:
+        ctx: SAQ context
+        session_id: ID of the session
+        subject: Email subject
+        message: Email body (plain text)
+
+    Returns:
+        Dictionary with task result metadata (number of emails sent)
+    """
+    logger.info(f"Sending bulk email for session {session_id}")
+
+    db = await _get_db_session()
+    emails_sent = 0
+    emails_failed = 0
+
+    try:
+        from app.lib.email import email_service
+
+        # Get all confirmed signups for this session with caregiver details
+        result = await db.execute(
+            text(
+                f"""
+                SELECT DISTINCT c.email, c.name
+                FROM {m.Signup.__tablename__} su
+                JOIN {m.Student.__tablename__} s ON su.student_id = s.id
+                JOIN {m.Caregiver.__tablename__} c ON s.caregiver_id = c.id
+                WHERE su.session_id = :session_id AND su.status = 'confirmed'
+                """
+            ),
+            {"session_id": session_id},
+        )
+
+        for to_email, caregiver_name in result:
+            try:
+                html, text_content = await email_service.render_template(
+                    "caregiver_message",
+                    caregiver_name=caregiver_name,
+                    subject=subject,
+                    message=message,
+                    support_email=settings.email_contact,
+                )
+
+                email_msg = {
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html,
+                    "text": text_content,
+                    "from": settings.email_from,
+                }
+
+                success = await email_service.send(email_msg)
+                if success:
+                    emails_sent += 1
+                else:
+                    emails_failed += 1
+            except Exception as e:
+                logger.error(f"Failed to send bulk email to {to_email}: {e}")
+                emails_failed += 1
+
+        return {
+            "success": emails_failed == 0,
+            "session_id": session_id,
+            "emails_sent": emails_sent,
+            "emails_failed": emails_failed,
+            "sent_at": datetime.now(tz).isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Failed to process session bulk email: {e}", exc_info=True)
+        return {
+            "success": False,
+            "session_id": session_id,
+            "error": str(e),
+        }
+    finally:
+        await db.close()
+
+
 async def send_session_cancelled_task(
     ctx: Context,
     *,
@@ -1115,6 +1201,7 @@ __all__ = [
     "send_waitlist_promoted_task",
     "send_signup_cancelled_task",
     "send_caregiver_message_task",
+    "send_session_bulk_email_task",
     "send_session_cancelled_task",
     "send_occurrence_cancelled_task",
     "bulk_promote_waitlist_task",

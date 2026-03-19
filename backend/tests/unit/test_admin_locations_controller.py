@@ -49,7 +49,9 @@ class DummyLocationService:
             ),
         ]
 
-    async def list_and_count(self, *args: Any, **kwargs: Any) -> tuple[list[m.Location], int]:
+    async def list_and_count(
+        self, *args: Any, **kwargs: Any
+    ) -> tuple[list[m.Location], int]:
         """Return all locations with count."""
         return self.mock_locations, len(self.mock_locations)
 
@@ -70,7 +72,7 @@ class DummyLocationService:
 
     async def get(self, location_id: UUID) -> m.Location | None:
         """Get location by ID.
-        
+
         Returns None for simple get calls, raises AlchemyNotFoundError for service calls
         that expect exceptions (like in get_location_sessions).
         """
@@ -89,17 +91,21 @@ class DummyLocationService:
             setattr(location, key, value)
         return location
 
-    def to_schema(self, data: Any, total: int | None = None, *args: Any, **kwargs: Any) -> Any:
+    def to_schema(
+        self, data: Any, total: int | None = None, *args: Any, **kwargs: Any
+    ) -> Any:
         """Convert ORM model to schema (with pagination support)."""
         if total is not None:
             # Return OffsetPagination for list endpoints
-            return alchemy_service.OffsetPagination(items=data, total=total, limit=100, offset=0)
+            return alchemy_service.OffsetPagination(
+                items=data, total=total, limit=100, offset=0
+            )
         return data
 
 
 class DummyLocationServiceWithExceptions(DummyLocationService):
     """Location service that raises exceptions on not found (for testing exception handling)."""
-    
+
     async def get(self, location_id: UUID) -> m.Location:
         """Get location by ID, raise exception if not found."""
         for loc in self.mock_locations:
@@ -133,9 +139,11 @@ class DummySessionService:
             ),
         ]
 
-    async def list_and_count(self, *filters: Any, **kwargs: Any) -> tuple[list[m.Session], int]:
+    async def list_and_count(
+        self, *filters: Any, **kwargs: Any
+    ) -> tuple[list[m.Session], int]:
         """Return sessions matching filters.
-        
+
         Simple filter logic:
         - If only 1 filter: return all sessions for the location (including archived)
         - If 2 filters: return only non-archived sessions for the location
@@ -143,23 +151,27 @@ class DummySessionService:
         # Always filter by location_id (first filter)
         # Second filter (if present) is ~archived
         filtered = self.mock_sessions
-        
+
         # Extract location_id from first filter
         if len(filters) > 0 and hasattr(filters[0], "right"):
             location_id = filters[0].right.value
             filtered = [s for s in filtered if s.location_id == location_id]
-        
+
         # If there are 2 filters, exclude archived
         if len(filters) == 2:
             filtered = [s for s in filtered if not s.archived]
 
         return filtered, len(filtered)
 
-    def to_schema(self, data: Any, total: int | None = None, *args: Any, **kwargs: Any) -> Any:
+    def to_schema(
+        self, data: Any, total: int | None = None, *args: Any, **kwargs: Any
+    ) -> Any:
         """Convert ORM model to schema (with pagination support)."""
         if total is not None:
             # Return OffsetPagination for list endpoints
-            return alchemy_service.OffsetPagination(items=data, total=total, limit=100, offset=0)
+            return alchemy_service.OffsetPagination(
+                items=data, total=total, limit=100, offset=0
+            )
         return data
 
 

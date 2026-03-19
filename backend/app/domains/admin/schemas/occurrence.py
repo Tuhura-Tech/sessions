@@ -47,3 +47,10 @@ class OccurrenceUpdate(CamelizedBaseSchema):
         ):
             raise ValueError("At least one field must be provided for update.")
         return self
+
+
+class OccurrenceCancellation(CamelizedBaseSchema):
+    """Schema for cancelling/reinstating an occurrence."""
+
+    cancelled: bool
+    cancellation_reason: str | None = None

@@ -192,17 +192,29 @@ class SessionController(Controller):
     @post("/{session_id:uuid}/email", status_code=HTTP_200_OK)
     async def email_session(
         self, session_id: UUID, session_service: SessionService, data: SessionEmail
-    ) -> None:
+    ) -> dict[str, int]:
         """Email session details to participants."""
+        from app.lib.deps import get_task_queue
+        from sqlalchemy import func
 
-        # queue = await get_task_queue()
-        # await queue.enqueue(
-        #     "email_session",
-        #     session_id=session_id,
-        #     title=data.title,
-        #     body=data.body,
-        # )
-        pass
+        # Count confirmed signups for this session
+        result = await session_service.signups.repository.session.execute(
+            select(func.count())
+            .select_from(m.Signup)
+            .where(m.Signup.session_id == session_id, m.Signup.status == "confirmed")
+        )
+        enqueued = result.scalar_one()
+
+        # Enqueue the bulk email task
+        queue = await get_task_queue()
+        await queue.enqueue(
+            "send_session_bulk_email_task",
+            session_id=str(session_id),
+            subject=data.subject,
+            message=data.message,
+        )
+
+        return {"enqueued": enqueued}
 
     @get("/{session_id:uuid}/occurrences", status_code=HTTP_200_OK)
     async def get_occurrences(

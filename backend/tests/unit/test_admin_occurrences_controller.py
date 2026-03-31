@@ -10,7 +10,11 @@ from litestar.exceptions import NotFoundException
 from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 
 from app.domains.admin.controllers.occurrences import OccurrenceController
-from app.domains.admin.schemas.occurrence import OccurrenceCreate, OccurrenceUpdate
+from app.domains.admin.schemas.occurrence import (
+    OccurrenceCancellation,
+    OccurrenceCreate,
+    OccurrenceUpdate,
+)
 
 
 @dataclass
@@ -117,10 +121,11 @@ class TestAdminOccurrenceController:
     async def test_toggle_cancel_occurrence_not_found(self):
         controller = make_controller()
         service = DummyOccurrenceService(None)
+        data = OccurrenceCancellation(cancelled=True, cancellation_reason="Bad weather")
 
         with pytest.raises(NotFoundException):
             await OccurrenceController.toggle_cancel_occurrence.fn(
-                controller, uuid4(), service, True, "Bad weather"
+                controller, uuid4(), data, service
             )
 
     async def test_toggle_cancel_occurrence_enqueues_notifications(
@@ -145,12 +150,12 @@ class TestAdminOccurrenceController:
             get_queue,
         )
 
+        data = OccurrenceCancellation(cancelled=True, cancellation_reason="Bad weather")
         result = await OccurrenceController.toggle_cancel_occurrence.fn(
             controller,
             occurrence_id,
+            data,
             service,
-            True,
-            "Bad weather",
         )
 
         assert result.cancelled is True
@@ -186,12 +191,12 @@ class TestAdminOccurrenceController:
             fail_queue,
         )
 
+        data = OccurrenceCancellation(cancelled=False, cancellation_reason=None)
         result = await OccurrenceController.toggle_cancel_occurrence.fn(
             controller,
             occurrence_id,
+            data,
             service,
-            False,
-            None,
         )
 
         assert result.cancelled is False

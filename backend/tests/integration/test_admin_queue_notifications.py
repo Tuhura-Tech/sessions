@@ -107,7 +107,8 @@ async def test_admin_occurrence_cancel_enqueues_notification(
     await db_session.commit()
 
     response = await client.patch(
-        f"/api/v1/admin/occurrences/{occurrence.id}/cancel?cancelled=true",
+        f"/api/v1/admin/occurrences/{occurrence.id}/cancel",
+        json={"cancelled": True},
         cookies={"admin_session": admin_session_cookie},
     )
 

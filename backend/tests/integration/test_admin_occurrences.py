@@ -178,7 +178,8 @@ class TestAdminOccurrenceUpdate:
         await db_session.commit()
 
         response = await client.patch(
-            f"/api/v1/admin/occurrences/{occurrence.id}/cancel?cancelled=true",
+            f"/api/v1/admin/occurrences/{occurrence.id}/cancel",
+            json={"cancelled": True},
             cookies={"admin_session": admin_session_cookie},
         )
 
@@ -209,7 +210,8 @@ class TestAdminOccurrenceUpdate:
         await db_session.commit()
 
         response = await client.patch(
-            f"/api/v1/admin/occurrences/{occurrence.id}/cancel?cancelled=true&cancellation_reason=Bad%20weather",
+            f"/api/v1/admin/occurrences/{occurrence.id}/cancel",
+            json={"cancelled": True, "cancellationReason": "Bad weather"},
             cookies={"admin_session": admin_session_cookie},
         )
 
@@ -242,7 +244,8 @@ class TestAdminOccurrenceUpdate:
         await db_session.commit()
 
         response = await client.patch(
-            f"/api/v1/admin/occurrences/{occurrence.id}/cancel?cancelled=false",
+            f"/api/v1/admin/occurrences/{occurrence.id}/cancel",
+            json={"cancelled": False},
             cookies={"admin_session": admin_session_cookie},
         )
 

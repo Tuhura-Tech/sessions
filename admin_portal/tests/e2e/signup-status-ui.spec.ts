@@ -37,7 +37,7 @@ test.describe('Signup status changes via UI', () => {
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 
@@ -66,18 +66,19 @@ test.describe('Signup status changes via UI', () => {
 
 		// Click on first session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 
 				// Find first status dropdown
-				const statusDropdowns = page.locator('table tbody select');				if (await statusDropdowns.count() > 0) {
+				const statusDropdowns = page.locator('table tbody select');
+				if ((await statusDropdowns.count()) > 0) {
 					const firstDropdown = statusDropdowns.first();
 					const currentValue = await firstDropdown.inputValue();
 
@@ -101,13 +102,13 @@ test.describe('Signup status changes via UI', () => {
 
 		// Click on a session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 
@@ -141,13 +142,13 @@ test.describe('Signup status changes via UI', () => {
 
 		// Click on a session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 
@@ -181,13 +182,13 @@ test.describe('Signup status changes via UI', () => {
 
 		// Click on a session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 
@@ -221,13 +222,13 @@ test.describe('Signup status changes via UI', () => {
 
 		// Click on a session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 

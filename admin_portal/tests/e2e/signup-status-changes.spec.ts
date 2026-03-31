@@ -28,17 +28,17 @@ test.describe('Signup status changes', () => {
 		await page.goto(`${ADMIN_BASE_URL}/sessions`, { waitUntil: 'domcontentloaded' });
 		await page.waitForTimeout(1000);
 
-		// Click on first session 
+		// Click on first session
 		const sessionLinks = page.locator('a[href*="/sessions/"]');
 		const linkCount = await sessionLinks.count();
-		
+
 		if (linkCount > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1000);
 
 			// Wait for signups tab to load
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(500);
 
@@ -85,13 +85,13 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
 					// Find the row with pending status
 					const pendingRow = page.locator(`tr:has-text("${pendingSignup.student_name}")`);
-					if (await pendingRow.count() > 0) {
+					if ((await pendingRow.count()) > 0) {
 						// Find the status dropdown in that row
 						const statusSelect = pendingRow.locator('select');
 						await statusSelect.selectOption('confirmed');
@@ -132,13 +132,13 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
 					// Find the row with waitlisted status
 					const waitlistedRow = page.locator(`tr:has-text("${waitlistedSignup.student_name}")`);
-					if (await waitlistedRow.count() > 0) {
+					if ((await waitlistedRow.count()) > 0) {
 						// Find the status dropdown in that row
 						const statusSelect = waitlistedRow.locator('select');
 						await statusSelect.selectOption('confirmed');
@@ -179,13 +179,13 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
 					// Find the row with confirmed status
 					const confirmedRow = page.locator(`tr:has-text("${confirmedSignup.student_name}")`);
-					if (await confirmedRow.count() > 0) {
+					if ((await confirmedRow.count()) > 0) {
 						// Find the status dropdown in that row
 						const statusSelect = confirmedRow.locator('select');
 						await statusSelect.selectOption('withdrawn');
@@ -229,13 +229,13 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
 					// Find the row with withdrawn status
 					const withdrawnRow = page.locator(`tr:has-text("${withdrawnSignup.student_name}")`);
-					if (await withdrawnRow.count() > 0) {
+					if ((await withdrawnRow.count()) > 0) {
 						// Find the status dropdown in that row
 						const statusSelect = withdrawnRow.locator('select');
 						await statusSelect.selectOption('confirmed');
@@ -276,13 +276,13 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
 					// Find the row with waitlisted status
 					const waitlistedRow = page.locator(`tr:has-text("${waitlistedSignup.student_name}")`);
-					if (await waitlistedRow.count() > 0) {
+					if ((await waitlistedRow.count()) > 0) {
 						// Find the status dropdown in that row
 						const statusSelect = waitlistedRow.locator('select');
 						await statusSelect.selectOption('withdrawn');
@@ -332,13 +332,13 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
 					// Find the row with non-confirmed status
 					const nonConfirmedRow = page.locator(`tr:has-text("${nonConfirmedSignup.student_name}")`);
-					if (await nonConfirmedRow.count() > 0) {
+					if ((await nonConfirmedRow.count()) > 0) {
 						// Find the status dropdown in that row
 						const statusSelect = nonConfirmedRow.locator('select');
 						await statusSelect.selectOption('confirmed');
@@ -357,10 +357,7 @@ test.describe('Signup status changes', () => {
 						await page.waitForTimeout(1000);
 
 						// Get updated confirmed count
-						const updatedCountText = await page
-							.locator('text=/\\d+\\/\\d+/')
-							.first()
-							.textContent();
+						const updatedCountText = await page.locator('text=/\\d+\\/\\d+/').first().textContent();
 						const updatedCount = updatedCountText
 							? Number.parseInt(updatedCountText.split('/')[0])
 							: 0;
@@ -396,7 +393,7 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
@@ -452,7 +449,7 @@ test.describe('Signup status changes', () => {
 
 				// Click signups tab
 				const signupsTab = page.locator('button:has-text("Signups")');
-				if (await signupsTab.count() > 0) {
+				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
 					await page.waitForTimeout(500);
 
@@ -460,7 +457,7 @@ test.describe('Signup status changes', () => {
 					for (let i = 0; i < Math.min(2, nonConfirmedSignups.length); i++) {
 						const signup = nonConfirmedSignups[i];
 						const row = page.locator(`tr:has-text("${signup.student_name}")`);
-						if (await row.count() > 0) {
+						if ((await row.count()) > 0) {
 							const statusSelect = row.locator('select');
 							await statusSelect.selectOption('confirmed');
 							await page.waitForTimeout(500);

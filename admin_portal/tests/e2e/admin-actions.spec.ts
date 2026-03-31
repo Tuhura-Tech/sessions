@@ -74,7 +74,9 @@ test.describe('Student management actions', () => {
 			const initialCount = await page.locator('table tbody tr').count();
 
 			// Find delete button for first student (if available)
-			const deleteButton = page.locator('button[title*="Delete"], button:has-text("Delete")').first();
+			const deleteButton = page
+				.locator('button[title*="Delete"], button:has-text("Delete")')
+				.first();
 			if (await deleteButton.isVisible()) {
 				await deleteButton.click();
 
@@ -140,13 +142,13 @@ test.describe('Student management actions', () => {
 
 		// Click on first student
 		const studentLinks = page.locator('a[href*="/students/"]').filter({ hasText: /\w/ });
-		if (await studentLinks.count() > 0) {
+		if ((await studentLinks.count()) > 0) {
 			await studentLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Look for caregiver link
 			const caregiverLink = page.locator('a:has-text("View Caregiver"), a[href*="/caregivers/"]');
-			if (await caregiverLink.count() > 0) {
+			if ((await caregiverLink.count()) > 0) {
 				await caregiverLink.first().click();
 
 				// Should navigate to caregiver detail page
@@ -222,7 +224,7 @@ test.describe('Session occurrence management', () => {
 
 			// Click occurrences tab
 			const occurrencesTab = page.locator('button:has-text("Occurrences")');
-			if (await occurrencesTab.count() > 0) {
+			if ((await occurrencesTab.count()) > 0) {
 				await occurrencesTab.click();
 				await page.waitForTimeout(500);
 
@@ -250,7 +252,7 @@ test.describe('Session occurrence management', () => {
 
 			// Click occurrences tab
 			const occurrencesTab = page.locator('button:has-text("Occurrences")');
-			if (await occurrencesTab.count() > 0) {
+			if ((await occurrencesTab.count()) > 0) {
 				await occurrencesTab.click();
 				await page.waitForTimeout(500);
 
@@ -259,7 +261,7 @@ test.describe('Session occurrence management', () => {
 
 				// Look for term filter
 				const termFilter = page.locator('select:has(option:has-text("All terms"))');
-				if (await termFilter.count() > 0) {
+				if ((await termFilter.count()) > 0) {
 					// Select a specific term
 					const options = await termFilter.locator('option').allTextContents();
 					if (options.length > 1) {
@@ -292,12 +294,14 @@ test.describe('Session occurrence management', () => {
 
 			// Click occurrences tab
 			const occurrencesTab = page.locator('button:has-text("Occurrences")');
-			if (await occurrencesTab.count() > 0) {
+			if ((await occurrencesTab.count()) > 0) {
 				await occurrencesTab.click();
 				await page.waitForTimeout(500);
 
 				// Look for attendance link
-				const attendanceLink = page.locator('a[href*="/attendance/"], button:has-text("Attendance")').first();
+				const attendanceLink = page
+					.locator('a[href*="/attendance/"], button:has-text("Attendance")')
+					.first();
 				if (await attendanceLink.isVisible()) {
 					await attendanceLink.click();
 
@@ -326,7 +330,7 @@ test.describe('Session occurrence management', () => {
 
 			// Click occurrences tab
 			const occurrencesTab = page.locator('button:has-text("Occurrences")');
-			if (await occurrencesTab.count() > 0) {
+			if ((await occurrencesTab.count()) > 0) {
 				await occurrencesTab.click();
 				await page.waitForTimeout(500);
 
@@ -362,19 +366,19 @@ test.describe('Session management actions', () => {
 
 		// Click on first session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Click signups tab
 			const signupsTab = page.locator('button:has-text("Signups")');
-			if (await signupsTab.count() > 0) {
+			if ((await signupsTab.count()) > 0) {
 				await signupsTab.click();
 				await page.waitForTimeout(1000);
 
 				// Look for export button
 				const exportButton = page.locator('button:has-text("Export")');
-				if (await exportButton.count() > 0) {
+				if ((await exportButton.count()) > 0) {
 					// Setup download listener
 					try {
 						const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
@@ -411,7 +415,7 @@ test.describe('Session management actions', () => {
 
 			// Check for capacity display (e.g., "5/10")
 			const capacityText = page.locator('text=/\\d+\\/\\d+/');
-			if (await capacityText.count() > 0) {
+			if ((await capacityText.count()) > 0) {
 				expect(await capacityText.first().isVisible()).toBeTruthy();
 
 				// Verify format
@@ -428,13 +432,13 @@ test.describe('Session management actions', () => {
 
 		// Click on first session
 		const sessionLinks = page.locator('a[href*="/sessions/"]').filter({ hasText: /\w/ });
-		if (await sessionLinks.count() > 0) {
+		if ((await sessionLinks.count()) > 0) {
 			await sessionLinks.first().click();
 			await page.waitForTimeout(1500);
 
 			// Look for location link in the session detail page
 			const locationLink = page.locator('a[href*="/locations/"]');
-			if (await locationLink.count() > 0) {
+			if ((await locationLink.count()) > 0) {
 				await locationLink.first().click();
 
 				// Should navigate to location detail
@@ -461,7 +465,7 @@ test.describe('Session management actions', () => {
 
 			// Look for staff section or staff names
 			const staffSection = page.locator('text="Staff", text="Facilitator"');
-			if (await staffSection.count() > 0) {
+			if ((await staffSection.count()) > 0) {
 				expect(await staffSection.first().isVisible()).toBeTruthy();
 			}
 		}
@@ -525,7 +529,7 @@ test.describe('Caregiver management actions', () => {
 
 			// Look for children/students section
 			const childrenSection = page.locator('text="Children", text="Students"');
-			if (await childrenSection.count() > 0) {
+			if ((await childrenSection.count()) > 0) {
 				expect(await childrenSection.first().isVisible()).toBeTruthy();
 			}
 		}
@@ -548,7 +552,7 @@ test.describe('Caregiver management actions', () => {
 
 			// Look for email button
 			const emailButton = page.locator('button:has-text("Email"), button:has-text("Send Email")');
-			if (await emailButton.count() > 0) {
+			if ((await emailButton.count()) > 0) {
 				await emailButton.first().click();
 
 				// Should open email modal/dialog
@@ -618,12 +622,12 @@ test.describe('Location management actions', () => {
 
 			// Look for sessions section
 			const sessionsSection = page.locator('text="Sessions"');
-			if (await sessionsSection.count() > 0) {
+			if ((await sessionsSection.count()) > 0) {
 				expect(await sessionsSection.first().isVisible()).toBeTruthy();
 
 				// Check for sessions list or table
 				const sessionsTable = page.locator('table');
-				if (await sessionsTable.count() > 0) {
+				if ((await sessionsTable.count()) > 0) {
 					expect(await sessionsTable.first().isVisible()).toBeTruthy();
 				}
 			}

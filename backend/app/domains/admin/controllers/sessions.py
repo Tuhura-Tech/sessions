@@ -10,7 +10,7 @@ from uuid import UUID
 from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers, service
 from advanced_alchemy.filters import LimitOffset
-from litestar import Controller, get, patch, post
+from litestar import Controller, delete, get, patch, post
 from litestar.exceptions import NotFoundException
 from litestar.response import Stream
 from litestar.status_codes import HTTP_200_OK
@@ -188,6 +188,18 @@ class SessionController(Controller):
         if not session:
             raise NotFoundException(detail="Session not found")
         return session_service.to_schema(session, schema_type=Session)
+
+    @delete("/{session_id:uuid}", status_code=HTTP_200_OK)
+    async def delete_session(
+        self,
+        session_id: UUID,
+        session_service: SessionService,
+    ) -> None:
+        """Delete a session."""
+        try:
+            await session_service.delete(session_id)
+        except AlchemyNotFoundError as exc:
+            raise NotFoundException(detail="Session not found") from exc
 
     @post("/{session_id:uuid}/email", status_code=HTTP_200_OK)
     async def email_session(

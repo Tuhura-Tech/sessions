@@ -208,6 +208,43 @@ class TestAdminSessionUpdate:
         assert response.status_code == HTTP_404_NOT_FOUND
 
 
+class TestAdminSessionDelete:
+    """Test deleting a session."""
+
+    async def test_delete_session(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test deleting an existing session succeeds."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(
+            db_session, location=location, name="Delete Me"
+        )
+
+        response = await client.delete(
+            f"/api/v1/admin/sessions/{session.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_200_OK
+
+        get_response = await client.get(
+            f"/api/v1/admin/sessions/{session.id}",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert get_response.status_code == HTTP_404_NOT_FOUND
+
+    async def test_delete_nonexistent_session(
+        self, client: AsyncClient, admin_session_cookie: str
+    ) -> None:
+        """Test deleting non-existent session returns 404."""
+        response = await client.delete(
+            "/api/v1/admin/sessions/00000000-0000-0000-0000-000000000000",
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_404_NOT_FOUND
+
+
 class TestAdminSessionOccurrences:
     """Test session occurrences retrieval."""
 

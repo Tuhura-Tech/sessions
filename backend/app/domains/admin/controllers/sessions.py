@@ -141,31 +141,32 @@ class SessionController(Controller):
 
             blocks.append(await session_service.blocks.get(block))
 
-        exclusions = await session_service.exclusions.list()
+        if session.session_type != "special":
+            exclusions = await session_service.exclusions.list()
 
-        filtered_exclusions = [
-            e.date for e in exclusions if e.date.year == session.year
-        ]
-        for block in blocks:
-            day = block.start_date
-            # Convert enum to int for arithmetic (day_of_week is DayOfWeekEnum | None)
-            day_of_week_int = (
-                int(session.day_of_week) if session.day_of_week is not None else 0
-            )
-            days_ahead = (day_of_week_int - day.weekday() + 7) % 7
-            day = day + timedelta(days=days_ahead)
+            filtered_exclusions = [
+                e.date for e in exclusions if e.date.year == session.year
+            ]
+            for block in blocks:
+                day = block.start_date
+                # Convert enum to int for arithmetic (day_of_week is DayOfWeekEnum | None)
+                day_of_week_int = (
+                    int(session.day_of_week) if session.day_of_week is not None else 0
+                )
+                days_ahead = (day_of_week_int - day.weekday() + 7) % 7
+                day = day + timedelta(days=days_ahead)
 
-            while day <= block.end_date:
-                if day not in filtered_exclusions:
-                    await session_service.occurrences.create(
-                        m.Occurrence(
-                            session_id=session.id,
-                            block_id=block.id,
-                            starts_at=datetime.combine(day, session.start_time),
-                            ends_at=datetime.combine(day, session.end_time),
+                while day <= block.end_date:
+                    if day not in filtered_exclusions:
+                        await session_service.occurrences.create(
+                            m.Occurrence(
+                                session_id=session.id,
+                                block_id=block.id,
+                                starts_at=datetime.combine(day, session.start_time),
+                                ends_at=datetime.combine(day, session.end_time),
+                            )
                         )
-                    )
-                day += timedelta(weeks=1)
+                    day += timedelta(weeks=1)
 
         # Refresh the session to load relationships
         session = await session_service.get(session.id)

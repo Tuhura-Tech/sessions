@@ -4,6 +4,8 @@ Integration tests for admin session management endpoints.
 Tests for session CRUD operations with proper authentication and data verification.
 """
 
+from datetime import date
+
 import pytest
 from httpx import AsyncClient
 from litestar.status_codes import (
@@ -120,6 +122,89 @@ class TestAdminSessionCreate:
             },
         )
         assert response.status_code in [302, 401, 403]
+
+    async def test_create_term_session_generates_occurrences(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test that creating a term session auto-generates occurrences for each block week."""
+        location = await create_test_location(db_session)
+        # Block spans Jan 15 – Mar 31 2025; there are 11 Mondays in that range
+        block = await create_test_block(
+            db_session,
+            year=2025,
+            name="Term Block",
+            start_date=date(2025, 1, 15),
+            end_date=date(2025, 3, 31),
+        )
+
+        response = await client.post(
+            "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
+            json={
+                "name": "Term Session",
+                "sessionType": "term",
+                "year": 2025,
+                "dayOfWeek": 1,  # Monday
+                "startTime": "09:00:00",
+                "endTime": "10:00:00",
+                "ageLower": 5,
+                "ageUpper": 12,
+                "capacity": 20,
+                "locationId": str(location.id),
+                "blocks": [str(block.id)],
+            },
+        )
+
+        assert response.status_code == HTTP_201_CREATED
+        session_id = response.json()["id"]
+
+        occ_response = await client.get(
+            f"/api/v1/admin/sessions/{session_id}/occurrences",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert occ_response.status_code == HTTP_200_OK
+        data = occ_response.json()
+        items = data.get("items", data) if isinstance(data, dict) else data
+        assert len(items) > 0, "Term session should have generated occurrences"
+
+    async def test_create_special_session_no_occurrences(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test that creating a special session does NOT auto-generate occurrences."""
+        location = await create_test_location(db_session)
+        block = await create_test_block(db_session, year=2025, name="Special Block")
+
+        response = await client.post(
+            "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
+            json={
+                "name": "Special Session",
+                "sessionType": "special",
+                "year": 2025,
+                "dayOfWeek": None,
+                "startTime": "09:00:00",
+                "endTime": "10:00:00",
+                "ageLower": 5,
+                "ageUpper": 12,
+                "capacity": 20,
+                "locationId": str(location.id),
+                "blocks": [str(block.id)],
+            },
+        )
+
+        assert response.status_code == HTTP_201_CREATED
+        session_id = response.json()["id"]
+
+        occ_response = await client.get(
+            f"/api/v1/admin/sessions/{session_id}/occurrences",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert occ_response.status_code == HTTP_200_OK
+        data = occ_response.json()
+        items = data.get("items", data) if isinstance(data, dict) else data
+        assert len(items) == 0, (
+            "Special session must not have auto-generated occurrences"
+        )
 
 
 class TestAdminSessionGet:
@@ -243,6 +328,18 @@ class TestAdminSessionDelete:
         )
 
         assert response.status_code == HTTP_404_NOT_FOUND
+
+    async def test_delete_session_without_auth(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Test deleting a session without authentication fails."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(db_session, location=location)
+
+        response = await client.delete(
+            f"/api/v1/admin/sessions/{session.id}",
+        )
+        assert response.status_code in [302, 401, 403]
 
 
 class TestAdminSessionOccurrences:

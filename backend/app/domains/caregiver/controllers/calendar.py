@@ -45,7 +45,7 @@ class CalendarController(Controller):
         for the specified session across all blocks. The feed includes:
         - Session name and location
         - Start and end times
-        - Session details and prerequisites
+        - Session details and description
         - Automatic updates when synced with calendar apps
 
         The feed only includes non-cancelled occurrences and is updated whenever
@@ -116,12 +116,6 @@ class CalendarController(Controller):
             description_parts = [
                 f"Session: {session.name}",
             ]
-
-            if session.prerequisites:
-                description_parts.append(f"Prerequisites: {session.prerequisites}")
-
-            if session.what_to_bring:
-                description_parts.append(f"What to bring: {session.what_to_bring}")
 
             # Location
             location = session.location

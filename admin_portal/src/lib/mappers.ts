@@ -25,8 +25,6 @@ export function toSessionCreate(data: {
 	endTime: string;
 	capacity: number;
 	sessionType?: 'term' | 'special';
-	whatToBring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
@@ -45,8 +43,6 @@ export function toSessionCreate(data: {
 		end_time: data.endTime,
 		capacity: data.capacity,
 		session_type: data.sessionType,
-		what_to_bring: data.whatToBring ?? undefined,
-		prerequisites: data.prerequisites ?? undefined,
 		description: data.description ?? undefined,
 		photo_album_url: data.photoAlbumUrl ?? undefined,
 		internal_notes: data.internalNotes ?? undefined,
@@ -70,8 +66,6 @@ export function toSessionUpdate(data: {
 	endTime?: string;
 	capacity?: number;
 	sessionType?: 'term' | 'special';
-	whatToBring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
@@ -90,8 +84,6 @@ export function toSessionUpdate(data: {
 		end_time: data.endTime,
 		capacity: data.capacity,
 		session_type: data.sessionType,
-		what_to_bring: data.whatToBring,
-		prerequisites: data.prerequisites,
 		description: data.description,
 		photo_album_url: data.photoAlbumUrl,
 		internal_notes: data.internalNotes,
@@ -115,8 +107,6 @@ export function fromSession(session: Session): {
 	endTime: string;
 	capacity: number;
 	sessionType?: string;
-	whatToBring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
@@ -135,8 +125,6 @@ export function fromSession(session: Session): {
 		endTime: session.end_time,
 		capacity: session.capacity,
 		sessionType: session.session_type,
-		whatToBring: session.what_to_bring,
-		prerequisites: session.prerequisites,
 		description: session.description,
 		photoAlbumUrl: session.photo_album_url,
 		internalNotes: session.internal_notes,
@@ -176,8 +164,6 @@ export function normalizeSession(session: Partial<Session>): Session {
 		end_time: session.end_time || '',
 		capacity: session.capacity ?? 30,
 		archived: session.archived ?? false,
-		what_to_bring: session.what_to_bring,
-		prerequisites: session.prerequisites,
 		description: session.description,
 		photo_album_url: session.photo_album_url,
 		internal_notes: session.internal_notes,

@@ -27,8 +27,6 @@ const EditSession: React.FC = () => {
 		endTime: '',
 		capacity: '',
 		waitlist: false,
-		whatToBring: '',
-		prerequisites: '',
 		description: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
@@ -61,8 +59,6 @@ const EditSession: React.FC = () => {
 					endTime: sessionData.end_time || '',
 					capacity: sessionData.capacity?.toString() || '',
 					waitlist: sessionData.waitlist ?? false,
-					whatToBring: sessionData.what_to_bring || '',
-					prerequisites: sessionData.prerequisites || '',
 					description: sessionData.description || '',
 					photoAlbumUrl: sessionData.photo_album_url || '',
 					internalNotes: sessionData.internal_notes || '',
@@ -103,8 +99,6 @@ const EditSession: React.FC = () => {
 				endTime: formData.endTime || undefined,
 				capacity: formData.capacity ? Number.parseInt(formData.capacity, 10) : undefined,
 				sessionType: formData.sessionType,
-				whatToBring: formData.whatToBring || null,
-				prerequisites: formData.prerequisites || null,
 				description: formData.description || null,
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
@@ -395,42 +389,6 @@ const EditSession: React.FC = () => {
 									/>
 								</div>
 
-								<div className="md:col-span-2">
-									<label
-										htmlFor="what-to-bring"
-										className="block text-sm font-medium text-gray-700"
-									>
-										What to Bring
-									</label>
-									<textarea
-										id="what-to-bring"
-										rows={3}
-										value={formData.whatToBring}
-										onChange={(e) => setFormData({ ...formData, whatToBring: e.target.value })}
-										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-									/>
-								</div>
-
-								<div className="md:col-span-2">
-									<label
-										htmlFor="prerequisites"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Prerequisites
-									</label>
-									<textarea
-										id="prerequisites"
-										rows={3}
-										value={formData.prerequisites}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												prerequisites: e.target.value,
-											})
-										}
-										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-									/>
-								</div>
 							</div>
 
 							<div className="flex justify-end gap-4">

@@ -234,8 +234,6 @@ class TestSessionCalendarEndpoint:
         # Create session with details
         session = m.Session(
             name="Python Programming",
-            prerequisites="Basic computer skills",
-            what_to_bring="Laptop",
             location_id=location.id,
             year=2025,
             session_type="term",
@@ -269,10 +267,5 @@ class TestSessionCalendarEndpoint:
 
         # Verify session details are included
         assert "Python Programming" in content
-        # Text may be wrapped/escaped in ICS format
-        assert "Prerequisites" in content
-        assert "computer" in content
-        assert "kills" in content  # Part of "skills", may be line-wrapped
-        assert "Laptop" in content
         assert "BEGIN:VALARM" in content  # Reminder alarm
         assert "TRIGGER:-P1D" in content  # 1 day before

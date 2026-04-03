@@ -1254,8 +1254,6 @@ export interface components {
 			endTime: string;
 			dayOfWeek: number;
 			capacity: number;
-			whatToBring?: string | null;
-			prerequisites?: string | null;
 			photoAlbumUrl?: string | null;
 			internalNotes?: string | null;
 			/** @default false */
@@ -1277,8 +1275,6 @@ export interface components {
 			start_time: string;
 			/** Format: duration */
 			end_time: string;
-			what_to_bring?: string | null;
-			prerequisites?: string | null;
 			/** @default [] */
 			blocks: string[];
 			location: components['schemas']['public_schemas_session_Location'];
@@ -1315,8 +1311,6 @@ export interface components {
 			endTime?: string | null;
 			dayOfWeek?: number | null;
 			capacity?: number | null;
-			whatToBring?: string | null;
-			prerequisites?: string | null;
 			photoAlbumUrl?: string | null;
 			internalNotes?: string | null;
 			archived?: boolean | null;

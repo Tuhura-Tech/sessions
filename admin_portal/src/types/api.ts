@@ -153,8 +153,6 @@ export interface Session {
 	start_time: string;
 	end_time: string;
 	capacity: number;
-	what_to_bring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	photo_album_url?: string | null;
 	internal_notes?: string | null;
@@ -182,8 +180,6 @@ export interface SessionCreate {
 	start_time: string;
 	end_time: string;
 	capacity: number;
-	what_to_bring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	photo_album_url?: string | null;
 	internal_notes?: string | null;
@@ -202,8 +198,6 @@ export interface SessionUpdate {
 	end_time?: string;
 	day_of_week?: number | null;
 	capacity?: number;
-	what_to_bring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	photo_album_url?: string | null;
 	internal_notes?: string | null;

@@ -98,8 +98,6 @@ class TestAdminSessionCreate:
                 "capacity": 15,
                 "locationId": str(location.id),
                 "blocks": [str(block.id)],
-                "whatToBring": "Water bottle",
-                "prerequisites": "None",
                 "description": "Hands-on robotics and maker activities",
             },
         )
@@ -110,6 +108,8 @@ class TestAdminSessionCreate:
         assert data["capacity"] == 15
         assert data["year"] == 2025
         assert data["description"] == "Hands-on robotics and maker activities"
+        assert "whatToBring" not in data
+        assert "prerequisites" not in data
         assert "id" in data
 
     async def test_create_session_without_auth(

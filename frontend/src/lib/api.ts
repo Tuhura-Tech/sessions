@@ -19,8 +19,6 @@ export type ApiSession = {
 	blocks?: string[];
 	public_instructions?: string | null;
 	arrival_instructions?: string | null;
-	what_to_bring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	waitlist: boolean;
 	locationDetails?: ApiSessionLocationDetails | null;
@@ -66,8 +64,6 @@ export type ApiPublicSession = {
 	start_time: string;
 	end_time: string;
 	waitlist?: boolean;
-	what_to_bring?: string | null;
-	prerequisites?: string | null;
 	description?: string | null;
 	location?: {
 		name: string;
@@ -123,8 +119,6 @@ export type UiSession = {
 	// Optional detail fields (used on session detail pages)
 	public_instructions?: string | null;
 	arrival_instructions?: string | null;
-	what_to_bring?: string | null;
-	prerequisites?: string | null;
 
 	occurrences_by_block?: ApiBlockOccurrences[];
 };
@@ -174,8 +168,6 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 					venueName: details?.name ?? null,
 					public_instructions: s.public_instructions ?? null,
 					arrival_instructions: s.arrival_instructions ?? null,
-					what_to_bring: s.what_to_bring ?? null,
-					prerequisites: s.prerequisites ?? null,
 				};
 			}),
 		}));
@@ -208,8 +200,6 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 			venueName: session.location?.name ?? null,
 			public_instructions: null,
 			arrival_instructions: null,
-			what_to_bring: session.what_to_bring ?? null,
-			prerequisites: session.prerequisites ?? null,
 		});
 
 		grouped.set(locationName, group);
@@ -442,8 +432,6 @@ export async function fetchSessionById(id: string): Promise<UiSession | null> {
 			venueName: details.name ?? null,
 			public_instructions: payload.public_instructions ?? null,
 			arrival_instructions: payload.arrival_instructions ?? null,
-			what_to_bring: payload.what_to_bring ?? null,
-			prerequisites: payload.prerequisites ?? null,
 			occurrences_by_block: payload.occurrences_by_block ?? [],
 		};
 	}
@@ -471,8 +459,6 @@ export async function fetchSessionById(id: string): Promise<UiSession | null> {
 		venueName: payload.location?.name ?? null,
 		public_instructions: payload.public_instructions ?? null,
 		arrival_instructions: payload.arrival_instructions ?? null,
-		what_to_bring: payload.what_to_bring ?? null,
-		prerequisites: payload.prerequisites ?? null,
 		occurrences_by_block: payload.occurrences_by_block ?? [],
 	};
 }

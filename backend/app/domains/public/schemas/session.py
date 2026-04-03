@@ -33,8 +33,6 @@ class Session(CamelizedBaseSchema):
     start_time: time
     end_time: time
     waitlist: bool = False
-    what_to_bring: str | None
-    prerequisites: str | None
     description: str | None
 
     blocks: list[str] = []

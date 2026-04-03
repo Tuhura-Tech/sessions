@@ -75,8 +75,6 @@ class Session(UUIDv7AuditBase):
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Public venue info
-    what_to_bring: Mapped[str | None] = mapped_column(Text, nullable=True)
-    prerequisites: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Staff-only (not exposed in public endpoints)

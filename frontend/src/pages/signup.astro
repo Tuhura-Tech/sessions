@@ -103,14 +103,6 @@ if (!user) {
 										</div>
 									)}
 
-									{session.what_to_bring && (
-										<div>
-											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
-												What to Bring
-											</h3>
-											<p class="mt-2 text-gray-900">{session.what_to_bring}</p>
-										</div>
-									)}
 
 									{session.public_instructions && (
 										<div>
@@ -131,15 +123,6 @@ if (!user) {
 											<p class="mt-2 whitespace-pre-line text-gray-900">
 												{session.arrival_instructions}
 											</p>
-										</div>
-									)}
-
-									{session.prerequisites && (
-										<div>
-											<h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
-												Prerequisites
-											</h3>
-											<p class="mt-2 text-gray-900">{session.prerequisites}</p>
 										</div>
 									)}
 

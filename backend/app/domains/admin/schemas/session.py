@@ -32,8 +32,6 @@ class Session(CamelizedBaseSchema):
 
     capacity: int
 
-    what_to_bring: str | None = None
-    prerequisites: str | None = None
     description: str | None = None
 
     photo_album_url: str | None = None
@@ -123,8 +121,6 @@ class SessionCreate(CamelizedBaseSchema):
 
     capacity: int
 
-    what_to_bring: str | None = None
-    prerequisites: str | None = None
     description: str | None = None
 
     photo_album_url: str | None = None
@@ -176,8 +172,6 @@ class SessionUpdate(CamelizedBaseSchema):
 
     capacity: int | None = None
 
-    what_to_bring: str | None = None
-    prerequisites: str | None = None
     description: str | None = None
 
     photo_album_url: str | None = None
@@ -226,8 +220,6 @@ class SessionUpdate(CamelizedBaseSchema):
                 self.start_time,
                 self.end_time,
                 self.capacity,
-                self.what_to_bring,
-                self.prerequisites,
                 self.description,
                 self.photo_album_url,
                 self.internal_notes,

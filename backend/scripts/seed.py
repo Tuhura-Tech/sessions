@@ -75,8 +75,6 @@ async def main() -> None:
                 start_time=time(15, 30),
                 end_time=time(17, 0),
                 capacity=20,
-                what_to_bring="Laptop and charger",
-                prerequisites=None,
                 archived=False,
             )
         )

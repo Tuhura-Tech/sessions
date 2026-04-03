@@ -134,13 +134,13 @@ const getDayLabel = (value?: number | null): string | null =>
 												? 'inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800'
 												: 'inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800'
 										}
-										{session?.description && (
-											<p class="mt-2 text-gray-700">{session.description}</p>
-										)}
-										{
+									>
 										{session.waitlist ? 'Waitlist' : 'Open'}
 									</span>
 								</div>
+								{session?.description && (
+									<p class="text-gray-700">{session.description}</p>
+								)}
 								<p class="text-gray-700">
 									<span class="font-semibold">Ages:</span> {session.age}
 									<span class="mx-2 text-gray-300">•</span>
@@ -235,32 +235,6 @@ const getDayLabel = (value?: number | null): string | null =>
 														</li>
 													))}
 											</ul>
-										</div>
-									) : null}
-									<div>
-										<h3 class="font-semibold text-gray-900">How to get there / where to enter</h3>
-										<p class="mt-1">
-											{session.public_instructions ||
-												'Please arrive at the venue address. If you are unsure where to enter, ask at reception or contact us for help.'}
-										</p>
-									</div>
-									<div>
-										<h3 class="font-semibold text-gray-900">On arrival</h3>
-										<p class="mt-1">
-											{session.arrival_instructions ||
-												'Please arrive a few minutes early. Our mentors will help you get checked in.'}
-										</p>
-									</div>
-									{session.what_to_bring ? (
-										<div>
-											<h3 class="font-semibold text-gray-900">What to bring</h3>
-											<p class="mt-1">{session.what_to_bring}</p>
-										</div>
-									) : null}
-									{session.prerequisites ? (
-										<div>
-											<h3 class="font-semibold text-gray-900">Prerequisites</h3>
-											<p class="mt-1">{session.prerequisites}</p>
 										</div>
 									) : null}
 									<div>

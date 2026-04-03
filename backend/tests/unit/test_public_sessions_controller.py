@@ -58,8 +58,7 @@ class DummySession:
         self.day_of_week = 1
         self.start_time = time(9, 0)
         self.end_time = time(17, 0)
-        self.what_to_bring = None
-        self.prerequisites = None
+        self.description = None
         self.archived = archived
         self.location = SimpleNamespace(
             name="Location",
@@ -124,8 +123,7 @@ async def test_list_sessions_success():
         day_of_week=1,
         start_time=time(9, 0),
         end_time=time(17, 0),
-        what_to_bring=None,
-        prerequisites=None,
+        description=None,
         location=SimpleNamespace(
             name="Location",
             address="Address",

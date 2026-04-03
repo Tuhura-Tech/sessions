@@ -31,7 +31,7 @@
 		"@types/react-dom": "19.2.3",
 		"@vitejs/plugin-react": "5.2.0",
 		"jsonwebtoken": "9.0.3",
-		"openapi-typescript": "7.10.1",
+		"openapi-typescript": "7.13.0",
 		"prettier": "3.8.1",
 		"prettier-plugin-tailwindcss": "0.7.2",
 		"tailwindcss": "4.1.18",

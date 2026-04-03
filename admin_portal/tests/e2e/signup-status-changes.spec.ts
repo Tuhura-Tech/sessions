@@ -10,7 +10,7 @@ const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
  */
 
 test.describe('Signup status changes', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([
@@ -328,9 +328,7 @@ test.describe('Signup status changes', () => {
 
 				// Get initial confirmed count
 				const initialCountText = await page.locator('text=/\\d+\\/\\d+/').first().textContent();
-				const initialCount = initialCountText ? Number.parseInt(initialCountText.split('/')[0]) : 0;
-
-				// Click signups tab
+		const initialCount = initialCountText ? Number.parseInt(initialCountText.split('/')[0], 10) : 0;
 				const signupsTab = page.locator('button:has-text("Signups")');
 				if ((await signupsTab.count()) > 0) {
 					await signupsTab.click();
@@ -359,10 +357,10 @@ test.describe('Signup status changes', () => {
 						// Get updated confirmed count
 						const updatedCountText = await page.locator('text=/\\d+\\/\\d+/').first().textContent();
 						const updatedCount = updatedCountText
-							? Number.parseInt(updatedCountText.split('/')[0])
-							: 0;
+						? Number.parseInt(updatedCountText.split('/')[0], 10)
+						: 0;
 
-						// Confirmed count should have increased by 1
+					// Confirmed count should have increased by 1
 						expect(updatedCount).toBe(initialCount + 1);
 					}
 				}

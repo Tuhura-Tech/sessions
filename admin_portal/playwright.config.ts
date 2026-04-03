@@ -72,22 +72,27 @@ export default defineConfig({
 			}
 		: [
 				{
-					command: 'uv run litestar run --host 0.0.0.0 --port 8000',
+					command:
+						'docker compose -f ../docker-compose.yml up -d postgres && uv run litestar database upgrade --no-prompt && uv run litestar run --host 0.0.0.0 --port 8000',
 					cwd: '../backend',
 					url: 'http://localhost:8000/api/v1/health',
-					reuseExistingServer: true,
+					reuseExistingServer: false,
 					timeout: 120 * 1000,
 					env: {
 						...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
+						AUTH_SECRET: process.env.PLAYWRIGHT_AUTH_SECRET || 'playwright-dev-secret',
 						DATABASE_URL:
 							process.env.DATABASE_URL ||
 							'postgresql+psycopg://sessions:sessions@localhost:5433/sessions',
+						CORS_ORIGINS:
+							'http://localhost:3002,http://127.0.0.1:3002,http://localhost:8000,http://127.0.0.1:8000',
+						SAQ_USE_SERVER_LIFESPAN: 'false',
 					},
 				},
 				{
 					command: 'pnpm dev',
 					url: 'http://localhost:3002',
-					reuseExistingServer: true,
+					reuseExistingServer: false,
 					timeout: 120 * 1000,
 					env: {
 						...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),

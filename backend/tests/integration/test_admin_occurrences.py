@@ -13,6 +13,7 @@ from httpx import AsyncClient
 from litestar.status_codes import (
     HTTP_200_OK,
     HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -86,6 +87,8 @@ class TestAdminOccurrenceCreate:
         location = await create_test_location(db_session)
         session = await create_test_session(db_session, location=location)
         block = await create_test_block(db_session)
+        db_session.add(m.BlockLink(session_id=session.id, block_id=block.id))
+        await db_session.commit()
 
         occurrence_data = {
             "sessionId": str(session.id),
@@ -104,6 +107,27 @@ class TestAdminOccurrenceCreate:
         data = response.json()
         assert data.get("cancelled") is not None
         assert "id" in data
+
+    async def test_create_occurrence_rejects_unlinked_block(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test creating an occurrence with an unlinked block returns 400."""
+        location = await create_test_location(db_session)
+        session = await create_test_session(db_session, location=location)
+        unlinked_block = await create_test_block(db_session)
+
+        response = await client.post(
+            "/api/v1/admin/occurrences/",
+            json={
+                "sessionId": str(session.id),
+                "blockId": str(unlinked_block.id),
+                "startsAt": "2026-05-15T09:00:00Z",
+                "endsAt": "2026-05-15T15:00:00Z",
+            },
+            cookies={"admin_session": admin_session_cookie},
+        )
+
+        assert response.status_code == HTTP_400_BAD_REQUEST
 
     async def test_create_occurrence_without_auth(self, client: AsyncClient) -> None:
         """Test creating occurrence without authentication fails."""

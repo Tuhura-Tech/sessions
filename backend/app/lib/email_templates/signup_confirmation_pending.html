@@ -148,6 +148,11 @@
                 <div class="info-item">
                     <span class="info-label">Session:</span> {{ session_name }}
                 </div>
+                {% if session_time %}
+                <div class="info-item">
+                    <span class="info-label">Time:</span> {{ session_time }}
+                </div>
+                {% endif %}
                 {% if session_venue %}
                 <div class="info-item">
                     <span class="info-label">Location:</span> {{ session_venue }}

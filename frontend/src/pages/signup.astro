@@ -52,6 +52,9 @@ if (!user) {
 									Sign up for
 								</p>
 								<h1 class="mt-2 text-3xl font-bold text-gray-900">Sign up for {session.name}</h1>
+										{session.description && (
+											<p class="mt-2 text-gray-700">{session.description}</p>
+										)}
 								<div class="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
 									<div>
 										<p class="text-xs font-medium text-gray-600 uppercase">Time</p>

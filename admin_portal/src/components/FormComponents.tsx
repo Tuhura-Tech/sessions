@@ -41,7 +41,7 @@ interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
 }
 
 export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
-	({ label, required, error, options, className, id, ...props }, ref) => {
+	({ label, required, error, options, className, id, children, ...props }, ref) => {
 		const selectId = id || `select-${label?.replace(/\s+/g, '-').toLowerCase()}`;
 		return (
 			<div className="flex flex-col gap-1">
@@ -64,6 +64,7 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
 							{opt.label}
 						</option>
 					))}
+					{children}
 				</select>
 				{error && <span className="text-sm text-red-600">{error}</span>}
 			</div>

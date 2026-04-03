@@ -77,6 +77,7 @@ class Session(UUIDv7AuditBase):
     # Public venue info
     what_to_bring: Mapped[str | None] = mapped_column(Text, nullable=True)
     prerequisites: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Staff-only (not exposed in public endpoints)
     photo_album_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

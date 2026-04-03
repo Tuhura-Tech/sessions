@@ -31,6 +31,9 @@ class Settings(BaseSettings):
 
     # Redis
     redis_url: str = "redis://localhost:6379"
+    saq_web_enabled: bool = True
+    saq_worker_processes: int = 1
+    saq_use_server_lifespan: bool = True
 
     # Application
     debug: bool = False
@@ -122,9 +125,9 @@ _BACKGROUND_TASKS = [
 def _get_saq_settings() -> SAQConfig:
     """Lazily create SAQ settings to avoid Redis connection at import time."""
     return SAQConfig(
-        web_enabled=True,
-        worker_processes=1,
-        use_server_lifespan=True,
+        web_enabled=settings.saq_web_enabled,
+        worker_processes=settings.saq_worker_processes,
+        use_server_lifespan=settings.saq_use_server_lifespan,
         queue_configs=[
             QueueConfig(
                 name="background-tasks",

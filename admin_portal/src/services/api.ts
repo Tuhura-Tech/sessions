@@ -197,6 +197,21 @@ export const adminApi = {
 		return unwrapList<Occurrence>(data);
 	},
 
+	createOccurrence: async (occurrence: {
+		sessionId: string;
+		blockId: string;
+		startsAt: string;
+		endsAt: string;
+	}): Promise<Occurrence> => {
+		const { data } = await api.post('/admin/occurrences', {
+			session_id: occurrence.sessionId,
+			block_id: occurrence.blockId,
+			starts_at: occurrence.startsAt,
+			ends_at: occurrence.endsAt,
+		});
+		return data;
+	},
+
 	cancelOccurrence: async (occurrenceId: string, reason?: string): Promise<Occurrence> => {
 		const { data } = await api.patch(`/admin/occurrences/${occurrenceId}/cancel`, {
 			cancelled: true,

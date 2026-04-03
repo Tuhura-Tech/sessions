@@ -35,6 +35,7 @@ class Session(CamelizedBaseSchema):
     waitlist: bool = False
     what_to_bring: str | None
     prerequisites: str | None
+    description: str | None
 
     blocks: list[str] = []
     location: Location

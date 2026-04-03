@@ -11,6 +11,7 @@ from httpx import AsyncClient
 from litestar.status_codes import (
     HTTP_200_OK,
     HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -99,6 +100,7 @@ class TestAdminSessionCreate:
                 "blocks": [str(block.id)],
                 "whatToBring": "Water bottle",
                 "prerequisites": "None",
+                "description": "Hands-on robotics and maker activities",
             },
         )
 
@@ -107,6 +109,7 @@ class TestAdminSessionCreate:
         assert data["name"] == "New Session"
         assert data["capacity"] == 15
         assert data["year"] == 2025
+        assert data["description"] == "Hands-on robotics and maker activities"
         assert "id" in data
 
     async def test_create_session_without_auth(
@@ -166,6 +169,33 @@ class TestAdminSessionCreate:
         data = occ_response.json()
         items = data.get("items", data) if isinstance(data, dict) else data
         assert len(items) > 0, "Term session should have generated occurrences"
+
+    async def test_create_term_session_requires_day_of_week(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Term sessions must include dayOfWeek."""
+        location = await create_test_location(db_session)
+        block = await create_test_block(db_session, year=2025, name="Term Block")
+
+        response = await client.post(
+            "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
+            json={
+                "name": "Invalid Term Session",
+                "sessionType": "term",
+                "year": 2025,
+                "dayOfWeek": None,
+                "startTime": "09:00:00",
+                "endTime": "10:00:00",
+                "ageLower": 5,
+                "ageUpper": 12,
+                "capacity": 20,
+                "locationId": str(location.id),
+                "blocks": [str(block.id)],
+            },
+        )
+
+        assert response.status_code == HTTP_400_BAD_REQUEST
 
     async def test_create_special_session_no_occurrences(
         self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
@@ -257,12 +287,13 @@ class TestAdminSessionUpdate:
         response = await client.patch(
             f"/api/v1/admin/sessions/{session.id}",
             cookies={"admin_session": admin_session_cookie},
-            json={"name": "Updated Name"},
+            json={"name": "Updated Name", "description": "Updated description"},
         )
 
         assert response.status_code == HTTP_200_OK
         data = response.json()
         assert data["name"] == "Updated Name"
+        assert data["description"] == "Updated description"
 
     async def test_update_session_capacity(
         self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession

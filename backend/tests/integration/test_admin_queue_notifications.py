@@ -72,6 +72,9 @@ async def test_admin_signup_status_enqueues_waitlist_promotion(
     assert response.status_code == HTTP_200_OK
     assert queue.calls
     assert queue.calls[0][0] == "send_waitlist_promoted_task"
+    payload = queue.calls[0][1]
+    assert payload["session_venue"] == location.name
+    assert payload["session_time"]
 
 
 @pytest.mark.anyio

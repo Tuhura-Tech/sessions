@@ -29,6 +29,7 @@ const EditSession: React.FC = () => {
 		waitlist: false,
 		whatToBring: '',
 		prerequisites: '',
+		description: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
 		sessionType: 'term' as 'term' | 'special',
@@ -62,9 +63,10 @@ const EditSession: React.FC = () => {
 					waitlist: sessionData.waitlist ?? false,
 					whatToBring: sessionData.what_to_bring || '',
 					prerequisites: sessionData.prerequisites || '',
+					description: sessionData.description || '',
 					photoAlbumUrl: sessionData.photo_album_url || '',
 					internalNotes: sessionData.internal_notes || '',
-					sessionType: 'term',
+					sessionType: (sessionData.session_type as 'term' | 'special') || 'term',
 					blocks: sessionData.blocks || [],
 				});
 			} catch (error) {
@@ -103,6 +105,7 @@ const EditSession: React.FC = () => {
 				sessionType: formData.sessionType,
 				whatToBring: formData.whatToBring || null,
 				prerequisites: formData.prerequisites || null,
+				description: formData.description || null,
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
 			};
@@ -374,6 +377,22 @@ const EditSession: React.FC = () => {
 											</label>
 										))}
 									</div>
+								</div>
+
+								<div className="md:col-span-2">
+									<label
+										htmlFor="description"
+										className="block text-sm font-medium text-gray-700"
+									>
+										Description
+									</label>
+									<textarea
+										id="description"
+										rows={3}
+										value={formData.description}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+									/>
 								</div>
 
 								<div className="md:col-span-2">

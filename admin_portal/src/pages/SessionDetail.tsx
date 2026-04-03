@@ -8,12 +8,28 @@ import Sidebar from '../components/Sidebar';
 import { downloadBlob } from '../lib/export';
 import { calculateAge, getStatusColor } from '../lib/utils';
 import { adminApi } from '../services/api';
-import type { ChildDetails, Occurrence, Session, Signup, Staff, StaffPublic } from '../types';
+import type {
+	ChildDetails,
+	Occurrence,
+	Session,
+	SessionBlock,
+	Signup,
+	Staff,
+	StaffPublic,
+} from '../types';
 
 function dayOfWeekAsString(dayIndex: number | null): string {
 	if (dayIndex === null || dayIndex === undefined) return 'Not set';
 	const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 	return days[dayIndex] || 'Unknown';
+}
+
+function toUtcIsoString(localDateTime: string): string | null {
+	const parsed = new Date(localDateTime);
+	if (Number.isNaN(parsed.getTime())) {
+		return null;
+	}
+	return parsed.toISOString();
 }
 
 const SessionDetail: React.FC = () => {
@@ -22,6 +38,7 @@ const SessionDetail: React.FC = () => {
 	const [session, setSession] = useState<Session | null>(null);
 	const [signups, setSignups] = useState<Signup[]>([]);
 	const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+	const [sessionBlocks, setSessionBlocks] = useState<SessionBlock[]>([]);
 	const [assignedStaff, setAssignedStaff] = useState<StaffPublic[]>([]);
 	const [availableStaff, setAvailableStaff] = useState<Staff[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +49,15 @@ const SessionDetail: React.FC = () => {
 	const [blockFilter, setBlockFilter] = useState<string>('');
 	const [showStaffModal, setShowStaffModal] = useState(false);
 	const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+	const [showCreateOccurrenceModal, setShowCreateOccurrenceModal] = useState(false);
 	const [allStudents, setAllStudents] = useState<ChildDetails[]>([]);
 	const [studentSearchQuery, setStudentSearchQuery] = useState('');
 	const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 	const [addingStudent, setAddingStudent] = useState(false);
+	const [creatingOccurrence, setCreatingOccurrence] = useState(false);
+	const [newOccurrenceStart, setNewOccurrenceStart] = useState('');
+	const [newOccurrenceEnd, setNewOccurrenceEnd] = useState('');
+	const [newOccurrenceBlockId, setNewOccurrenceBlockId] = useState('');
 
 	const [bulkSubject, setBulkSubject] = useState('');
 	const [bulkMessage, setBulkMessage] = useState('');
@@ -44,18 +66,21 @@ const SessionDetail: React.FC = () => {
 	const loadSessionData = useCallback(async (sessionId: string) => {
 		try {
 			setIsLoading(true);
-			const [sessionData, signupsData, occurrencesData, staffData, allStaff, students] =
+			const sessionData = await adminApi.getSession(sessionId);
+			const [signupsData, occurrencesData, staffData, allStaff, students, allBlocks] =
 				await Promise.all([
-					adminApi.getSession(sessionId),
 					adminApi.getSessionSignups(sessionId),
 					adminApi.getSessionOccurrences(sessionId),
 					adminApi.getSessionStaff(sessionId),
 					adminApi.getStaff(true),
 					adminApi.listChildren(),
+					adminApi.getBlocks(sessionData.year),
 				]);
 			setSession(sessionData);
 			setSignups(signupsData);
 			setOccurrences(occurrencesData);
+			const linkedBlockIds = new Set((sessionData.blocks || []).map((blockId) => String(blockId)));
+			setSessionBlocks(allBlocks.filter((block) => linkedBlockIds.has(String(block.id))));
 			setAssignedStaff(staffData);
 			setAvailableStaff(allStaff);
 			setAllStudents(students);
@@ -91,6 +116,48 @@ const SessionDetail: React.FC = () => {
 		}
 	};
 
+	const handleCreateOccurrence = async () => {
+		if (!id) return;
+		if (!newOccurrenceStart || !newOccurrenceEnd || !newOccurrenceBlockId) {
+			alert('Start, end, and block are required');
+			return;
+		}
+
+		const startsAtUtc = toUtcIsoString(newOccurrenceStart);
+		const endsAtUtc = toUtcIsoString(newOccurrenceEnd);
+		if (!startsAtUtc || !endsAtUtc) {
+			alert('Please provide valid start and end dates');
+			return;
+		}
+		if (new Date(startsAtUtc).getTime() >= new Date(endsAtUtc).getTime()) {
+			alert('End time must be after start time');
+			return;
+		}
+
+		try {
+			setCreatingOccurrence(true);
+			await adminApi.createOccurrence({
+				sessionId: id,
+				blockId: newOccurrenceBlockId,
+				startsAt: startsAtUtc,
+				endsAt: endsAtUtc,
+			});
+
+			const updated = await adminApi.getSessionOccurrences(id);
+			setOccurrences(updated);
+			setShowCreateOccurrenceModal(false);
+			setNewOccurrenceStart('');
+			setNewOccurrenceEnd('');
+			setNewOccurrenceBlockId('');
+			alert('Occurrence created');
+		} catch (error) {
+			console.error('Failed to create occurrence:', error);
+			alert('Failed to create occurrence');
+		} finally {
+			setCreatingOccurrence(false);
+		}
+	};
+
 	const handleExportSignups = async () => {
 		if (!id || !session) return;
 		try {
@@ -101,6 +168,8 @@ const SessionDetail: React.FC = () => {
 			alert('Failed to export signups');
 		}
 	};
+
+	const hasLinkedBlocks = sessionBlocks.length > 0;
 
 	const handleCancelOccurrence = async (occurrenceId: string) => {
 		const reason = prompt('Enter cancellation reason (optional):');
@@ -277,6 +346,9 @@ const SessionDetail: React.FC = () => {
 						<div className="flex items-start justify-between">
 							<div>
 								<h1 className="text-3xl font-bold text-gray-900">{session.name}</h1>
+								{session.description && (
+									<p className="mt-2 text-gray-700">{session.description}</p>
+								)}
 								{session.internal_notes && (
 									<p className="mt-2 text-gray-600">{session.internal_notes}</p>
 								)}
@@ -531,7 +603,16 @@ const SessionDetail: React.FC = () => {
 										Showing {filteredOccurrences.length} of {occurrences.length} occurrence(s)
 									</p>
 								</div>
-								<div>
+								<div className="flex items-center gap-3">
+									<button
+										type="button"
+										onClick={() => setShowCreateOccurrenceModal(true)}
+										disabled={!hasLinkedBlocks}
+										title={hasLinkedBlocks ? 'Add a manual occurrence' : 'Link at least one block to this session first'}
+										className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										Add occurrence
+									</button>
 									<label className="flex items-center gap-2">
 										<span className="text-sm text-gray-700">Filter by term:</span>
 										<select
@@ -899,6 +980,85 @@ const SessionDetail: React.FC = () => {
 							className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{addingStudent ? 'Adding...' : 'Add Student'}
+						</button>
+					</div>
+				</div>
+			</Modal>
+
+			<Modal
+				isOpen={showCreateOccurrenceModal}
+				onClose={() => setShowCreateOccurrenceModal(false)}
+				title="Create Occurrence"
+			>
+				<div className="space-y-4">
+					{!hasLinkedBlocks && (
+						<p className="text-sm text-amber-700">
+							This session has no linked blocks. Link a block before creating an occurrence.
+						</p>
+					)}
+					<div>
+						<label htmlFor="occurrence-block" className="mb-1 block text-sm font-medium text-gray-700">
+							Block
+						</label>
+						<select
+							id="occurrence-block"
+							value={newOccurrenceBlockId}
+							onChange={(e) => setNewOccurrenceBlockId(e.target.value)}
+							disabled={!hasLinkedBlocks}
+							className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+						>
+							<option value="">Select a block</option>
+							{sessionBlocks.map((block) => (
+								<option key={block.id} value={block.id}>
+									{block.name} ({block.block_type})
+								</option>
+							))}
+						</select>
+					</div>
+
+					<div>
+						<label htmlFor="occurrence-start" className="mb-1 block text-sm font-medium text-gray-700">
+							Starts at
+						</label>
+						<input
+							id="occurrence-start"
+							type="datetime-local"
+							value={newOccurrenceStart}
+							onChange={(e) => setNewOccurrenceStart(e.target.value)}
+							disabled={!hasLinkedBlocks}
+							className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+						/>
+					</div>
+
+					<div>
+						<label htmlFor="occurrence-end" className="mb-1 block text-sm font-medium text-gray-700">
+							Ends at
+						</label>
+						<input
+							id="occurrence-end"
+							type="datetime-local"
+							value={newOccurrenceEnd}
+							onChange={(e) => setNewOccurrenceEnd(e.target.value)}
+							disabled={!hasLinkedBlocks}
+							className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+						/>
+					</div>
+
+					<div className="flex justify-end gap-2 pt-2">
+						<button
+							type="button"
+							onClick={() => setShowCreateOccurrenceModal(false)}
+							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={handleCreateOccurrence}
+							disabled={creatingOccurrence || !hasLinkedBlocks}
+							className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+						>
+							{creatingOccurrence ? 'Creating...' : 'Create'}
 						</button>
 					</div>
 				</div>

@@ -21,6 +21,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db import models as m
 from app.lib.age import calculate_age, is_age_eligible
+from app.lib.session_time import format_session_time
 from app.lib.settings import settings
 
 if TYPE_CHECKING:
@@ -65,6 +66,7 @@ async def send_signup_confirmation_task(
     session_name: str,
     session_venue: str,
     session_address: str,
+    session_time: str | None = None,
     signup_status: str,
     signup_id: str,
     session_id: str,
@@ -111,6 +113,7 @@ async def send_signup_confirmation_task(
             session_name=session_name,
             session_venue=session_venue,
             session_address=session_address,
+            session_time=session_time,
             status=signup_status,
             waitlist_reason=waitlist_reason,
             support_email=settings.email_contact,
@@ -157,6 +160,7 @@ async def send_waitlist_promoted_task(
     session_name: str,
     session_venue: str,
     session_address: str,
+    session_time: str | None = None,
     session_id: str,
 ) -> dict[str, Any]:
     """Send email when a student is promoted from waitlist to confirmed.
@@ -192,6 +196,7 @@ async def send_waitlist_promoted_task(
             session_name=session_name,
             session_venue=session_venue,
             session_address=session_address,
+            session_time=session_time,
             support_email=settings.email_contact,
             session_id=session_id,
             api_base_url=settings.public_base_url,
@@ -728,6 +733,7 @@ async def process_signup_approval_task(
         # Queue appropriate notification email
         if caregiver and caregiver.email:
             queue = await _get_task_queue(ctx)
+            session_time = format_session_time(session)
             await queue.enqueue(
                 "send_signup_confirmation_task",
                 to_email=caregiver.email,
@@ -736,6 +742,7 @@ async def process_signup_approval_task(
                 session_name=session.name,
                 session_venue=session_location.name if session_location else "TBD",
                 session_address=session_location.address if session_location else "TBD",
+                session_time=session_time,
                 signup_status=final_status,
                 signup_id=signup_id,
                 session_id=session_id,
@@ -839,6 +846,7 @@ async def bulk_promote_waitlist_task(
                 caregiver = signup.student.caregiver
                 if caregiver and caregiver.email:
                     queue = await _get_task_queue(ctx)
+                    session_time = format_session_time(session)
                     await queue.enqueue(
                         "send_waitlist_promoted_task",
                         signup_id=str(signup.id),
@@ -852,6 +860,8 @@ async def bulk_promote_waitlist_task(
                         session_address=session.location.address
                         if session.location
                         else "",
+                        session_time=session_time,
+                        session_id=str(session.id),
                     )
                     promoted += 1
             except Exception as e:

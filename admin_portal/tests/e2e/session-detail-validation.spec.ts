@@ -278,4 +278,78 @@ test.describe('Session Detail - Signup Counts', () => {
 			}
 		}
 	});
+
+	test('should expose manual occurrence creation controls', async ({ page }) => {
+		const headers = getAdminAuthHeaders();
+
+		const sessionsRes = await page.request.get(`${ADMIN_API_BASE_URL}/admin/sessions`, {
+			headers,
+		});
+		const sessionsPayload = await sessionsRes.json();
+		const sessions = unwrapListResponse<any>(sessionsPayload);
+
+		const sessionWithBlocks = sessions.find((s: any) => Array.isArray(s.blocks) && s.blocks.length > 0);
+		if (!sessionWithBlocks) {
+			return;
+		}
+
+		await navigateTo(page, `/sessions/${sessionWithBlocks.id}`);
+		await waitForAuthReady(page);
+		await waitForApiCalls(page);
+
+		await page.getByRole('button', { name: /Occurrences/i }).click();
+		await expect(page.getByRole('button', { name: /Add occurrence/i })).toBeVisible();
+
+		await page.getByRole('button', { name: /Add occurrence/i }).click();
+		await expect(page.getByRole('heading', { name: /Create Occurrence/i })).toBeVisible();
+		await expect(page.locator('select').filter({ hasText: /Select a block/i })).toBeVisible();
+	});
+
+	test('should create a manual occurrence and persist it', async ({ page }) => {
+		const headers = getAdminAuthHeaders();
+
+		const sessionsRes = await page.request.get(`${ADMIN_API_BASE_URL}/admin/sessions`, {
+			headers,
+		});
+		const sessionsPayload = await sessionsRes.json();
+		const sessions = unwrapListResponse<any>(sessionsPayload);
+
+		const sessionWithBlocks = sessions.find((s: any) => Array.isArray(s.blocks) && s.blocks.length > 0);
+		if (!sessionWithBlocks) {
+			return;
+		}
+
+		const beforeRes = await page.request.get(
+			`${ADMIN_API_BASE_URL}/admin/sessions/${sessionWithBlocks.id}/occurrences`,
+			{ headers },
+		);
+		const beforePayload = await beforeRes.json();
+		const beforeOccurrences = unwrapListResponse<any>(beforePayload);
+
+		await navigateTo(page, `/sessions/${sessionWithBlocks.id}`);
+		await waitForAuthReady(page);
+		await waitForApiCalls(page);
+
+		await page.getByRole('button', { name: /Occurrences/i }).click();
+		await page.getByRole('button', { name: /Add occurrence/i }).click();
+
+		const blockSelect = page.locator('#occurrence-block');
+		await expect(blockSelect).toBeVisible();
+		await blockSelect.selectOption({ index: 1 });
+
+		await page.locator('#occurrence-start').fill('2030-01-15T09:00');
+		await page.locator('#occurrence-end').fill('2030-01-15T10:00');
+		await page.getByRole('button', { name: /^Create$/i }).click();
+
+		await expect(page.getByRole('heading', { name: /Create Occurrence/i })).not.toBeVisible();
+
+		const afterRes = await page.request.get(
+			`${ADMIN_API_BASE_URL}/admin/sessions/${sessionWithBlocks.id}/occurrences`,
+			{ headers },
+		);
+		const afterPayload = await afterRes.json();
+		const afterOccurrences = unwrapListResponse<any>(afterPayload);
+
+		expect(afterOccurrences.length).toBeGreaterThan(beforeOccurrences.length);
+	});
 });

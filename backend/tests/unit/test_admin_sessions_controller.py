@@ -144,6 +144,7 @@ class DummySessionService:
             start_time=data.start_time,
             end_time=data.end_time,
         )
+        session.session_type = getattr(data, "session_type", "term")
         self._session = session
         return session
 

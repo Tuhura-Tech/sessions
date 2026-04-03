@@ -8,6 +8,7 @@ Great news! {{ student_name }} is confirmed for {{ session_name }}.
 --- Session Details ---
 Student: {{ student_name }}
 Session: {{ session_name }}
+{% if session_time %}Time: {{ session_time }}{% endif %}
 {% if session_venue %}Location: {{ session_venue }}{% endif %}
 {% if session_address %}Address: {{ session_address }}{% endif %}
 

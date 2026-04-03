@@ -27,6 +27,7 @@ export function toSessionCreate(data: {
 	sessionType?: 'term' | 'special';
 	whatToBring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
 	blocks: string[];
@@ -46,6 +47,7 @@ export function toSessionCreate(data: {
 		session_type: data.sessionType,
 		what_to_bring: data.whatToBring ?? undefined,
 		prerequisites: data.prerequisites ?? undefined,
+		description: data.description ?? undefined,
 		photo_album_url: data.photoAlbumUrl ?? undefined,
 		internal_notes: data.internalNotes ?? undefined,
 		blocks: data.blocks,
@@ -70,6 +72,7 @@ export function toSessionUpdate(data: {
 	sessionType?: 'term' | 'special';
 	whatToBring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
 	blocks?: string[];
@@ -89,6 +92,7 @@ export function toSessionUpdate(data: {
 		session_type: data.sessionType,
 		what_to_bring: data.whatToBring,
 		prerequisites: data.prerequisites,
+		description: data.description,
 		photo_album_url: data.photoAlbumUrl,
 		internal_notes: data.internalNotes,
 		blocks: data.blocks,
@@ -113,6 +117,7 @@ export function fromSession(session: Session): {
 	sessionType?: string;
 	whatToBring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
 	blocks: string[];
@@ -132,6 +137,7 @@ export function fromSession(session: Session): {
 		sessionType: session.session_type,
 		whatToBring: session.what_to_bring,
 		prerequisites: session.prerequisites,
+		description: session.description,
 		photoAlbumUrl: session.photo_album_url,
 		internalNotes: session.internal_notes,
 		blocks: session.blocks || [],
@@ -172,6 +178,7 @@ export function normalizeSession(session: Partial<Session>): Session {
 		archived: session.archived ?? false,
 		what_to_bring: session.what_to_bring,
 		prerequisites: session.prerequisites,
+		description: session.description,
 		photo_album_url: session.photo_album_url,
 		internal_notes: session.internal_notes,
 		session_type: session.session_type,

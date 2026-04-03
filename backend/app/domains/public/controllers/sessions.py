@@ -101,6 +101,7 @@ class SessionController(Controller):
                 waitlist=getattr(result, "is_full", False),
                 what_to_bring=result.what_to_bring,
                 prerequisites=result.prerequisites,
+                description=result.description,
                 blocks=blocks_by_session.get(str(result.id), []),
                 location=location,
             )
@@ -197,6 +198,7 @@ class SessionController(Controller):
             waitlist=getattr(session, "is_full", False),
             what_to_bring=session.what_to_bring,
             prerequisites=session.prerequisites,
+            description=session.description,
             blocks=blocks,
             location=location,
             occurrences=occurrences,

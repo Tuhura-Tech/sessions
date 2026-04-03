@@ -6,7 +6,8 @@ from uuid import UUID
 from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 from advanced_alchemy.extensions.litestar import providers
 from litestar import Controller, get, patch, post
-from litestar.exceptions import NotFoundException
+from litestar.exceptions import NotFoundException, ValidationException
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.db import models as m
@@ -70,6 +71,31 @@ class OccurrenceController(Controller):
         occurrence_service: OccurrenceService,
     ) -> Occurrence:
         """Create a new occurrence."""
+        db = occurrence_service.repository.session
+
+        session_exists = await db.scalar(
+            select(m.Session.id).where(m.Session.id == data.session_id)
+        )
+        if session_exists is None:
+            raise ValidationException(detail="Session not found")
+
+        block_exists = await db.scalar(
+            select(m.Block.id).where(m.Block.id == data.block_id)
+        )
+        if block_exists is None:
+            raise ValidationException(detail="Block not found")
+
+        block_link_exists = await db.scalar(
+            select(m.BlockLink.id).where(
+                m.BlockLink.session_id == data.session_id,
+                m.BlockLink.block_id == data.block_id,
+            )
+        )
+        if block_link_exists is None:
+            raise ValidationException(
+                detail="Block must be linked to the selected session"
+            )
+
         occurrence = await occurrence_service.create(data)
         return occurrence_service.to_schema(occurrence, schema_type=Occurrence)
 

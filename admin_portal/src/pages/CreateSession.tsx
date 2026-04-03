@@ -27,6 +27,7 @@ const CreateSession: React.FC = () => {
 		waitlist: false,
 		whatToBring: '',
 		prerequisites: '',
+		description: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
 		sessionType: 'term' as 'term' | 'special',
@@ -68,6 +69,7 @@ const CreateSession: React.FC = () => {
 				sessionType: formData.sessionType,
 				whatToBring: formData.whatToBring || null,
 				prerequisites: formData.prerequisites || null,
+				description: formData.description || null,
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
 				blocks: formData.blocks,
@@ -334,6 +336,22 @@ const CreateSession: React.FC = () => {
 											</label>
 										))}
 									</div>
+								</div>
+
+								<div className="md:col-span-2">
+									<label
+										htmlFor="description"
+										className="block text-sm font-medium text-gray-700"
+									>
+										Description
+									</label>
+									<textarea
+										id="description"
+										rows={3}
+										value={formData.description}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+									/>
 								</div>
 
 								<div className="md:col-span-2">

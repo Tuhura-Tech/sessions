@@ -10,7 +10,7 @@ const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
  */
 
 test.describe('Student management actions', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([
@@ -194,7 +194,7 @@ test.describe('Student management actions', () => {
 });
 
 test.describe('Session occurrence management', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([
@@ -346,7 +346,7 @@ test.describe('Session occurrence management', () => {
 });
 
 test.describe('Session management actions', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([
@@ -389,7 +389,7 @@ test.describe('Session management actions', () => {
 
 						// Verify download filename
 						expect(download.suggestedFilename()).toMatch(/\.csv$/);
-					} catch (e) {
+				} catch (_e) {
 						// If no download happens, at least verify button exists
 						expect(await exportButton.isVisible()).toBeTruthy();
 					}
@@ -473,7 +473,7 @@ test.describe('Session management actions', () => {
 });
 
 test.describe('Caregiver management actions', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([
@@ -565,7 +565,7 @@ test.describe('Caregiver management actions', () => {
 });
 
 test.describe('Location management actions', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([

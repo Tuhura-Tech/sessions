@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
-from litestar.exceptions import NotFoundException
+from litestar.exceptions import NotFoundException, ValidationException
 from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 
 from app.domains.admin.controllers.occurrences import OccurrenceController
@@ -41,10 +41,24 @@ class DummyQueue:
 
 
 class DummyOccurrenceService:
-    def __init__(self, occurrence: FakeOccurrence | None = None) -> None:
+    def __init__(
+        self,
+        occurrence: FakeOccurrence | None = None,
+        *,
+        session_exists: bool = True,
+        block_exists: bool = True,
+        block_link_exists: bool = True,
+    ) -> None:
         self._occurrence = occurrence
         self.created: list[OccurrenceCreate] = []
         self.updated: list[dict] = []
+        self.repository = SimpleNamespace(
+            session=DummyRepositorySession(
+                session_exists=session_exists,
+                block_exists=block_exists,
+                block_link_exists=block_link_exists,
+            )
+        )
 
     async def get(self, *_args, **_kwargs):  # noqa: ANN002, ANN003
         if self._occurrence is None:
@@ -65,6 +79,30 @@ class DummyOccurrenceService:
 
     def to_schema(self, data, **_):  # noqa: ANN001
         return data
+
+
+class DummyRepositorySession:
+    def __init__(
+        self,
+        *,
+        session_exists: bool,
+        block_exists: bool,
+        block_link_exists: bool,
+    ) -> None:
+        self._session_exists = session_exists
+        self._block_exists = block_exists
+        self._block_link_exists = block_link_exists
+        self._call_count = 0
+
+    async def scalar(self, *_args, **_kwargs):  # noqa: ANN002, ANN003
+        self._call_count += 1
+        if self._call_count == 1:
+            return uuid4() if self._session_exists else None
+        if self._call_count == 2:
+            return uuid4() if self._block_exists else None
+        if self._call_count == 3:
+            return uuid4() if self._block_link_exists else None
+        return None
 
 
 def make_controller() -> OccurrenceController:
@@ -117,6 +155,29 @@ class TestAdminOccurrenceController:
 
         assert result == occurrence
         assert service.created[-1] == data
+
+    async def test_create_occurrence_rejects_unlinked_block(self):
+        controller = make_controller()
+        session_id = uuid4()
+        block_id = uuid4()
+        starts_at = datetime.now(tz=timezone.utc)
+        ends_at = starts_at + timedelta(hours=1)
+        service = DummyOccurrenceService(
+            occurrence=None,
+            session_exists=True,
+            block_exists=True,
+            block_link_exists=False,
+        )
+
+        data = OccurrenceCreate(
+            starts_at=starts_at,
+            ends_at=ends_at,
+            session_id=session_id,
+            block_id=block_id,
+        )
+
+        with pytest.raises(ValidationException):
+            await OccurrenceController.create_occurrence.fn(controller, data, service)
 
     async def test_toggle_cancel_occurrence_not_found(self):
         controller = make_controller()

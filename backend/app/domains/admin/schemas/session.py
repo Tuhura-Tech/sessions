@@ -28,12 +28,13 @@ class Session(CamelizedBaseSchema):
     start_time: time
     end_time: time
 
-    day_of_week: int
+    day_of_week: int | None = None
 
     capacity: int
 
     what_to_bring: str | None = None
     prerequisites: str | None = None
+    description: str | None = None
 
     photo_album_url: str | None = None
     internal_notes: str | None = None
@@ -118,12 +119,13 @@ class SessionCreate(CamelizedBaseSchema):
 
     start_time: time
     end_time: time
-    day_of_week: int
+    day_of_week: int | None = None
 
     capacity: int
 
     what_to_bring: str | None = None
     prerequisites: str | None = None
+    description: str | None = None
 
     photo_album_url: str | None = None
     internal_notes: str | None = None
@@ -153,6 +155,9 @@ class SessionCreate(CamelizedBaseSchema):
     @model_validator(mode="after")
     def validate_times_and_ages(self) -> SessionCreate:
         """Validate time and age ranges."""
+        if self.session_type == "term" and self.day_of_week is None:
+            raise ValueError("day_of_week is required for term sessions")
+
         validate_time_range(self.start_time, self.end_time)
         validate_age_range(self.age_lower, self.age_upper)
         return self
@@ -173,6 +178,7 @@ class SessionUpdate(CamelizedBaseSchema):
 
     what_to_bring: str | None = None
     prerequisites: str | None = None
+    description: str | None = None
 
     photo_album_url: str | None = None
     internal_notes: str | None = None
@@ -222,6 +228,7 @@ class SessionUpdate(CamelizedBaseSchema):
                 self.capacity,
                 self.what_to_bring,
                 self.prerequisites,
+                self.description,
                 self.photo_album_url,
                 self.internal_notes,
                 self.archived,

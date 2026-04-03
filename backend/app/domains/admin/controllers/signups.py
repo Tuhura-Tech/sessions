@@ -22,6 +22,7 @@ from app.domains.admin.schemas.signup import (
 )
 from app.domains.admin.services.signup import SignupService
 from app.lib.deps import get_task_queue
+from app.lib.session_time import format_session_time
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +135,7 @@ class SignupController(Controller):
                 queue = await get_task_queue()
                 caregiver = signup.student.caregiver
                 session = signup.session
+                session_time = format_session_time(session)
 
                 # Determine email type based on status change
                 if data.status == SignupStatus.CONFIRMED:
@@ -148,6 +150,7 @@ class SignupController(Controller):
                         session_address=session.location.address
                         if session.location
                         else "",
+                        session_time=session_time,
                         session_id=str(session.id),
                     )
                     logger.info(
@@ -181,6 +184,7 @@ class SignupController(Controller):
                         session_address=session.location.address
                         if session.location
                         else "",
+                        session_time=session_time,
                         signup_status="waitlisted",
                         waitlist_reason=data.reason,
                         session_id=str(session.id),

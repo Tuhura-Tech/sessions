@@ -9,7 +9,7 @@ const ADMIN_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173
  */
 
 test.describe('Signup status changes via UI', () => {
-	test.beforeEach(async ({ page, context }) => {
+	test.beforeEach(async ({ context }) => {
 		// Set admin authentication cookie
 		const token = createAdminSessionToken();
 		await context.addCookies([

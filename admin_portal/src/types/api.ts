@@ -155,6 +155,7 @@ export interface Session {
 	capacity: number;
 	what_to_bring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	photo_album_url?: string | null;
 	internal_notes?: string | null;
 	archived: boolean;
@@ -183,6 +184,7 @@ export interface SessionCreate {
 	capacity: number;
 	what_to_bring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	photo_album_url?: string | null;
 	internal_notes?: string | null;
 	archived?: boolean;
@@ -202,6 +204,7 @@ export interface SessionUpdate {
 	capacity?: number;
 	what_to_bring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	photo_album_url?: string | null;
 	internal_notes?: string | null;
 	archived?: boolean;
@@ -235,7 +238,7 @@ export interface OccurrenceCreate {
 	session_id: string;
 	starts_at: string;
 	ends_at: string;
-	block_id?: string | null;
+	block_id: string;
 }
 
 export interface OccurrenceUpdate {

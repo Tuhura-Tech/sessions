@@ -108,6 +108,9 @@
                 <h3>Session Details</h3>
                 <p><strong>Student:</strong> {{ student_name }}</p>
                 <p><strong>Session:</strong> {{ session_name }}</p>
+                {% if session_time %}
+                <p><strong>Time:</strong> {{ session_time }}</p>
+                {% endif %}
                 {% if session_venue %}
                 <p><strong>Location:</strong> {{ session_venue }}</p>
                 {% endif %}

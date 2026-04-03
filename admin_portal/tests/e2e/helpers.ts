@@ -10,7 +10,7 @@ import jwt from 'jsonwebtoken';
  * Must match backend/app/lib/settings.py and backend/.env
  */
 const AUTH_SECRET =
-	process.env.ADMIN_AUTH_SECRET || process.env.AUTH_SECRET || 'dev-secret-change-me';
+	process.env.PLAYWRIGHT_AUTH_SECRET || 'playwright-dev-secret';
 const ADMIN_SESSION_ALGORITHM = 'HS256';
 const ADMIN_SESSION_TTL_HOURS = 24;
 const TEST_ADMIN_EMAIL = 'test@example.com';

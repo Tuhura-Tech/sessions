@@ -21,6 +21,7 @@ export type ApiSession = {
 	arrival_instructions?: string | null;
 	what_to_bring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	waitlist: boolean;
 	locationDetails?: ApiSessionLocationDetails | null;
 };
@@ -67,6 +68,7 @@ export type ApiPublicSession = {
 	waitlist?: boolean;
 	what_to_bring?: string | null;
 	prerequisites?: string | null;
+	description?: string | null;
 	location?: {
 		name: string;
 		address: string;
@@ -114,6 +116,7 @@ export type UiSession = {
 	blocks?: string[];
 	location: string;
 	waitlist?: boolean;
+	description?: string | null;
 	signupLink?: string;
 	venueName?: string | null;
 
@@ -166,6 +169,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 					blocks: s.blocks ?? [],
 					location: details?.region ?? loc.name,
 					waitlist: s.waitlist,
+					description: s.description ?? null,
 					signupLink: `/signup?session=${s.id}`,
 					venueName: details?.name ?? null,
 					public_instructions: s.public_instructions ?? null,
@@ -199,6 +203,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 			blocks: [],
 			location: session.location?.region ?? locationName,
 			waitlist: session.waitlist ?? false,
+			description: session.description ?? null,
 			signupLink: `/signup?session=${session.id}`,
 			venueName: session.location?.name ?? null,
 			public_instructions: null,
@@ -432,6 +437,7 @@ export async function fetchSessionById(id: string): Promise<UiSession | null> {
 			blocks: payload.blocks ?? [],
 			location: details.region ?? '',
 			waitlist: payload.waitlist,
+			description: payload.description ?? null,
 			signupLink: `/signup?session=${payload.id}`,
 			venueName: details.name ?? null,
 			public_instructions: payload.public_instructions ?? null,
@@ -460,6 +466,7 @@ export async function fetchSessionById(id: string): Promise<UiSession | null> {
 		blocks: payload.blocks ?? [],
 		location: payload.location?.region ?? '',
 		waitlist: payload.waitlist ?? false,
+		description: payload.description ?? null,
 		signupLink: `/signup?session=${payload.id}`,
 		venueName: payload.location?.name ?? null,
 		public_instructions: payload.public_instructions ?? null,

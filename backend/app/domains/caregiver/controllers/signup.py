@@ -24,6 +24,7 @@ from app.domains.caregiver.services.student import StudentService
 from app.lib.age import is_age_eligible as check_age_eligible
 from app.lib.auth import utcnow
 from app.lib.deps import get_task_queue
+from app.lib.session_time import format_session_time
 from app.domains.public.services.session import SessionService as PublicSessionService
 from advanced_alchemy.extensions.litestar import providers
 
@@ -328,6 +329,7 @@ async def _queue_confirmation_email(
         queue = await get_task_queue()
         session_location = session.location.name if session.location else "TBD"
         session_address = session.location.address if session.location else ""
+        session_time = format_session_time(session)
 
         await queue.enqueue(
             "send_signup_confirmation_task",
@@ -337,6 +339,7 @@ async def _queue_confirmation_email(
             session_name=session.name,
             session_venue=session_location,
             session_address=session_address,
+            session_time=session_time,
             signup_status=status,
             signup_id=str(signup_id),
             session_id=str(session.id),

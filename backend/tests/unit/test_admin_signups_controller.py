@@ -41,6 +41,7 @@ class FakeSession:
     venue: str | None = None
     address: str | None = None
     location: FakeLocation | None = None
+    day_of_week: int | None = None
 
 
 @dataclass

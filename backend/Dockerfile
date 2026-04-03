@@ -28,7 +28,7 @@
 ARG PYTHON_VERSION=3.13
 ARG DEBIAN_VERSION=bookworm
 ARG BUILDER_IMAGE=docker.io/python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
-ARG RUN_IMAGE=gcr.io/distroless/cc-debian12:nonroot@sha256:1460b2049b1d605cba0b45c73d5e3971dcce300cfd3b95acfe22b2f34e1f5d88
+ARG RUN_IMAGE=gcr.io/distroless/cc-debian12:nonroot@sha256:7e5b8df2f4d36f5599ef4ab856d7d444922531709becb03f3368c6d797d0a5eb
 
 # =============================================================================
 # Stage 1: Python Base

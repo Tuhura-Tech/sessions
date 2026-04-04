@@ -156,14 +156,13 @@ async function fetchSessionLocationsByPath(
 			name: loc.name,
 			sessions: loc.sessions.map((s) => {
 				const details = s.locationDetails ?? null;
-				return {
+				const uiSession: UiSession = {
 					id: s.id,
 					name: s.name,
 					address: details?.address ?? '',
 					latlong: [details?.latlong.lat ?? 0, details?.latlong.lng ?? 0],
 					age: s.age,
 					time: s.time,
-					session_type: s.session_type,
 					day_of_week: s.day_of_week ?? null,
 					term_summary: s.term_summary ?? null,
 					blocks: s.blocks ?? [],
@@ -175,6 +174,12 @@ async function fetchSessionLocationsByPath(
 					public_instructions: s.public_instructions ?? null,
 					arrival_instructions: s.arrival_instructions ?? null,
 				};
+
+				if (s.session_type !== undefined) {
+					uiSession.session_type = s.session_type;
+				}
+
+				return uiSession;
 			}),
 		}));
 	}
@@ -189,14 +194,13 @@ async function fetchSessionLocationsByPath(
 			sessions: [],
 		};
 
-		group.sessions.push({
+		const uiSession: UiSession = {
 			id: session.id,
 			name: session.name,
 			address: session.location?.address ?? '',
 			latlong: [session.location?.lat ?? 0, session.location?.lng ?? 0],
 			age: `${session.age_lower}-${session.age_upper}`,
 			time: `${formatTime(session.start_time)}-${formatTime(session.end_time)}`,
-			session_type: session.session_type,
 			day_of_week: session.day_of_week ?? null,
 			term_summary: null,
 			blocks: [],
@@ -207,7 +211,13 @@ async function fetchSessionLocationsByPath(
 			venueName: session.location?.name ?? null,
 			public_instructions: null,
 			arrival_instructions: null,
-		});
+		};
+
+		if (session.session_type !== undefined) {
+			uiSession.session_type = session.session_type;
+		}
+
+		group.sessions.push(uiSession);
 
 		grouped.set(locationName, group);
 	}

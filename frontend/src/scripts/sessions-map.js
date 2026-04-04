@@ -12,6 +12,36 @@ function showMapError(mapEl) {
 		'<div class="flex h-full items-center justify-center px-6 text-center text-sm text-red-700">Map failed to load. Please refresh the page, or open the session address directly in Google Maps.</div>';
 }
 
+/** @returns {Promise<any>} */
+async function loadLeaflet() {
+	try {
+		return await import('leaflet');
+	} catch (importError) {
+		// Fallback for environments where bare module specifiers fail in emitted script assets.
+		if (window.L) return window.L;
+
+		await new Promise((resolve, reject) => {
+			const existing = document.querySelector('script[data-leaflet-cdn="true"]');
+			if (existing) {
+				existing.addEventListener('load', () => resolve(undefined), { once: true });
+				existing.addEventListener('error', reject, { once: true });
+				return;
+			}
+
+			const script = document.createElement('script');
+			script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+			script.async = true;
+			script.dataset.leafletCdn = 'true';
+			script.addEventListener('load', () => resolve(undefined), { once: true });
+			script.addEventListener('error', reject, { once: true });
+			document.head.appendChild(script);
+		});
+
+		if (window.L) return window.L;
+		throw importError;
+	}
+}
+
 /** @param {HTMLElement} mapEl
  * @returns {Session[]}
  */
@@ -37,7 +67,7 @@ async function initMap(mapEl) {
 		const mapId = mapEl.id;
 		if (!mapId) return;
 
-		const L = await import('leaflet');
+		const L = await loadLeaflet();
 		const { Map: LeafletMap, TileLayer, Marker, Popup, FeatureGroup, Icon } = L;
 
 		const icon = new Icon({
@@ -91,7 +121,8 @@ async function initMap(mapEl) {
 		} catch {
 			// ignore
 		}
-	} catch {
+	} catch (error) {
+		console.error('[Tuhura] Map initialization failed', error);
 		showMapError(mapEl);
 	}
 }

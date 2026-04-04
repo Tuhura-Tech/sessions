@@ -1,8 +1,6 @@
 ---
 import 'leaflet/dist/leaflet.css';
 
-import sessionsMapScript from '../scripts/sessions-map.js?url';
-
 interface Session {
 	name: string;
 	address: string;
@@ -36,7 +34,9 @@ const { sessions, mapId = 'map', height = 600, framed = true } = Astro.props as 
 	</noscript>
 </div>
 
-<script type="module" src={sessionsMapScript}></script>
+<script type="module">
+	import '../scripts/sessions-map.js';
+</script>
 
 <style>
 	.tuhura-map {

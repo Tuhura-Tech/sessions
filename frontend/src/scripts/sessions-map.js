@@ -1,27 +1,32 @@
-type Session = {
-	name: string;
-	address: string;
-	latlong: [number, number];
-	age: string;
-	time: string;
-};
+/** @typedef {Object} Session
+ * @property {string} name
+ * @property {string} address
+ * @property {[number, number]} latlong
+ * @property {string} age
+ * @property {string} time
+ */
 
-function showMapError(mapEl: HTMLElement): void {
+/** @param {HTMLElement} mapEl */
+function showMapError(mapEl) {
 	mapEl.innerHTML =
 		'<div class="flex h-full items-center justify-center px-6 text-center text-sm text-red-700">Map failed to load. Please refresh the page, or open the session address directly in Google Maps.</div>';
 }
 
-function parseSessions(mapEl: HTMLElement): Session[] {
+/** @param {HTMLElement} mapEl
+ * @returns {Session[]}
+ */
+function parseSessions(mapEl) {
 	try {
 		const raw = mapEl.getAttribute('data-sessions') || '[]';
 		const parsed = JSON.parse(raw);
-		return Array.isArray(parsed) ? (parsed as Session[]) : [];
+		return Array.isArray(parsed) ? parsed : [];
 	} catch {
 		return [];
 	}
 }
 
-async function initMap(mapEl: HTMLElement): Promise<void> {
+/** @param {HTMLElement} mapEl */
+async function initMap(mapEl) {
 	if (mapEl.dataset.mapInitialized === 'true') return;
 	mapEl.dataset.mapInitialized = 'true';
 
@@ -91,25 +96,25 @@ async function initMap(mapEl: HTMLElement): Promise<void> {
 	}
 }
 
-function observeAndInit(mapEl: HTMLElement): void {
+function observeAndInit(mapEl) {
 	if ('IntersectionObserver' in window) {
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (entries.some((e) => e.isIntersecting)) {
 					observer.disconnect();
-					void initMap(mapEl);
+					initMap(mapEl);
 				}
 			},
 			{ rootMargin: '200px' },
 		);
 		observer.observe(mapEl);
 	} else {
-		void initMap(mapEl);
+		initMap(mapEl);
 	}
 }
 
-function initAll(): void {
-	const maps = Array.from(document.querySelectorAll<HTMLElement>('[data-sessions-map="true"]'));
+function initAll() {
+	const maps = Array.from(document.querySelectorAll('[data-sessions-map="true"]'));
 	for (const mapEl of maps) {
 		// Mark as needing initialization
 		mapEl.dataset.mapNeedsInit = 'true';
@@ -118,12 +123,10 @@ function initAll(): void {
 }
 
 // Watch for when map containers become visible and retry initialization
-function watchMapVisibility(): void {
+function watchMapVisibility() {
 	const observer = new MutationObserver(() => {
 		const maps = Array.from(
-			document.querySelectorAll<HTMLElement>(
-				'[data-sessions-map="true"][data-map-needs-init="true"]',
-			),
+			document.querySelectorAll('[data-sessions-map="true"][data-map-needs-init="true"]'),
 		);
 		for (const mapEl of maps) {
 			const parent = mapEl.closest('.map-container');

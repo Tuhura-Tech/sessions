@@ -79,6 +79,8 @@ async function initMap(mapEl) {
 
 		const mapRef = new LeafletMap(mapId, {
 			attributionControl: true,
+			worldCopyJump: true,
+			minZoom: 4,
 		});
 
 		// Always start with a sane default view so the map renders even before
@@ -88,6 +90,7 @@ async function initMap(mapEl) {
 		// Add tile layer first
 		new TileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 19,
+			noWrap: true,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 		}).addTo(mapRef);
 
@@ -116,7 +119,10 @@ async function initMap(mapEl) {
 			if (markerCount === 1 && sessions[0]?.latlong) {
 				mapRef.setView(sessions[0].latlong, 17, { animate: false });
 			} else if (markerCount > 1) {
-				mapRef.fitBounds(markerLayerRef.getBounds().pad(0.1));
+				mapRef.fitBounds(markerLayerRef.getBounds().pad(0.1), { maxZoom: 12 });
+				if (mapRef.getZoom() < 4) {
+					mapRef.setZoom(4, { animate: false });
+				}
 			}
 		} catch {
 			// ignore

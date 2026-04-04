@@ -16,16 +16,39 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Update session_type check constraint to include 'event'
-    op.drop_constraint("ck_sessions_type", "sessions", type_="check")
+    # Drop existing check constraints (handle both naming conventions for clean installs and prod)
+    # Try the ORM-generated name first, then fallback to raw SQL for any variant
+    try:
+        op.drop_constraint("ck_sessions_ck_sessions_type", "sessions", type_="check")
+    except Exception:
+        pass
+    try:
+        op.drop_constraint("ck_sessions_type", "sessions", type_="check")
+    except Exception:
+        pass
+
+    try:
+        op.drop_constraint("ck_sessions_ck_sessions_term_requires_schedule", "sessions", type_="check")
+    except Exception:
+        pass
+    try:
+        op.drop_constraint("ck_sessions_term_requires_schedule", "sessions", type_="check")
+    except Exception:
+        pass
+
+    # Use raw SQL as fallback for edge cases
+    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_type")
+    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_type")
+    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_term_requires_schedule")
+    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule")
+
+    # Create new constraints with the event type included
     op.create_check_constraint(
         "ck_sessions_type",
         "sessions",
         "session_type IN ('term','special','event')",
     )
 
-    # Update schedule constraint to allow event sessions without day_of_week
-    op.drop_constraint("ck_sessions_term_requires_schedule", "sessions", type_="check")
     op.create_check_constraint(
         "ck_sessions_term_requires_schedule",
         "sessions",
@@ -34,16 +57,19 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("ck_sessions_term_requires_schedule", "sessions", type_="check")
-    op.create_check_constraint(
-        "ck_sessions_term_requires_schedule",
-        "sessions",
-        "(session_type = 'term' AND day_of_week IS NOT NULL) OR (session_type = 'special')",
-    )
+    # Drop the new constraints
+    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_type")
+    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule")
 
-    op.drop_constraint("ck_sessions_type", "sessions", type_="check")
+    # Recreate the old constraints
     op.create_check_constraint(
         "ck_sessions_type",
         "sessions",
         "session_type IN ('term','special')",
+    )
+
+    op.create_check_constraint(
+        "ck_sessions_term_requires_schedule",
+        "sessions",
+        "(session_type = 'term' AND day_of_week IS NOT NULL) OR (session_type = 'special')",
     )

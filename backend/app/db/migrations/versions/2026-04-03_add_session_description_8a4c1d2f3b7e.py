@@ -17,8 +17,18 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("sessions", sa.Column("description", sa.Text(), nullable=True))
+    # Add description column if it doesn't already exist (for prod databases)
+    op.execute(
+        """
+        ALTER TABLE sessions ADD COLUMN IF NOT EXISTS description TEXT NULL
+        """
+    )
 
 
 def downgrade() -> None:
-    op.drop_column("sessions", "description")
+    # Drop column if it exists
+    op.execute(
+        """
+        ALTER TABLE sessions DROP COLUMN IF EXISTS description
+        """
+    )

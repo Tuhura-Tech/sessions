@@ -40,6 +40,10 @@ async function initMap(mapEl: HTMLElement): Promise<void> {
 		attributionControl: true,
 	});
 
+	// Always start with a sane default view so the map renders even before
+	// markers are added or when marker data is incomplete.
+	mapRef.setView([-41.2865, 174.7762], 11, { animate: false });
+
 	// Add tile layer first
 	new TileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		maxZoom: 19,
@@ -48,10 +52,12 @@ async function initMap(mapEl: HTMLElement): Promise<void> {
 
 	const markerLayerRef = new FeatureGroup();
 	mapRef.addLayer(markerLayerRef);
+	let markerCount = 0;
 
 	for (const session of sessions) {
 		if (!session?.latlong || session.latlong.length !== 2) continue;
 		const marker = new Marker(session.latlong, { icon }).addTo(markerLayerRef);
+		markerCount += 1;
 		const q = encodeURIComponent(`${session.name}, ${session.address}`);
 		const popupContent = `
 			<div>
@@ -66,9 +72,9 @@ async function initMap(mapEl: HTMLElement): Promise<void> {
 	}
 
 	try {
-		if (sessions.length === 1 && sessions[0]?.latlong) {
+		if (markerCount === 1 && sessions[0]?.latlong) {
 			mapRef.setView(sessions[0].latlong, 17, { animate: false });
-		} else if (sessions.length > 1) {
+		} else if (markerCount > 1) {
 			mapRef.fitBounds(markerLayerRef.getBounds().pad(0.1));
 		}
 	} catch {

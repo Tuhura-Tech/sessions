@@ -65,9 +65,15 @@ export default defineConfig({
 				url: 'http://127.0.0.1:3002',
 				reuseExistingServer: false,
 				timeout: 120 * 1000,
-				env: {
-					...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-				},
+				env: Object.entries(process.env).reduce(
+					(acc, [k, v]) => {
+						if (v !== undefined) {
+							acc[k] = v;
+						}
+						return acc;
+					},
+					{} as Record<string, string>,
+				),
 			}
 		: [
 				{
@@ -78,7 +84,15 @@ export default defineConfig({
 					reuseExistingServer: true,
 					timeout: 120 * 1000,
 					env: {
-						...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
+						...Object.entries(process.env).reduce(
+							(acc, [k, v]) => {
+								if (v !== undefined) {
+									acc[k] = v;
+								}
+								return acc;
+							},
+							{} as Record<string, string>,
+						),
 						AUTH_SECRET: process.env.PLAYWRIGHT_AUTH_SECRET || 'playwright-dev-secret',
 						DATABASE_URL:
 							process.env.DATABASE_URL ||
@@ -93,9 +107,16 @@ export default defineConfig({
 					url: 'http://localhost:3002',
 					reuseExistingServer: true,
 					timeout: 120 * 1000,
-					env: {
-						...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-					},
+					env: Object.entries(process.env).reduce(
+						(acc, [k, v]) => {
+							if (v !== undefined) {
+								acc[k] = v;
+							}
+							return acc;
+						},
+						{} as Record<string, string>,
+					),
 				},
 			],
 });
+

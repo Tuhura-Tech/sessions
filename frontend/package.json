@@ -18,9 +18,9 @@
 		"format:check": "prettier --check ."
 	},
 	"dependencies": {
-		"@astrojs/node": "^9.5.1",
+		"@astrojs/node": "^10.0.0",
 		"@astrojs/sitemap": "^3.6.1",
-		"astro": "^5.16.7",
+		"astro": "^6.0.0",
 		"leaflet": "^2.0.0-alpha",
 		"sharp": "^0.34.5"
 	},

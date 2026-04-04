@@ -160,5 +160,5 @@ class Session(UUIDv7AuditBase):
 
     @property
     def is_full(self) -> bool:
-        """Check if session has reached capacity."""
-        return self.confirmed_count >= self.capacity
+        """Check if session is full or explicitly in waitlist mode."""
+        return self.waitlist or self.confirmed_count >= self.capacity

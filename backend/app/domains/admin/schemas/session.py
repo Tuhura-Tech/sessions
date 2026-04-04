@@ -104,7 +104,9 @@ class Session(CamelizedBaseSchema):
             payload["confirmed_count"] = confirmed
             payload["waitlist_count"] = waitlisted
             payload["pending_count"] = pending
-            payload["is_full"] = confirmed >= (payload.get("capacity", 0) or 0)
+            payload["is_full"] = bool(payload.get("waitlist", False)) or (
+                confirmed >= (payload.get("capacity", 0) or 0)
+            )
 
         return payload
 

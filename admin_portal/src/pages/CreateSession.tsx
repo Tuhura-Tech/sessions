@@ -30,6 +30,7 @@ const CreateSession: React.FC = () => {
 		internalNotes: '',
 		sessionType: 'term' as 'term' | 'special' | 'event',
 		blocks: [] as string[],
+		generateOccurrences: true,
 	});
 
 	const loadFormData = useCallback(async () => {
@@ -69,6 +70,7 @@ const CreateSession: React.FC = () => {
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
 				blocks: formData.blocks,
+				generateOccurrences: formData.generateOccurrences,
 			});
 
 			const created = await adminApi.createSession(sessionCreate);
@@ -299,6 +301,33 @@ const CreateSession: React.FC = () => {
 									/>
 									{/* biome-ignore lint/a11y/noLabelWithoutControl: label is adjacent to checkbox */}
 									<label className="ml-2 block text-sm text-gray-900">Enable waitlist</label>
+								</div>
+
+								<div className="md:col-span-2">
+									<div className="flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-4">
+										<input
+											id="generate-occurrences"
+											type="checkbox"
+											checked={formData.generateOccurrences}
+											onChange={(e) =>
+												setFormData({ ...formData, generateOccurrences: e.target.checked })
+											}
+											className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+										/>
+										<div>
+											<label
+												htmlFor="generate-occurrences"
+												className="block text-sm font-medium text-gray-900"
+											>
+												Auto-generate occurrences
+											</label>
+											<p className="mt-0.5 text-sm text-gray-500">
+												{formData.generateOccurrences
+													? 'Occurrences will be automatically generated from the selected blocks and exclusions.'
+													: 'No occurrences will be generated. You can add them manually after creation.'}
+											</p>
+										</div>
+									</div>
 								</div>
 
 								<div className="md:col-span-2">

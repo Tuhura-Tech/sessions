@@ -18,20 +18,28 @@ depends_on = None
 
 def upgrade() -> None:
     """Update session_type check constraints to include 'event'.
-    
+
     Works for both fresh databases (table may not exist) and existing ones.
     Uses raw SQL with IF EXISTS to be idempotent.
     """
     # Drop old constraints if they exist (safe for all database states)
-    op.execute("ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_type CASCADE")
-    op.execute("ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_type CASCADE")
-    op.execute("ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_term_requires_schedule CASCADE")
-    op.execute("ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule CASCADE")
+    op.execute(
+        "ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_type CASCADE"
+    )
+    op.execute(
+        "ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_type CASCADE"
+    )
+    op.execute(
+        "ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_term_requires_schedule CASCADE"
+    )
+    op.execute(
+        "ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule CASCADE"
+    )
 
     # Create new constraints (will only affect tables that exist)
     # Check if table exists before creating constraints
     conn = op.get_bind()
-    
+
     # Use information_schema to safely check if table exists
     try:
         result = conn.execute(
@@ -61,12 +69,16 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade: revert to original session_type constraints without 'event'."""
     # Drop the new constraints if they exist
-    op.execute("ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_type CASCADE")
-    op.execute("ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule CASCADE")
+    op.execute(
+        "ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_type CASCADE"
+    )
+    op.execute(
+        "ALTER TABLE IF EXISTS sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule CASCADE"
+    )
 
     # Check if table exists before creating constraints
     conn = op.get_bind()
-    
+
     try:
         result = conn.execute(
             sa.text(

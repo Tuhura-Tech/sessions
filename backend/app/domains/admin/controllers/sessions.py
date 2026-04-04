@@ -141,7 +141,7 @@ class SessionController(Controller):
 
             blocks.append(await session_service.blocks.get(block))
 
-        if session.session_type != "special":
+        if session.session_type != "special" and data.generate_occurrences:
             exclusions = await session_service.exclusions.list()
 
             filtered_exclusions = [

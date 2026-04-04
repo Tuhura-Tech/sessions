@@ -170,6 +170,50 @@ class TestAdminSessionCreate:
         items = data.get("items", data) if isinstance(data, dict) else data
         assert len(items) > 0, "Term session should have generated occurrences"
 
+    async def test_create_term_session_can_skip_auto_generated_occurrences(
+        self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
+    ) -> None:
+        """Test that term sessions can opt out of automatic occurrence generation."""
+        location = await create_test_location(db_session)
+        block = await create_test_block(
+            db_session,
+            year=2025,
+            name="Manual Occurrence Block",
+            start_date=date(2025, 1, 15),
+            end_date=date(2025, 3, 31),
+        )
+
+        response = await client.post(
+            "/api/v1/admin/sessions/",
+            cookies={"admin_session": admin_session_cookie},
+            json={
+                "name": "Manual Occurrence Session",
+                "sessionType": "term",
+                "year": 2025,
+                "dayOfWeek": 1,
+                "startTime": "09:00:00",
+                "endTime": "10:00:00",
+                "ageLower": 5,
+                "ageUpper": 12,
+                "capacity": 20,
+                "locationId": str(location.id),
+                "blocks": [str(block.id)],
+                "generateOccurrences": False,
+            },
+        )
+
+        assert response.status_code == HTTP_201_CREATED
+        session_id = response.json()["id"]
+
+        occ_response = await client.get(
+            f"/api/v1/admin/sessions/{session_id}/occurrences",
+            cookies={"admin_session": admin_session_cookie},
+        )
+        assert occ_response.status_code == HTTP_200_OK
+        data = occ_response.json()
+        items = data.get("items", data) if isinstance(data, dict) else data
+        assert items == []
+
     async def test_create_term_session_requires_day_of_week(
         self, client: AsyncClient, admin_session_cookie: str, db_session: AsyncSession
     ) -> None:

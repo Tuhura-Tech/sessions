@@ -130,6 +130,7 @@ class SessionCreate(CamelizedBaseSchema):
 
     location_id: UUID
     blocks: list[UUID]
+    generate_occurrences: bool = True
 
     @field_validator("name")
     @classmethod

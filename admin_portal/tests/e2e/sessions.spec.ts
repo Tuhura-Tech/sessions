@@ -134,6 +134,120 @@ test.describe('Sessions Management', () => {
 		}
 	});
 
+	test('should send generate_occurrences=false when auto-generation is unchecked', async ({
+		page,
+	}) => {
+		const token = await page.evaluate(
+			() =>
+				localStorage.getItem('adminToken') ||
+				(window as typeof window & { __adminToken?: string }).__adminToken ||
+				'',
+		);
+		expect(token).toBeTruthy();
+		const headers = {
+			Authorization: `Bearer ${token}`,
+		};
+		const year = new Date().getFullYear();
+		const uniqueSuffix = Date.now();
+
+		const locationsRes = await page.request.get(`${ADMIN_API_BASE_URL}/admin/locations`, {
+			headers,
+		});
+		expect(locationsRes.ok()).toBeTruthy();
+		const locationsPayload = await locationsRes.json();
+		const existingLocations = unwrapListResponse<any>(locationsPayload);
+
+		const location =
+			existingLocations[0] ??
+			(await (async () => {
+				const response = await page.request.post(`${ADMIN_API_BASE_URL}/admin/locations`, {
+					headers,
+					data: {
+						name: `Playwright Location ${uniqueSuffix}`,
+						address: '123 Test Street',
+						region: 'Auckland',
+						lat: -36.8485,
+						lng: 174.7633,
+						contactName: 'Playwright Admin',
+						contactEmail: `playwright-${uniqueSuffix}@example.com`,
+					},
+				});
+				expect(response.ok()).toBeTruthy();
+				return response.json();
+			})());
+
+		const blocksRes = await page.request.get(`${ADMIN_API_BASE_URL}/admin/blocks?year=${year}`, {
+			headers,
+		});
+		expect(blocksRes.ok()).toBeTruthy();
+		const blocksPayload = await blocksRes.json();
+		const existingBlocks = unwrapListResponse<any>(blocksPayload);
+
+		const block =
+			existingBlocks[0] ??
+			(await (async () => {
+				const response = await page.request.post(`${ADMIN_API_BASE_URL}/admin/blocks`, {
+					headers,
+					data: {
+						name: `Playwright Block ${uniqueSuffix}`,
+						year,
+						blockType: 'term_1',
+						startDate: `${year}-02-02`,
+						endDate: `${year}-03-30`,
+						timezone: 'Pacific/Auckland',
+					},
+				});
+				expect(response.ok()).toBeTruthy();
+				return response.json();
+			})());
+
+		await navigateTo(page, '/sessions/new');
+		await waitForAuthReady(page);
+		await waitForApiCalls(page);
+
+		const generateOccurrencesCheckbox = page.locator('#generate-occurrences');
+		await expect(generateOccurrencesCheckbox).toBeChecked();
+		await expect(page.getByText('Auto-generate occurrences')).toBeVisible();
+
+		await generateOccurrencesCheckbox.uncheck();
+		await expect(generateOccurrencesCheckbox).not.toBeChecked();
+		await expect(
+			page.getByText('No occurrences will be generated. You can add them manually after creation.'),
+		).toBeVisible();
+
+		await page.locator('#session-name-').fill(`Manual Occurrence Session ${uniqueSuffix}`);
+		await page.locator('#year-').fill(String(year));
+		await page.locator('#location').selectOption(String(location.id));
+		await page.locator('#day-of-week').selectOption('1');
+
+		const blockCheckbox = page
+			.locator('label', { hasText: String(block.name) })
+			.locator('input[type="checkbox"]');
+		await expect(blockCheckbox).toBeVisible();
+		await blockCheckbox.check();
+
+		const createRequestPromise = page.waitForRequest(
+			(request) => request.method() === 'POST' && request.url().includes('/api/v1/admin/sessions'),
+		);
+		const createResponsePromise = page.waitForResponse(
+			(response) =>
+				response.request().method() === 'POST' &&
+				response.url().includes('/api/v1/admin/sessions') &&
+				response.status() === 201,
+		);
+
+		await page.getByRole('button', { name: 'Create Session' }).click();
+
+		const createRequest = await createRequestPromise;
+		const requestBody = createRequest.postDataJSON() as { generate_occurrences?: boolean };
+		expect(requestBody.generate_occurrences).toBe(false);
+
+		const createResponse = await createResponsePromise;
+		expect(createResponse.ok()).toBeTruthy();
+		const createdSession = (await createResponse.json()) as { id: string };
+		expect(createdSession.id).toBeTruthy();
+	});
+
 	test('should display session details when clicking on a session', async ({ page }) => {
 		await navigateTo(page, '/sessions');
 		await waitForAuthReady(page);

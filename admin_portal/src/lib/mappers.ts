@@ -31,6 +31,7 @@ export function toSessionCreate(data: {
 	blocks: string[];
 	archived?: boolean;
 	waitlist?: boolean;
+	generateOccurrences?: boolean;
 }): SessionCreate {
 	return {
 		name: data.name,
@@ -49,6 +50,7 @@ export function toSessionCreate(data: {
 		blocks: data.blocks,
 		archived: data.archived,
 		waitlist: data.waitlist,
+		generate_occurrences: data.generateOccurrences,
 	};
 }
 

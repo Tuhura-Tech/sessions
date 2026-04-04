@@ -186,6 +186,7 @@ export interface SessionCreate {
 	archived?: boolean;
 	blocks: string[];
 	waitlist?: boolean;
+	generate_occurrences?: boolean;
 }
 
 export interface SessionUpdate {

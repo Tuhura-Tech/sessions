@@ -16,27 +16,29 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Drop existing check constraints (handle both naming conventions for clean installs and prod)
-    # Try the ORM-generated name first, then fallback to raw SQL for any variant
-    try:
-        op.drop_constraint("ck_sessions_ck_sessions_type", "sessions", type_="check")
-    except Exception:
-        pass
-    try:
-        op.drop_constraint("ck_sessions_type", "sessions", type_="check")
-    except Exception:
-        pass
+    # Check if sessions table exists (works for both clean and existing databases)
+    conn = op.get_bind()
+    inspector = conn.dialect.get_table_names(conn)
+    
+    if "sessions" not in inspector:
+        # Table doesn't exist yet (fresh database), will be created by ORM
+        return
 
-    try:
-        op.drop_constraint("ck_sessions_ck_sessions_term_requires_schedule", "sessions", type_="check")
-    except Exception:
-        pass
-    try:
-        op.drop_constraint("ck_sessions_term_requires_schedule", "sessions", type_="check")
-    except Exception:
-        pass
-
-    # Use raw SQL as fallback for edge cases
+    # Drop old constraints with all possible naming conventions
+    constraint_names = [
+        "ck_sessions_ck_sessions_type",
+        "ck_sessions_type",
+        "ck_sessions_ck_sessions_term_requires_schedule",
+        "ck_sessions_term_requires_schedule",
+    ]
+    
+    for constraint_name in constraint_names:
+        try:
+            op.drop_constraint(constraint_name, "sessions", type_="check")
+        except Exception:
+            pass
+    
+    # Fallback: use raw SQL for any remaining constraints
     op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_type")
     op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_type")
     op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_ck_sessions_term_requires_schedule")
@@ -57,6 +59,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Check if sessions table exists
+    conn = op.get_bind()
+    inspector = conn.dialect.get_table_names(conn)
+    
+    if "sessions" not in inspector:
+        return
+
     # Drop the new constraints
     op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_type")
     op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_term_requires_schedule")

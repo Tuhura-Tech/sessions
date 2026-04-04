@@ -138,9 +138,7 @@ const getDayLabel = (value?: number | null): string | null =>
 										{session.waitlist ? 'Waitlist' : 'Open'}
 									</span>
 								</div>
-								{session?.description && (
-									<p class="text-gray-700">{session.description}</p>
-								)}
+								{session?.description && <p class="text-gray-700">{session.description}</p>}
 								<p class="text-gray-700">
 									<span class="font-semibold">Ages:</span> {session.age}
 									<span class="mx-2 text-gray-300">•</span>

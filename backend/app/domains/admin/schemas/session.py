@@ -20,7 +20,7 @@ class Session(CamelizedBaseSchema):
 
     id: UUID
     year: int
-    session_type: Literal["term", "special"]
+    session_type: Literal["term", "special", "event"]
     name: str
     age_lower: int
     age_upper: int
@@ -110,7 +110,7 @@ class Session(CamelizedBaseSchema):
 
 class SessionCreate(CamelizedBaseSchema):
     year: int
-    session_type: Literal["term", "special"]
+    session_type: Literal["term", "special", "event"]
     name: str
     age_lower: int
     age_upper: int
@@ -161,7 +161,7 @@ class SessionCreate(CamelizedBaseSchema):
 
 class SessionUpdate(CamelizedBaseSchema):
     year: int | None = None
-    session_type: Literal["term", "special"] | None = None
+    session_type: Literal["term", "special", "event"] | None = None
     name: str | None = None
     age_lower: int | None = None
     age_upper: int | None = None

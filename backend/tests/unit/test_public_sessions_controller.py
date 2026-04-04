@@ -11,6 +11,7 @@ from uuid import uuid4
 import pytest
 from litestar.exceptions import NotFoundException, ValidationException
 
+from app.domains.public.controllers.events import EventController
 from app.domains.public.controllers.sessions import SessionController
 
 
@@ -18,8 +19,10 @@ class DummySessionService:
     def __init__(self, results=None, total=0):
         self.results = results or []
         self.total = total
+        self.last_filters = []
 
     async def list_and_count(self, *args, **kwargs):
+        self.last_filters = list(args)
         return self.results, self.total
 
     def to_schema(self, obj, schema_type):
@@ -53,6 +56,7 @@ class DummySession:
         self.id = session_id
         self.name = "Session"
         self.year = 2026
+        self.session_type = "term"
         self.age_lower = 5
         self.age_upper = 12
         self.day_of_week = 1
@@ -118,6 +122,7 @@ async def test_list_sessions_success():
         id=session_id,
         name="Session",
         year=2026,
+        session_type="term",
         age_lower=5,
         age_upper=12,
         day_of_week=1,
@@ -149,6 +154,49 @@ async def test_list_sessions_success():
 
     assert result.total == 1
     assert result.items[0].blocks == ["Block A"]
+
+
+@pytest.mark.anyio
+async def test_list_events_success():
+    controller = EventController.__new__(EventController)
+    session_id = uuid4()
+    session = SimpleNamespace(
+        id=session_id,
+        name="Event",
+        year=2026,
+        session_type="event",
+        age_lower=8,
+        age_upper=12,
+        day_of_week=None,
+        start_time=time(10, 0),
+        end_time=time(12, 0),
+        description="One-off event",
+        location=SimpleNamespace(
+            name="Location",
+            address="Address",
+            region="Region",
+            lat=-41.0,
+            lng=174.0,
+        ),
+    )
+    service = DummySessionService(results=[session], total=1)
+
+    async def execute(_query):
+        return DummyResult(rows=[(session_id, "Special")])
+
+    db_session = SimpleNamespace(execute=execute)
+
+    result = await EventController.list_events.fn(
+        controller,
+        sessions_service=service,
+        db_session=db_session,
+        limit=10,
+        offset=0,
+    )
+
+    assert result.total == 1
+    assert result.items[0].session_type == "event"
+    assert result.items[0].blocks == ["Special"]
 
 
 @pytest.mark.anyio

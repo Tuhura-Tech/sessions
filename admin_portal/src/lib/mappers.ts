@@ -24,7 +24,7 @@ export function toSessionCreate(data: {
 	startTime: string;
 	endTime: string;
 	capacity: number;
-	sessionType?: 'term' | 'special';
+	sessionType?: 'term' | 'special' | 'event';
 	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;
@@ -65,7 +65,7 @@ export function toSessionUpdate(data: {
 	startTime?: string;
 	endTime?: string;
 	capacity?: number;
-	sessionType?: 'term' | 'special';
+	sessionType?: 'term' | 'special' | 'event';
 	description?: string | null;
 	photoAlbumUrl?: string | null;
 	internalNotes?: string | null;

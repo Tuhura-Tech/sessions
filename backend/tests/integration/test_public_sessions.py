@@ -130,6 +130,35 @@ class TestPublicSessionListEndpoint:
         assert data["total"] == 1
         assert data["items"][0]["name"] == "Active"
 
+    async def test_list_sessions_excludes_event_type(
+        self,
+        test_client,
+        db_session: AsyncSession,
+    ):
+        """Test that event sessions are excluded from /api/v1/sessions."""
+        location = await create_test_location(db_session)
+
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Regular Session",
+            session_type="special",
+        )
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Event Session",
+            session_type="event",
+        )
+
+        response = await test_client.get("/api/v1/sessions/")
+        assert response.status_code == HTTP_200_OK
+
+        data = response.json()
+        assert data["total"] == 1
+        assert [item["name"] for item in data["items"]] == ["Regular Session"]
+        assert all(item["session_type"] != "event" for item in data["items"])
+
     async def test_list_sessions_pagination(
         self,
         test_client,
@@ -309,3 +338,88 @@ class TestPublicSessionDetailEndpoint:
         data = response.json()
         assert data["location"]["name"] == "Test Location"
         assert data["location"]["address"] == "123 Main St"
+
+
+@pytest.mark.integration
+class TestPublicEventListEndpoint:
+    """Test public events listing endpoint."""
+
+    async def test_list_events_empty(self, test_client):
+        """Test GET /api/v1/events returns empty list when no events."""
+        response = await test_client.get("/api/v1/events/")
+        assert response.status_code == HTTP_200_OK
+
+        data = response.json()
+        assert "items" in data
+        assert isinstance(data["items"], list)
+        assert len(data["items"]) == 0
+        assert data["total"] == 0
+
+    async def test_list_events_returns_only_event_type(
+        self,
+        test_client,
+        db_session: AsyncSession,
+    ):
+        """Test that /api/v1/events only returns event sessions."""
+        location = await create_test_location(db_session)
+
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Regular Session",
+            session_type="special",
+        )
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Event One",
+            session_type="event",
+        )
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Event Two",
+            session_type="event",
+        )
+
+        response = await test_client.get("/api/v1/events/")
+        assert response.status_code == HTTP_200_OK
+
+        data = response.json()
+        assert data["total"] == 2
+        assert sorted(item["name"] for item in data["items"]) == [
+            "Event One",
+            "Event Two",
+        ]
+        assert all(item["session_type"] == "event" for item in data["items"])
+
+    async def test_list_events_excludes_archived_events(
+        self,
+        test_client,
+        db_session: AsyncSession,
+    ):
+        """Test archived events are excluded from /api/v1/events."""
+        location = await create_test_location(db_session)
+
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Active Event",
+            session_type="event",
+            archived=False,
+        )
+        await create_test_session(
+            db_session,
+            location=location,
+            name="Archived Event",
+            session_type="event",
+            archived=True,
+        )
+
+        response = await test_client.get("/api/v1/events/")
+        assert response.status_code == HTTP_200_OK
+
+        data = response.json()
+        assert data["total"] == 1
+        assert data["items"][0]["name"] == "Active Event"
+        assert data["items"][0]["session_type"] == "event"

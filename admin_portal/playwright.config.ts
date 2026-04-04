@@ -67,7 +67,6 @@ export default defineConfig({
 				timeout: 120 * 1000,
 				env: {
 					...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-					VITE_API_BASE_URL: 'http://127.0.0.1:8000',
 				},
 			}
 		: [
@@ -76,7 +75,7 @@ export default defineConfig({
 						'docker compose -f ../docker-compose.yml up -d postgres && uv run litestar database upgrade --no-prompt && uv run litestar run --host 0.0.0.0 --port 8000',
 					cwd: '../backend',
 					url: 'http://localhost:8000/api/v1/health',
-					reuseExistingServer: false,
+					reuseExistingServer: true,
 					timeout: 120 * 1000,
 					env: {
 						...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
@@ -92,11 +91,10 @@ export default defineConfig({
 				{
 					command: 'pnpm dev',
 					url: 'http://localhost:3002',
-					reuseExistingServer: false,
+					reuseExistingServer: true,
 					timeout: 120 * 1000,
 					env: {
 						...Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)),
-						VITE_API_BASE_URL: 'http://localhost:8000',
 					},
 				},
 			],

@@ -14,6 +14,7 @@ export type ApiSession = {
 	name: string;
 	age: string;
 	time: string;
+	session_type?: string;
 	day_of_week?: number | null;
 	term_summary?: string | null;
 	blocks?: string[];
@@ -60,6 +61,7 @@ export type ApiPublicSession = {
 	name: string;
 	age_lower: number;
 	age_upper: number;
+	session_type?: string;
 	day_of_week?: number | null;
 	start_time: string;
 	end_time: string;
@@ -107,6 +109,7 @@ export type UiSession = {
 	latlong: [number, number];
 	age: string;
 	time: string;
+	session_type?: string;
 	day_of_week?: number | null;
 	term_summary?: string | null;
 	blocks?: string[];
@@ -130,9 +133,11 @@ export type UiSessionLocation = {
 
 import { getApiBaseUrl } from '@/config';
 
-export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
+async function fetchSessionLocationsByPath(
+	path: '/api/v1/sessions' | '/api/v1/events',
+): Promise<UiSessionLocation[]> {
 	const baseUrl = getApiBaseUrl();
-	const res = await fetch(`${baseUrl}/api/v1/sessions`);
+	const res = await fetch(`${baseUrl}${path}`);
 	if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.status}`);
 	const payload = (await res.json()) as
 		| { items?: ApiSessionLocation[] | ApiPublicSession[] }
@@ -158,6 +163,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 					latlong: [details?.latlong.lat ?? 0, details?.latlong.lng ?? 0],
 					age: s.age,
 					time: s.time,
+					session_type: s.session_type,
 					day_of_week: s.day_of_week ?? null,
 					term_summary: s.term_summary ?? null,
 					blocks: s.blocks ?? [],
@@ -190,6 +196,7 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 			latlong: [session.location?.lat ?? 0, session.location?.lng ?? 0],
 			age: `${session.age_lower}-${session.age_upper}`,
 			time: `${formatTime(session.start_time)}-${formatTime(session.end_time)}`,
+			session_type: session.session_type,
 			day_of_week: session.day_of_week ?? null,
 			term_summary: null,
 			blocks: [],
@@ -206,6 +213,14 @@ export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
 	}
 
 	return Array.from(grouped.values());
+}
+
+export async function fetchSessionLocations(): Promise<UiSessionLocation[]> {
+	return fetchSessionLocationsByPath('/api/v1/sessions');
+}
+
+export async function fetchEventLocations(): Promise<UiSessionLocation[]> {
+	return fetchSessionLocationsByPath('/api/v1/events');
 }
 
 async function apiFetch(path: string, init?: RequestInit, cookies?: string): Promise<Response> {

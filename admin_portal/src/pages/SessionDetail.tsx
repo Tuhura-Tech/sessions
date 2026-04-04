@@ -346,9 +346,7 @@ const SessionDetail: React.FC = () => {
 						<div className="flex items-start justify-between">
 							<div>
 								<h1 className="text-3xl font-bold text-gray-900">{session.name}</h1>
-								{session.description && (
-									<p className="mt-2 text-gray-700">{session.description}</p>
-								)}
+								{session.description && <p className="mt-2 text-gray-700">{session.description}</p>}
 								{session.internal_notes && (
 									<p className="mt-2 text-gray-600">{session.internal_notes}</p>
 								)}
@@ -608,7 +606,11 @@ const SessionDetail: React.FC = () => {
 										type="button"
 										onClick={() => setShowCreateOccurrenceModal(true)}
 										disabled={!hasLinkedBlocks}
-										title={hasLinkedBlocks ? 'Add a manual occurrence' : 'Link at least one block to this session first'}
+										title={
+											hasLinkedBlocks
+												? 'Add a manual occurrence'
+												: 'Link at least one block to this session first'
+										}
 										className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										Add occurrence
@@ -997,7 +999,10 @@ const SessionDetail: React.FC = () => {
 						</p>
 					)}
 					<div>
-						<label htmlFor="occurrence-block" className="mb-1 block text-sm font-medium text-gray-700">
+						<label
+							htmlFor="occurrence-block"
+							className="mb-1 block text-sm font-medium text-gray-700"
+						>
 							Block
 						</label>
 						<select
@@ -1017,7 +1022,10 @@ const SessionDetail: React.FC = () => {
 					</div>
 
 					<div>
-						<label htmlFor="occurrence-start" className="mb-1 block text-sm font-medium text-gray-700">
+						<label
+							htmlFor="occurrence-start"
+							className="mb-1 block text-sm font-medium text-gray-700"
+						>
 							Starts at
 						</label>
 						<input
@@ -1031,7 +1039,10 @@ const SessionDetail: React.FC = () => {
 					</div>
 
 					<div>
-						<label htmlFor="occurrence-end" className="mb-1 block text-sm font-medium text-gray-700">
+						<label
+							htmlFor="occurrence-end"
+							className="mb-1 block text-sm font-medium text-gray-700"
+						>
 							Ends at
 						</label>
 						<input

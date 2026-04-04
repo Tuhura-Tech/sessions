@@ -30,7 +30,7 @@ const EditSession: React.FC = () => {
 		description: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
-		sessionType: 'term' as 'term' | 'special',
+		sessionType: 'term' as 'term' | 'special' | 'event',
 		blocks: [] as string[],
 	});
 
@@ -62,7 +62,7 @@ const EditSession: React.FC = () => {
 					description: sessionData.description || '',
 					photoAlbumUrl: sessionData.photo_album_url || '',
 					internalNotes: sessionData.internal_notes || '',
-					sessionType: (sessionData.session_type as 'term' | 'special') || 'term',
+					sessionType: (sessionData.session_type as 'term' | 'special' | 'event') || 'term',
 					blocks: sessionData.blocks || [],
 				});
 			} catch (error) {
@@ -210,13 +210,14 @@ const EditSession: React.FC = () => {
 										onChange={(e) =>
 											setFormData({
 												...formData,
-												sessionType: e.target.value as 'term' | 'special',
+												sessionType: e.target.value as 'term' | 'special' | 'event',
 											})
 										}
 										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 									>
 										<option value="term">Term (Recurring)</option>
 										<option value="special">Special (One-off)</option>
+										<option value="event">Event (One-off)</option>
 									</select>
 								</div>
 
@@ -374,10 +375,7 @@ const EditSession: React.FC = () => {
 								</div>
 
 								<div className="md:col-span-2">
-									<label
-										htmlFor="description"
-										className="block text-sm font-medium text-gray-700"
-									>
+									<label htmlFor="description" className="block text-sm font-medium text-gray-700">
 										Description
 									</label>
 									<textarea
@@ -388,7 +386,6 @@ const EditSession: React.FC = () => {
 										className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 									/>
 								</div>
-
 							</div>
 
 							<div className="flex justify-end gap-4">

@@ -27,6 +27,7 @@ class Session(CamelizedBaseSchema):
     id: UUID
     name: str
     year: int
+    session_type: str
     age_lower: int
     age_upper: int
     day_of_week: int | None

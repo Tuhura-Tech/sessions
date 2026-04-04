@@ -1,0 +1,48 @@
+---
+import HomeSessionsList from '../components/home/HomeSessionsList.astro';
+import Layout from '../layouts/Layout.astro';
+import { fetchEventLocations } from '../lib/api';
+
+const sessionLocations = await fetchEventLocations();
+const eventSessions = sessionLocations.flatMap((l) => l.sessions);
+
+const regions = Array.from(new Set(eventSessions.map((s) => s.location))).filter(Boolean);
+---
+
+<Layout title="Events" description="Upcoming one-off events from Tūhura Tech.">
+	<main>
+		<section class="bg-white py-16">
+			<div class="container-custom">
+				<div class="mx-auto max-w-6xl">
+					<div class="mb-8">
+						<a
+							href="/"
+							class="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-tuhura-green"
+						>
+							← Back to Sessions
+						</a>
+						<h1 class="mt-2 text-3xl font-bold text-gray-900">Upcoming Events</h1>
+						<p class="mt-2 text-gray-600">One-off events open for registration.</p>
+					</div>
+
+					{
+						eventSessions.length === 0 ? (
+							<div class="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+								<p class="text-lg font-semibold text-gray-900">No upcoming events</p>
+								<p class="mt-2 text-sm text-gray-600">
+									Check back soon or browse our regular{' '}
+									<a href="/" class="text-tuhura-green hover:underline">
+										sessions
+									</a>
+									.
+								</p>
+							</div>
+						) : (
+							<HomeSessionsList sessions={eventSessions} regions={regions} />
+						)
+					}
+				</div>
+			</div>
+		</section>
+	</main>
+</Layout>

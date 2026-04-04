@@ -2,7 +2,7 @@
 import HomeSessionsList from '../components/home/HomeSessionsList.astro';
 import SessionsMap from '../components/Map.astro';
 import Layout from '../layouts/Layout.astro';
-import { fetchSessionLocations } from '../lib/api';
+import { fetchEventLocations, fetchSessionLocations } from '../lib/api';
 
 // Term dates for 2026
 // const TERM_DATES = {
@@ -41,6 +41,8 @@ import { fetchSessionLocations } from '../lib/api';
 
 const sessionLocations = await fetchSessionLocations();
 const allSessions = sessionLocations.flatMap((l) => l.sessions);
+const eventLocations = await fetchEventLocations();
+const eventSessions = eventLocations.flatMap((l) => l.sessions);
 
 // Split sessions into term sessions and special sessions
 const termSessions = allSessions.filter((s) => !s.blocks?.includes('Special'));
@@ -128,10 +130,23 @@ const totalCount = allSessions.length;
 					<div class="mb-8">
 						<div class="flex flex-wrap items-baseline justify-between gap-4">
 							<h2 class="text-3xl font-bold text-gray-900">Available Sessions</h2>
-							<p id="session-count" class="text-sm text-gray-600" data-testid="session-count">
-								Showing {totalCount} of {totalCount}
-								{totalCount === 1 ? 'session' : 'sessions'}
-							</p>
+							<div class="flex items-center gap-4">
+								{
+									eventSessions.length > 0 && (
+										<a
+											href="/events"
+											class="inline-flex items-center rounded-full bg-tuhura-green/10 px-4 py-1.5 text-sm font-semibold text-tuhura-green transition-colors hover:bg-tuhura-green/20"
+										>
+											{eventSessions.length} {eventSessions.length === 1 ? 'event' : 'events'}{' '}
+											upcoming →
+										</a>
+									)
+								}
+								<p id="session-count" class="text-sm text-gray-600" data-testid="session-count">
+									Showing {totalCount} of {totalCount}
+									{totalCount === 1 ? 'session' : 'sessions'}
+								</p>
+							</div>
 						</div>
 					</div>
 

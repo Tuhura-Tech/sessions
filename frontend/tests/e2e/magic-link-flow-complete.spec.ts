@@ -106,19 +106,19 @@ test.describe('Magic Link Complete Authentication Flow', () => {
 		const emailInput = page.locator('#email');
 		const submitBtn = page.locator('#submit-btn');
 
-		// Listen for the API request
-		const requestPromise = page.waitForRequest((request) => {
-			return (
-				request.url().includes('/api/v1/auth/magic-link') &&
-				request.method() === 'POST' &&
-				request.url().includes(API_BASE_URL)
-			);
-		});
-
 		await emailInput.fill(testEmail);
-		await submitBtn.click();
 
-		const request = await requestPromise;
+		// Use Promise.all to set up listener and trigger action atomically
+		const [request] = await Promise.all([
+			page.waitForRequest((req) => {
+				return (
+					req.url().includes('/api/v1/auth/magic-link') &&
+					req.method() === 'POST' &&
+					req.url().includes(API_BASE_URL)
+				);
+			}),
+			submitBtn.click(),
+		]);
 
 		// Verify the request is going to the correct backend URL
 		expect(request.url()).toContain(API_BASE_URL);
@@ -132,25 +132,27 @@ test.describe('Magic Link Complete Authentication Flow', () => {
 
 	test('should normalize email before sending to API', async ({ page }) => {
 		const testEmail = generateTestEmail();
-		const emailWithWhitespace = `  ${testEmail.toUpperCase()}  `;
+		// Use uppercase to test lowercasing — spaces are stripped by browser
+		// on type="email" inputs so we test case normalization only
+		const emailMixedCase = testEmail.toUpperCase();
 
 		await page.goto(`${FRONTEND_BASE_URL}/auth/login`, { waitUntil: 'networkidle' });
 
 		const emailInput = page.locator('#email');
 		const submitBtn = page.locator('#submit-btn');
 
-		// Listen for the API request
-		const requestPromise = page.waitForRequest((request) => {
-			return request.url().includes('/api/v1/auth/magic-link') && request.method() === 'POST';
-		});
+		await emailInput.fill(emailMixedCase);
 
-		await emailInput.fill(emailWithWhitespace);
-		await submitBtn.click();
-
-		const request = await requestPromise;
+		// Use Promise.all to set up listener and trigger action atomically
+		const [request] = await Promise.all([
+			page.waitForRequest((req) => {
+				return req.url().includes('/api/v1/auth/magic-link') && req.method() === 'POST';
+			}),
+			submitBtn.click(),
+		]);
 		const postData = request.postDataJSON();
 
-		// Email should be trimmed and lowercased
+		// Email should be lowercased
 		expect(postData.email).toBe(testEmail.toLowerCase());
 	});
 
@@ -248,22 +250,18 @@ test.describe('Magic Link Complete Authentication Flow', () => {
 
 		await emailInput.fill(testEmail);
 
-		// Start the request
-		const requestPromise = page.waitForRequest((request) => {
-			return request.url().includes('/api/v1/auth/magic-link');
-		});
+		// Set up request and response listeners, then click atomically
+		const [[request]] = await Promise.all([
+			Promise.all([
+				page.waitForRequest((req) => req.url().includes('/api/v1/auth/magic-link')),
+				page.waitForResponse((res) => res.url().includes('/api/v1/auth/magic-link')),
+			]),
+			submitBtn.click(),
+		]);
 
-		// Click the button
-		const clickPromise = submitBtn.click();
-
-		// Check button state immediately (should be disabled)
-		// Note: The form might process quickly, so we check the request was made
-		const request = await requestPromise;
 		expect(request).toBeDefined();
 
-		// After response, button should be re-enabled
-		await clickPromise;
-		await page.waitForResponse((response) => response.url().includes('/api/v1/auth/magic-link'));
+		// After response completes, button should be re-enabled
 		const isDisabled = await submitBtn.isDisabled();
 		expect(isDisabled).toBe(false);
 	});
@@ -287,15 +285,12 @@ test.describe('Magic Link Complete Authentication Flow', () => {
 
 		await expect(successMsg).toContainText(testEmail1);
 
-		// Second submission
+		// Second submission — use Promise.all for reliable request capture
 		await emailInput.fill(testEmail2);
-		const requestPromise = page.waitForRequest((request) => {
-			return request.url().includes('/api/v1/auth/magic-link');
-		});
-
-		// The form should reset the message when resubmitting
-		await submitBtn.click();
-		await requestPromise;
+		await Promise.all([
+			page.waitForRequest((req) => req.url().includes('/api/v1/auth/magic-link')),
+			submitBtn.click(),
+		]);
 
 		// New success message with new email
 		await expect(successMsg).toContainText(testEmail2);

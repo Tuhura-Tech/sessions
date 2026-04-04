@@ -18,17 +18,17 @@ const CreateSession: React.FC = () => {
 		name: '',
 		year: new Date().getFullYear(),
 		locationId: '',
-		ageLower: '',
-		ageUpper: '',
+		ageLower: '8',
+		ageUpper: '12',
 		dayOfWeek: '',
-		startTime: '',
-		endTime: '',
+		startTime: '15:30',
+		endTime: '17:30',
 		capacity: '16',
 		waitlist: false,
 		description: '',
 		photoAlbumUrl: '',
 		internalNotes: '',
-		sessionType: 'term' as 'term' | 'special',
+		sessionType: 'term' as 'term' | 'special' | 'event',
 		blocks: [] as string[],
 	});
 
@@ -159,7 +159,8 @@ const CreateSession: React.FC = () => {
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 									>
 										<option value="term">Term (Recurring)</option>
-										<option value="special">Special (One-off)</option>
+										<option value="special">Special (One-off)</option>{' '}
+										<option value="event">Event (One-off)</option>{' '}
 									</select>
 								</div>
 
@@ -335,10 +336,7 @@ const CreateSession: React.FC = () => {
 								</div>
 
 								<div className="md:col-span-2">
-									<label
-										htmlFor="description"
-										className="block text-sm font-medium text-gray-700"
-									>
+									<label htmlFor="description" className="block text-sm font-medium text-gray-700">
 										Description
 									</label>
 									<textarea
@@ -349,7 +347,6 @@ const CreateSession: React.FC = () => {
 										className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 									/>
 								</div>
-
 							</div>
 
 							<div className="flex justify-end gap-4">

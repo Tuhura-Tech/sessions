@@ -288,7 +288,9 @@ test.describe('Session Detail - Signup Counts', () => {
 		const sessionsPayload = await sessionsRes.json();
 		const sessions = unwrapListResponse<any>(sessionsPayload);
 
-		const sessionWithBlocks = sessions.find((s: any) => Array.isArray(s.blocks) && s.blocks.length > 0);
+		const sessionWithBlocks = sessions.find(
+			(s: any) => Array.isArray(s.blocks) && s.blocks.length > 0,
+		);
 		if (!sessionWithBlocks) {
 			return;
 		}
@@ -314,7 +316,9 @@ test.describe('Session Detail - Signup Counts', () => {
 		const sessionsPayload = await sessionsRes.json();
 		const sessions = unwrapListResponse<any>(sessionsPayload);
 
-		const sessionWithBlocks = sessions.find((s: any) => Array.isArray(s.blocks) && s.blocks.length > 0);
+		const sessionWithBlocks = sessions.find(
+			(s: any) => Array.isArray(s.blocks) && s.blocks.length > 0,
+		);
 		if (!sessionWithBlocks) {
 			return;
 		}

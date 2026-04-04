@@ -1,5 +1,22 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 import { authenticateAsAdmin, ensureAuthenticated, navigateTo } from './helpers';
+
+const openFirstStudentDetail = async (page: Page): Promise<boolean> => {
+	const viewButton = page.getByRole('button', { name: 'View Details' }).first();
+	const viewButtonCount = await viewButton.count();
+
+	if (viewButtonCount === 0) {
+		return false;
+	}
+
+	await viewButton.scrollIntoViewIfNeeded();
+	await viewButton.click({ force: true });
+	await page.waitForURL(/\/students\/[a-f0-9-]+/i);
+	await page.waitForLoadState('networkidle');
+
+	return true;
+};
 
 test.describe('Students Management', () => {
 	test.beforeEach(async ({ page }) => {
@@ -38,14 +55,7 @@ test.describe('Students Management', () => {
 		// Wait for table to load
 		await page.waitForTimeout(1000);
 
-		// Click on first "View Details" button if available
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Should be on student detail page
 			expect(page.url()).toContain('/students/');
 		}
@@ -56,13 +66,7 @@ test.describe('Students Management', () => {
 		await page.waitForLoadState('networkidle');
 		await page.waitForTimeout(1000);
 
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Check for profile section
 			await expect(page.locator('h2:has-text("Profile")')).toBeVisible();
 
@@ -78,13 +82,7 @@ test.describe('Students Management', () => {
 		await page.waitForLoadState('networkidle');
 		await page.waitForTimeout(1000);
 
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Look for caregiver link
 			const caregiverLabel = page.locator('dt:has-text("Caregiver")');
 			await expect(caregiverLabel).toBeVisible();
@@ -114,13 +112,7 @@ test.describe('Students Management', () => {
 		await page.waitForLoadState('networkidle');
 		await page.waitForTimeout(1000);
 
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Check for enrollments section
 			await expect(page.locator('h2:has-text("Enrollments")')).toBeVisible();
 		}
@@ -131,13 +123,7 @@ test.describe('Students Management', () => {
 		await page.waitForLoadState('networkidle');
 		await page.waitForTimeout(1000);
 
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Check if there are any session links
 			const sessionLinks = page.locator('a[href*="/sessions/"]');
 			const sessionLinkCount = await sessionLinks.count();
@@ -156,13 +142,7 @@ test.describe('Students Management', () => {
 		await page.waitForLoadState('networkidle');
 		await page.waitForTimeout(1000);
 
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Check for status badges (confirmed, waitlisted, pending, withdrawn)
 			const _statusBadges = page.locator('span').filter({
 				hasText: /Confirmed|Waitlisted|Pending|Withdrawn/i,
@@ -177,13 +157,7 @@ test.describe('Students Management', () => {
 		await page.waitForLoadState('networkidle');
 		await page.waitForTimeout(1000);
 
-		const viewButton = page.locator('button:has-text("View Details")').first();
-		const viewButtonCount = await viewButton.count();
-
-		if (viewButtonCount > 0) {
-			await viewButton.click();
-			await page.waitForLoadState('networkidle');
-
+		if (await openFirstStudentDetail(page)) {
 			// Should have back button
 			const backButton = page.locator('button:has-text("Back")');
 			await expect(backButton).toBeVisible();

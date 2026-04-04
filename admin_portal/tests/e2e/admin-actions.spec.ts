@@ -389,7 +389,7 @@ test.describe('Session management actions', () => {
 
 						// Verify download filename
 						expect(download.suggestedFilename()).toMatch(/\.csv$/);
-				} catch (_e) {
+					} catch (_e) {
 						// If no download happens, at least verify button exists
 						expect(await exportButton.isVisible()).toBeTruthy();
 					}

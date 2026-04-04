@@ -57,6 +57,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         from app.domains.public.controllers import (
             HealthController,
             PublicBlockController,
+            PublicEventController,
             PublicSessionController,
         )
         from app.lib.settings import settings
@@ -120,6 +121,7 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
         app_config.route_handlers = [
             HealthController,
             PublicBlockController,
+            PublicEventController,
             PublicSessionController,
             CalendarController,
             LegacyCalendarRedirectController,

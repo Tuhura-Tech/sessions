@@ -1244,7 +1244,7 @@ export interface components {
 		SessionCreate: {
 			year: number;
 			/** @enum {string} */
-			sessionType: 'term' | 'special';
+			sessionType: 'term' | 'special' | 'event';
 			name: string;
 			ageLower: number;
 			ageUpper: number;
@@ -1303,7 +1303,7 @@ export interface components {
 		SessionUpdate: {
 			year?: number | null;
 			/** @enum {null|string} */
-			sessionType?: 'term' | 'special' | null;
+			sessionType?: 'term' | 'special' | 'event' | null;
 			name?: string | null;
 			ageLower?: number | null;
 			ageUpper?: number | null;

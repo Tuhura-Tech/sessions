@@ -34,18 +34,21 @@ class Session(UUIDv7AuditBase):
     Session types:
     - term: a year-long weekly session (runs during school terms).
     - special: a one-off program with a custom set of occurrences.
+    - event: a one-off event (shown on the public events page).
     """
 
     __tablename__ = "sessions"
 
     __table_args__ = (
-        CheckConstraint("session_type IN ('term','special')", name="ck_sessions_type"),
+        CheckConstraint(
+            "session_type IN ('term','special','event')", name="ck_sessions_type"
+        ),
         CheckConstraint(
             "day_of_week IS NULL OR day_of_week BETWEEN 0 AND 6",
             name="ck_sessions_day_of_week_nullable",
         ),
         CheckConstraint(
-            "(session_type = 'term' AND day_of_week IS NOT NULL) OR (session_type = 'special')",
+            "(session_type = 'term' AND day_of_week IS NOT NULL) OR (session_type = 'special') OR (session_type = 'event')",
             name="ck_sessions_term_requires_schedule",
         ),
     )

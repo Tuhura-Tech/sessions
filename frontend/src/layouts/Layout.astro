@@ -43,6 +43,7 @@ const ogImage = await getImage({ src: heroOg, width: 1200, height: 630, format: 
 const ogImageUrl = new URL(ogImage.src, canonicalUrl).toString();
 
 const navItems: NavItem[] = [
+	{ name: 'Events', href: '/events' },
 	{ name: 'Account', href: '/account' },
 	{ name: 'Contact', href: 'https://tuhuratech.org.nz/contact' },
 	{

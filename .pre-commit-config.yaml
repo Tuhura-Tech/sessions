@@ -1,14 +1,7 @@
 default_language_version:
   python: "3"
 repos:
-  - repo: local
-    hooks:
-      - id: local-biome-check
-        name: biome check
-        entry: bash -c 'cd src/js/web && pnpx @biomejs/biome check --write --files-ignore-unknown=true --no-errors-on-unmatched --config-path biome.json'
-        language: system
-        types: [text]
-        pass_filenames: false
+  # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -19,20 +12,81 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.14.10"
+
+  # Backend (Python) - Ruff Linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.5
     hooks:
-      # Run the linter.
       - id: ruff
-        types_or: [python, pyi]
+        name: Ruff Lint (Backend)
+        types: [python]
         args: [--fix]
-      # Run the formatter.
+        files: ^backend/
       - id: ruff-format
-        types_or: [python, pyi]
+        name: Ruff Format (Backend)
+        types: [python]
+        files: ^backend/
+
+  # Backend Type Checking (Pyright via ty)
+  - repo: local
+    hooks:
+      - id: pyright-backend
+        name: Pyright Type Check (Backend)
+        entry: bash -c "cd backend && uv run ty check app"
+        language: system
+        types: [python]
+        pass_filenames: false
+        files: ^backend/
+        exclude: tests/
+
+  # Frontend (Astro) - Biome Linting
+  - repo: local
+    hooks:
+      - id: biome-lint-frontend
+        name: Biome Lint (Frontend)
+        entry: bash -c "cd frontend && pnpm exec biome lint --apply ."
+        language: system
+        types: [javascript, typescript, jsx, tsx]
+        pass_filenames: false
+        files: ^frontend/src/
+        stages: [commit]
+
+      - id: prettier-frontend
+        name: Prettier Format (Frontend)
+        entry: bash -c "cd frontend && pnpm run format"
+        language: system
+        types: [javascript, typescript, jsx, tsx, json, yaml, markdown]
+        pass_filenames: false
+        files: ^frontend/
+        stages: [commit]
+
+  # Admin Portal - Biome Linting
+  - repo: local
+    hooks:
+      - id: biome-lint-admin
+        name: Biome Lint (Admin Portal)
+        entry: bash -c "cd admin_portal && pnpm exec biome lint --apply ."
+        language: system
+        types: [javascript, typescript, jsx, tsx]
+        pass_filenames: false
+        files: ^admin_portal/src/
+        stages: [commit]
+
+      - id: prettier-admin
+        name: Prettier Format (Admin Portal)
+        entry: bash -c "cd admin_portal && pnpm run format"
+        language: system
+        types: [javascript, typescript, jsx, tsx, json, yaml, markdown]
+        pass_filenames: false
+        files: ^admin_portal/
+        stages: [commit]
+
+  # Codespell
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
       - id: codespell
-        exclude: "uv.lock|package.json|package-lock.json"
+        exclude: "uv.lock|pnpm-lock.yaml|package.json|package-lock.json|coverage.xml"
         additional_dependencies:
           - tomli
+

@@ -102,6 +102,7 @@ const EditSession: React.FC = () => {
 				description: formData.description || null,
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
+				waitlist: formData.waitlist,
 			};
 
 			await adminApi.updateSession(id, sessionData);

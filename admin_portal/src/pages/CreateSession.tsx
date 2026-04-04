@@ -71,6 +71,7 @@ const CreateSession: React.FC = () => {
 				internalNotes: formData.internalNotes || null,
 				blocks: formData.blocks,
 				generateOccurrences: formData.generateOccurrences,
+				waitlist: formData.waitlist,
 			});
 
 			const created = await adminApi.createSession(sessionCreate);

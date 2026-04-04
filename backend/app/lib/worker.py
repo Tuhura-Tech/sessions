@@ -715,10 +715,14 @@ async def process_signup_approval_task(
             logger.info(
                 f"Signup {signup_id} kept pending (age ineligible): {age_ineligible_reason}"
             )
-        elif session.is_full:
-            # Age eligible but no space - waitlist
+        elif session.waitlist or session.is_full:
+            # Age eligible but session is in waitlist mode or at capacity
             final_status = "waitlisted"
-            waitlist_reason = "session is at capacity"
+            waitlist_reason = (
+                "session is in waitlist-only mode"
+                if session.waitlist
+                else "session is at capacity"
+            )
             logger.info(f"Signup {signup_id} waitlisted: {waitlist_reason}")
         else:
             # Age eligible and space available - confirm

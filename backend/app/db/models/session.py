@@ -77,6 +77,11 @@ class Session(UUIDv7AuditBase):
 
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
 
+    # Whether new signups are placed on the waitlist regardless of capacity.
+    # When True, the session is in "waitlist mode" and age-eligible signups are
+    # waitlisted even if there are still confirmed spots available.
+    waitlist: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Public venue info
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 

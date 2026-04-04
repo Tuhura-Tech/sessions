@@ -31,6 +31,7 @@ class Session(CamelizedBaseSchema):
     day_of_week: int | None = None
 
     capacity: int
+    waitlist: bool = False
 
     description: str | None = None
 
@@ -120,6 +121,7 @@ class SessionCreate(CamelizedBaseSchema):
     day_of_week: int | None = None
 
     capacity: int
+    waitlist: bool = False
 
     description: str | None = None
 
@@ -172,6 +174,7 @@ class SessionUpdate(CamelizedBaseSchema):
     day_of_week: int | None = None
 
     capacity: int | None = None
+    waitlist: bool | None = None
 
     description: str | None = None
 

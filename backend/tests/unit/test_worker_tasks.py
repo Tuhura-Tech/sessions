@@ -629,6 +629,7 @@ class TestProcessSignupApprovalTask:
         mock_session.age_lower = 5
         mock_session.age_upper = 15
         mock_session.is_full = False
+        mock_session.waitlist = False
         mock_session.name = "Science"
         mock_session.location = MagicMock()
         mock_session.location.name = "Lab"
@@ -677,6 +678,7 @@ class TestProcessSignupApprovalTask:
         mock_session.age_lower = 5
         mock_session.age_upper = 15
         mock_session.is_full = True
+        mock_session.waitlist = False
         mock_session.name = "Full Session"
         mock_session.location = MagicMock()
         mock_session.location.name = "Room"
@@ -706,6 +708,51 @@ class TestProcessSignupApprovalTask:
         assert mock_signup.status == "waitlisted"
 
     @patch(DB_SESSION)
+    async def test_waitlisted_when_eligible_and_waitlist_mode_enabled(
+        self, mock_get_db: AsyncMock
+    ) -> None:
+        """When session.waitlist=True, eligible signups are waitlisted even with space."""
+        from datetime import date, timedelta
+
+        mock_signup = MagicMock()
+        mock_signup.status = "pending"
+        mock_student = MagicMock()
+        mock_student.date_of_birth = date.today() - timedelta(days=365 * 10)
+        mock_student.name = "Kid"
+        mock_session = MagicMock()
+        mock_session.age_lower = 5
+        mock_session.age_upper = 15
+        mock_session.is_full = False  # space available
+        mock_session.waitlist = True  # but session is in waitlist mode
+        mock_session.name = "Waitlist Session"
+        mock_session.location = MagicMock()
+        mock_session.location.name = "Room"
+        mock_session.location.address = "2 St"
+        mock_caregiver = MagicMock()
+        mock_caregiver.email = "carer@test.com"
+        mock_caregiver.name = "Carer"
+
+        mock_db = self._build_mock_db(
+            signup=mock_signup,
+            student=mock_student,
+            session=mock_session,
+            caregiver=mock_caregiver,
+        )
+        mock_get_db.return_value = mock_db
+
+        result = await process_signup_approval_task(
+            _make_ctx(),
+            signup_id="su-wl",
+            caregiver_id="cg-1",
+            student_id="st-1",
+            session_id="se-1",
+        )
+
+        assert result["success"] is True
+        assert result["final_status"] == "waitlisted"
+        assert mock_signup.status == "waitlisted"
+
+    @patch(DB_SESSION)
     async def test_pending_when_age_ineligible(self, mock_get_db: AsyncMock) -> None:
         from datetime import date, timedelta
 
@@ -718,6 +765,7 @@ class TestProcessSignupApprovalTask:
         mock_session.age_lower = 8
         mock_session.age_upper = 15
         mock_session.is_full = False
+        mock_session.waitlist = False
         mock_session.name = "Advanced"
         mock_session.location = None
         mock_caregiver = MagicMock()
@@ -755,6 +803,7 @@ class TestProcessSignupApprovalTask:
         mock_session.age_lower = 5
         mock_session.age_upper = 15
         mock_session.is_full = False
+        mock_session.waitlist = False
         mock_session.name = "Session"
         mock_session.location = None
         mock_caregiver = MagicMock()

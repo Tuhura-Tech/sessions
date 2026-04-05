@@ -24,7 +24,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.4.10",
 		"@playwright/test": "1.59.1",
-		"@tailwindcss/vite": "4.1.18",
+		"@tailwindcss/vite": "4.2.2",
 		"@types/jsonwebtoken": "9.0.10",
 		"@types/leaflet": "1.9.21",
 		"@types/react": "19.2.14",
@@ -34,7 +34,7 @@
 		"openapi-typescript": "7.13.0",
 		"prettier": "3.8.1",
 		"prettier-plugin-tailwindcss": "0.7.2",
-		"tailwindcss": "4.1.18",
+		"tailwindcss": "4.2.2",
 		"typescript": "5.9.3",
 		"vite": "7.3.1"
 	},

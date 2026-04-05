@@ -55,6 +55,18 @@ function parseSessions(mapEl) {
 	}
 }
 
+/** @param {[number, number]} latlong */
+function isValidLatlong(latlong) {
+	if (!Array.isArray(latlong) || latlong.length !== 2) return false;
+	const [lat, lng] = latlong;
+	if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+	if (lat < -90 || lat > 90) return false;
+	if (lng < -180 || lng > 180) return false;
+	// Common geocoding fallback for unknown addresses.
+	if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) return false;
+	return true;
+}
+
 /** @param {HTMLElement} mapEl */
 async function initMap(mapEl) {
 	if (mapEl.dataset.mapInitialized === 'true') return;
@@ -97,11 +109,13 @@ async function initMap(mapEl) {
 		const markerLayerRef = new FeatureGroup();
 		mapRef.addLayer(markerLayerRef);
 		let markerCount = 0;
+		let firstMarkerLatlong = null;
 
 		for (const session of sessions) {
-			if (!session?.latlong || session.latlong.length !== 2) continue;
+			if (!session?.latlong || !isValidLatlong(session.latlong)) continue;
 			const marker = new Marker(session.latlong, { icon }).addTo(markerLayerRef);
 			markerCount += 1;
+			if (!firstMarkerLatlong) firstMarkerLatlong = session.latlong;
 			const q = encodeURIComponent(`${session.name}, ${session.address}`);
 			const popupContent = `
 				<div>
@@ -116,8 +130,8 @@ async function initMap(mapEl) {
 		}
 
 		try {
-			if (markerCount === 1 && sessions[0]?.latlong) {
-				mapRef.setView(sessions[0].latlong, 17, { animate: false });
+			if (markerCount === 1 && firstMarkerLatlong) {
+				mapRef.setView(firstMarkerLatlong, 15, { animate: false });
 			} else if (markerCount > 1) {
 				mapRef.fitBounds(markerLayerRef.getBounds().pad(0.1), { maxZoom: 12 });
 				if (mapRef.getZoom() < 4) {

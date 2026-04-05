@@ -102,7 +102,6 @@ async function initMap(mapEl) {
 		// Add tile layer first
 		new TileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 19,
-			noWrap: true,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 		}).addTo(mapRef);
 

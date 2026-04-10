@@ -101,23 +101,37 @@ class _HTTPConflictException(HTTPException):
 
 
 def after_exception_hook_handler(exc: Exception, _scope: Scope) -> None:
-    """Binds `exc_info` key with exception instance as value to structlog
-    context vars.
+    """Log exceptions after they are handled by Litestar.
 
-    This must be a coroutine so that it is not wrapped in a thread where we'll lose context.
+    4xx client errors are logged at WARNING level without a stack trace.
+    5xx server errors are logged at ERROR level with full exc_info.
 
     Args:
         exc: the exception that was raised.
         _scope: scope of the request
     """
+    import logging
+
+    _logger = logging.getLogger("litestar.exceptions")
+
     if isinstance(exc, ApplicationError):
         return
-    if (
-        isinstance(exc, HTTPException)
-        and exc.status_code < HTTP_500_INTERNAL_SERVER_ERROR
-    ):
+    if isinstance(exc, HTTPException):
+        if exc.status_code < HTTP_500_INTERNAL_SERVER_ERROR:
+            _logger.warning(
+                "HTTP %s: %s",
+                exc.status_code,
+                getattr(exc, "detail", str(exc)),
+            )
+        else:
+            _logger.error(
+                "HTTP %s: %s",
+                exc.status_code,
+                getattr(exc, "detail", str(exc)),
+                exc_info=exc,
+            )
         return
-    # bind_contextvars(exc_info=sys.exc_info())
+    _logger.error("Unhandled exception", exc_info=exc)
 
 
 _create_debug_response_typed = cast(

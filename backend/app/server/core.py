@@ -9,7 +9,11 @@ from advanced_alchemy.exceptions import NotFoundError as AlchemyNotFoundError
 
 from app.db import models as m
 from datetime import datetime
-from app.lib.exceptions import ApplicationError, exception_to_http_response
+from app.lib.exceptions import (
+    ApplicationError,
+    after_exception_hook_handler,
+    exception_to_http_response,
+)
 
 
 class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
@@ -144,7 +148,9 @@ class ApplicationCore(InitPluginProtocol, CLIPluginProtocol):
             AdminStudentController,
         ]
 
-        app_config.debug = True
+        app_config.debug = settings.debug
+
+        app_config.after_exception = [after_exception_hook_handler]
 
         # Register exception handlers
         app_config.exception_handlers = {

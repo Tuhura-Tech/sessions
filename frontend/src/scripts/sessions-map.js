@@ -12,6 +12,17 @@ function showMapError(mapEl) {
 		'<div class="flex h-full items-center justify-center px-6 text-center text-sm text-red-700">Map failed to load. Please refresh the page, or open the session address directly in Google Maps.</div>';
 }
 
+const MAP_DEBUG =
+	typeof window !== 'undefined' &&
+	(new URLSearchParams(window.location.search).has('mapDebug') ||
+		window.localStorage?.getItem('mapDebug') === '1');
+
+function debugLog(...args) {
+	if (MAP_DEBUG) {
+		console.log('[Tuhura][MapDebug]', ...args);
+	}
+}
+
 /** @returns {Promise<any>} */
 async function loadLeaflet() {
 	try {
@@ -75,6 +86,7 @@ async function initMap(mapEl) {
 	try {
 		const sessions = parseSessions(mapEl);
 		if (!sessions.length) return;
+		debugLog('map element', mapEl.id || '(no-id)', 'total sessions', sessions.length);
 
 		const mapId = mapEl.id;
 		if (!mapId) return;
@@ -109,11 +121,21 @@ async function initMap(mapEl) {
 		mapRef.addLayer(markerLayerRef);
 		let markerCount = 0;
 		let firstMarkerLatlong = null;
+		const validLatlongs = [];
+		const invalidSessions = [];
 
 		for (const session of sessions) {
-			if (!session?.latlong || !isValidLatlong(session.latlong)) continue;
+			if (!session?.latlong || !isValidLatlong(session.latlong)) {
+				invalidSessions.push({
+					name: session?.name,
+					address: session?.address,
+					latlong: session?.latlong,
+				});
+				continue;
+			}
 			const marker = new Marker(session.latlong, { icon }).addTo(markerLayerRef);
 			markerCount += 1;
+			validLatlongs.push(session.latlong);
 			if (!firstMarkerLatlong) firstMarkerLatlong = session.latlong;
 			const q = encodeURIComponent(`${session.name}, ${session.address}`);
 			const popupContent = `
@@ -128,14 +150,30 @@ async function initMap(mapEl) {
 			marker.bindPopup(new Popup({ maxWidth: 300 }).setContent(popupContent));
 		}
 
+		debugLog('valid markers', markerCount, validLatlongs);
+		if (invalidSessions.length > 0) {
+			debugLog('invalid sessions filtered', invalidSessions.length, invalidSessions);
+		}
+
 		try {
 			if (markerCount === 1 && firstMarkerLatlong) {
 				mapRef.setView(firstMarkerLatlong, 15, { animate: false });
+				debugLog('single marker setView', { center: firstMarkerLatlong, zoom: 15 });
 			} else if (markerCount > 1) {
-				mapRef.fitBounds(markerLayerRef.getBounds().pad(0.1), { maxZoom: 12 });
+				const bounds = markerLayerRef.getBounds().pad(0.1);
+				mapRef.fitBounds(bounds, { maxZoom: 12 });
+				debugLog('fitBounds applied', {
+					northEast: bounds.getNorthEast(),
+					southWest: bounds.getSouthWest(),
+					center: mapRef.getCenter(),
+					zoom: mapRef.getZoom(),
+				});
 				if (mapRef.getZoom() < 4) {
 					mapRef.setZoom(4, { animate: false });
+					debugLog('zoom clamped to min', 4);
 				}
+			} else {
+				debugLog('no valid markers; keeping default view');
 			}
 		} catch {
 			// ignore

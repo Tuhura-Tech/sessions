@@ -77,6 +77,50 @@ async def test_newsletter_subscription_without_webhook(mocker):
     assert not mock_client_class.called
 
 
+async def test_newsletter_subscription_cloudflare_blocked(mocker):
+    """Test newsletter subscription when Cloudflare blocks the request."""
+    import httpx
+
+    # Build a mock response mimicking a Cloudflare 403 challenge page
+    mock_request = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 403
+    mock_response.text = (
+        '<html><script src="/cdn-cgi/challenge-platform/..."></script></html>'
+    )
+    mock_response.headers = {"server": "cloudflare"}
+    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "403 Forbidden", request=mock_request, response=mock_response
+    )
+
+    mock_post = AsyncMock(return_value=mock_response)
+    mock_client = MagicMock()
+    mock_client.post = mock_post
+    mock_async_client_class = MagicMock()
+    mock_async_client_context = MagicMock()
+    mock_async_client_context.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_async_client_context.__aexit__ = AsyncMock(return_value=None)
+    mock_async_client_class.return_value = mock_async_client_context
+
+    mocker.patch("httpx.AsyncClient", mock_async_client_class)
+    mocker.patch(
+        "app.lib.newsletter.settings.newsletter_webhook_url",
+        "https://blog.example.org.nz",
+    )
+    mocker.patch(
+        "app.lib.newsletter.settings.newsletter_webhook_token",
+        "test_key_id:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    )
+    mocker.patch("app.lib.newsletter.settings.email_dry_run", False)
+
+    from app.lib.newsletter import notify_newsletter_subscription
+
+    # Should not raise; should log the Cloudflare-specific message
+    await notify_newsletter_subscription(email="test@example.com", name="Test User")
+
+    assert mock_post.called, "Expected POST to be attempted"
+
+
 async def test_newsletter_worker_task_without_webhook(mocker):
     """Test newsletter subscription worker task when webhook is not configured."""
 

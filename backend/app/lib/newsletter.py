@@ -93,6 +93,18 @@ async def notify_newsletter_subscription(
                 and "already exists" in e.response.text.lower()
             ):
                 logger.info(f"Member {email} already subscribed to newsletter")
+            elif e.response.status_code == 403 and (
+                "challenge-platform" in e.response.text
+                or "cf-chl" in e.response.text.lower()
+                or "cloudflare" in e.response.headers.get("server", "").lower()
+            ):
+                logger.error(
+                    f"Newsletter subscription blocked by Cloudflare for {email}: "
+                    "The Ghost Admin API URL is behind Cloudflare bot protection. "
+                    "Configure a Cloudflare WAF rule to bypass bot challenges for the "
+                    "worker's IP on /ghost/api/admin/*, or use a non-proxied (grey-cloud) "
+                    "DNS entry for the Ghost API host."
+                )
             else:
                 logger.error(
                     f"Newsletter subscription failed for {email}: {e.response.status_code} - {e.response.text}"

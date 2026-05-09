@@ -276,9 +276,7 @@ class SessionController(Controller):
 
                 day = block.start_date
                 day_of_week_int = (
-                    int(session.day_of_week)
-                    if session.day_of_week is not None
-                    else 0
+                    int(session.day_of_week) if session.day_of_week is not None else 0
                 )
                 day_of_week_python = (day_of_week_int - 1) % 7
                 days_ahead = (day_of_week_python - day.weekday() + 7) % 7
@@ -292,10 +290,12 @@ class SessionController(Controller):
 
                 # Fetch existing occurrences for this block fresh from DB
                 existing_occs_result = await db.execute(
-                    select(m.Occurrence).where(
+                    select(m.Occurrence)
+                    .where(
                         m.Occurrence.session_id == session_id,
                         m.Occurrence.block_id == block.id,
-                    ).order_by(m.Occurrence.starts_at)
+                    )
+                    .order_by(m.Occurrence.starts_at)
                 )
                 occurrences = existing_occs_result.scalars().all()
 
@@ -329,7 +329,7 @@ class SessionController(Controller):
                             )
                         )
 
-                for extra in occurrences[len(desired_dates):]:
+                for extra in occurrences[len(desired_dates) :]:
                     await session_service.occurrences.delete(extra.id)
 
         session = await session_service.get(session_id)

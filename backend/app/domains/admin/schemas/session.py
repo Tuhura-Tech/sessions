@@ -60,8 +60,12 @@ class Session(CamelizedBaseSchema):
             block_links = getattr(data, "block_links", None) or []
             block_ids = [link.block_id for link in block_links]
             signups = getattr(data, "signups", None) or []
-            confirmed = sum(1 for s in signups if getattr(s, "status", None) == "confirmed")
-            waitlisted = sum(1 for s in signups if getattr(s, "status", None) == "waitlisted")
+            confirmed = sum(
+                1 for s in signups if getattr(s, "status", None) == "confirmed"
+            )
+            waitlisted = sum(
+                1 for s in signups if getattr(s, "status", None) == "waitlisted"
+            )
             pending = sum(1 for s in signups if getattr(s, "status", None) == "pending")
             capacity = getattr(data, "capacity", 0) or 0
             waitlist_flag = getattr(data, "waitlist", False)
@@ -88,7 +92,9 @@ class Session(CamelizedBaseSchema):
                 "waitlist_count": waitlisted,
                 "pending_count": pending,
                 "is_full": bool(waitlist_flag) or confirmed >= capacity,
-                "needs_devices_count": sum(1 for s in signups if getattr(s, "needs_devices", False)),
+                "needs_devices_count": sum(
+                    1 for s in signups if getattr(s, "needs_devices", False)
+                ),
             }
 
         payload: dict[str, Any] = dict(data)
@@ -98,9 +104,15 @@ class Session(CamelizedBaseSchema):
             block_links = payload.get("block_links", [])
             if block_links:
                 payload["block_ids"] = [
-                    link.get("block_id") if isinstance(link, dict) else getattr(link, "block_id", None)
+                    link.get("block_id")
+                    if isinstance(link, dict)
+                    else getattr(link, "block_id", None)
                     for link in block_links
-                    if (link.get("block_id") if isinstance(link, dict) else getattr(link, "block_id", None))
+                    if (
+                        link.get("block_id")
+                        if isinstance(link, dict)
+                        else getattr(link, "block_id", None)
+                    )
                 ]
 
         # If counts are already set and non-zero, use them

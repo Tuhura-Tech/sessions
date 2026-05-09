@@ -48,10 +48,13 @@ const EditSession: React.FC = () => {
 				setLocations(locationsData);
 				setBlocks(blocksData);
 
+				// block_ids is returned directly by the API as UUIDs
+				const currentBlockIds = sessionData.block_ids || [];
+
 				setFormData({
 					name: sessionData.name,
 					year: sessionData.year,
-					locationId: sessionData.session_location_id || '',
+					locationId: sessionData.location_id || sessionData.location?.id || '',
 					ageLower: sessionData.age_lower?.toString() || '',
 					ageUpper: sessionData.age_upper?.toString() || '',
 					dayOfWeek: sessionData.day_of_week?.toString() || '',
@@ -63,7 +66,7 @@ const EditSession: React.FC = () => {
 					photoAlbumUrl: sessionData.photo_album_url || '',
 					internalNotes: sessionData.internal_notes || '',
 					sessionType: (sessionData.session_type as 'term' | 'special' | 'event') || 'term',
-					blocks: sessionData.blocks || [],
+					blocks: currentBlockIds,
 				});
 			} catch (error) {
 				console.error('Failed to load session data:', error);
@@ -103,6 +106,7 @@ const EditSession: React.FC = () => {
 				photoAlbumUrl: formData.photoAlbumUrl || null,
 				internalNotes: formData.internalNotes || null,
 				waitlist: formData.waitlist,
+				blocks: formData.blocks,
 			};
 
 			await adminApi.updateSession(id, sessionData);

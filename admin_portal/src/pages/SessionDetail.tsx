@@ -79,7 +79,7 @@ const SessionDetail: React.FC = () => {
 			setSession(sessionData);
 			setSignups(signupsData);
 			setOccurrences(occurrencesData);
-			const linkedBlockIds = new Set((sessionData.blocks || []).map((blockId) => String(blockId)));
+			const linkedBlockIds = new Set((sessionData.block_ids || []).map((id) => String(id)));
 			setSessionBlocks(allBlocks.filter((block) => linkedBlockIds.has(String(block.id))));
 			setAssignedStaff(staffData);
 			setAvailableStaff(allStaff);

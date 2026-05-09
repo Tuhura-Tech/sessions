@@ -43,6 +43,8 @@ class Session(CamelizedBaseSchema):
     location_id: UUID
     location: Location | None = None
 
+    block_ids: list[UUID] = []
+
     confirmed_count: int = 0
     waitlist_count: int = 0
     pending_count: int = 0
@@ -51,13 +53,67 @@ class Session(CamelizedBaseSchema):
 
     @model_validator(mode="before")
     @classmethod
-    def compute_signup_counts(cls, data: Any) -> Any:
-        """Compute signup counts from signups relationship if not already set."""
-        # If it's not a dict, it will be handled by Pydantic's from_attributes
+    def compute_fields(cls, data: Any) -> Any:
+        """Compute block_ids and signup counts from ORM relationships."""
+        # For ORM objects (from_attributes), convert to dict-like via __dict__
         if not isinstance(data, Mapping):
-            return data
+            block_links = getattr(data, "block_links", None) or []
+            block_ids = [link.block_id for link in block_links]
+            signups = getattr(data, "signups", None) or []
+            confirmed = sum(
+                1 for s in signups if getattr(s, "status", None) == "confirmed"
+            )
+            waitlisted = sum(
+                1 for s in signups if getattr(s, "status", None) == "waitlisted"
+            )
+            pending = sum(1 for s in signups if getattr(s, "status", None) == "pending")
+            capacity = getattr(data, "capacity", 0) or 0
+            waitlist_flag = getattr(data, "waitlist", False)
+            return {
+                "id": getattr(data, "id"),
+                "year": getattr(data, "year"),
+                "session_type": getattr(data, "session_type"),
+                "name": getattr(data, "name"),
+                "age_lower": getattr(data, "age_lower"),
+                "age_upper": getattr(data, "age_upper"),
+                "start_time": getattr(data, "start_time"),
+                "end_time": getattr(data, "end_time"),
+                "day_of_week": getattr(data, "day_of_week", None),
+                "capacity": capacity,
+                "waitlist": waitlist_flag,
+                "description": getattr(data, "description", None),
+                "photo_album_url": getattr(data, "photo_album_url", None),
+                "internal_notes": getattr(data, "internal_notes", None),
+                "archived": getattr(data, "archived"),
+                "location_id": getattr(data, "location_id"),
+                "location": getattr(data, "location", None),
+                "block_ids": block_ids,
+                "confirmed_count": confirmed,
+                "waitlist_count": waitlisted,
+                "pending_count": pending,
+                "is_full": bool(waitlist_flag) or confirmed >= capacity,
+                "needs_devices_count": sum(
+                    1 for s in signups if getattr(s, "needs_devices", False)
+                ),
+            }
 
         payload: dict[str, Any] = dict(data)
+
+        # Populate block_ids from block_links if not already set
+        if not payload.get("block_ids"):
+            block_links = payload.get("block_links", [])
+            if block_links:
+                payload["block_ids"] = [
+                    link.get("block_id")
+                    if isinstance(link, dict)
+                    else getattr(link, "block_id", None)
+                    for link in block_links
+                    if (
+                        link.get("block_id")
+                        if isinstance(link, dict)
+                        else getattr(link, "block_id", None)
+                    )
+                ]
 
         # If counts are already set and non-zero, use them
         if (
@@ -186,6 +242,7 @@ class SessionUpdate(CamelizedBaseSchema):
     archived: bool | None = None
 
     location_id: UUID | None = None
+    blocks: list[UUID] | None = None
 
     @field_validator("capacity")
     @classmethod
@@ -225,11 +282,13 @@ class SessionUpdate(CamelizedBaseSchema):
                 self.age_upper,
                 self.start_time,
                 self.end_time,
+                self.day_of_week,
                 self.capacity,
                 self.description,
                 self.photo_album_url,
                 self.internal_notes,
                 self.archived,
+                self.blocks,
             ]
         ):
             raise ValueError("At least one field must be provided for update.")

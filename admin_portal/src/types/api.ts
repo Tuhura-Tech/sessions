@@ -159,6 +159,8 @@ export interface Session {
 	archived: boolean;
 	session_type?: string;
 	blocks?: string[];
+	block_ids?: string[];
+	location_id?: string;
 	location?: SessionLocation;
 	session_location_id?: string;
 	confirmed_count?: number;

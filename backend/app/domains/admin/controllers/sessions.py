@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import csv
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from io import StringIO
 from typing import AsyncIterator
 from uuid import UUID
@@ -47,6 +48,7 @@ class SessionController(Controller):
                 joinedload(m.Location.sessions, innerjoin=True)
             ),
             selectinload(m.Session.signups),
+            selectinload(m.Session.block_links),
         ],
     )
 
@@ -147,23 +149,32 @@ class SessionController(Controller):
             filtered_exclusions = [
                 e.date for e in exclusions if e.date.year == session.year
             ]
+            local_tz = ZoneInfo("Pacific/Auckland")
             for block in blocks:
                 day = block.start_date
                 # Convert enum to int for arithmetic (day_of_week is DayOfWeekEnum | None)
                 day_of_week_int = (
                     int(session.day_of_week) if session.day_of_week is not None else 0
                 )
-                days_ahead = (day_of_week_int - day.weekday() + 7) % 7
+                # Convert DayOfWeekEnum (0=Sun..6=Sat) to Python weekday (0=Mon..6=Sun)
+                day_of_week_python = (day_of_week_int - 1) % 7
+                days_ahead = (day_of_week_python - day.weekday() + 7) % 7
                 day = day + timedelta(days=days_ahead)
 
                 while day <= block.end_date:
                     if day not in filtered_exclusions:
+                        starts_at_local = datetime.combine(
+                            day, session.start_time, tzinfo=local_tz
+                        )
+                        ends_at_local = datetime.combine(
+                            day, session.end_time, tzinfo=local_tz
+                        )
                         await session_service.occurrences.create(
                             m.Occurrence(
                                 session_id=session.id,
                                 block_id=block.id,
-                                starts_at=datetime.combine(day, session.start_time),
-                                ends_at=datetime.combine(day, session.end_time),
+                                starts_at=starts_at_local.astimezone(timezone.utc),
+                                ends_at=ends_at_local.astimezone(timezone.utc),
                             )
                         )
                     day += timedelta(weeks=1)
@@ -180,14 +191,148 @@ class SessionController(Controller):
         session_service: SessionService,
     ) -> Session:
         """Update an existing session."""
+        update_payload = data.model_dump(exclude_unset=True)
+
+        # Extract blocks before passing to the ORM update (not a model column)
+        new_block_ids: list[UUID] | None = update_payload.pop("blocks", None)
+
+        reschedule_fields = {"day_of_week", "start_time", "end_time"}
+        should_reschedule = bool(reschedule_fields.intersection(update_payload.keys()))
+
         try:
-            session = await session_service.update(
-                data.model_dump(exclude_unset=True), session_id
-            )
+            session = await session_service.update(update_payload, session_id)
         except AlchemyNotFoundError:
             raise NotFoundException(detail="Session not found")
         if not session:
             raise NotFoundException(detail="Session not found")
+
+        db = session_service.repository.session
+
+        # --- Block link reconciliation ---
+        if new_block_ids is not None:
+            # Fetch current links fresh from DB
+            existing_links_result = await db.execute(
+                select(m.BlockLink).where(m.BlockLink.session_id == session_id)
+            )
+            existing_links = existing_links_result.scalars().all()
+            existing_block_ids = {link.block_id for link in existing_links}
+            desired_block_ids = set(new_block_ids)
+
+            # Delete links for blocks no longer selected
+            for link in existing_links:
+                if link.block_id not in desired_block_ids:
+                    await session_service.session_block_service.delete(link.id)
+
+            # Add links for newly selected blocks
+            for block_id in desired_block_ids - existing_block_ids:
+                await session_service.session_block_service.create(
+                    m.BlockLink(session_id=session_id, block_id=block_id)
+                )
+
+            # Flush so the DB reflects the new block links before we query occurrences
+            await db.flush()
+
+            should_reschedule = True
+
+        # --- Occurrence reschedule ---
+        if should_reschedule and session.session_type == "term":
+            # Re-fetch session fields (day_of_week, start_time, end_time)
+            session = await session_service.get(session_id)
+            if not session:
+                raise NotFoundException(detail="Session not found")
+
+            exclusions = await session_service.exclusions.list()
+            filtered_exclusions = [
+                e.date for e in exclusions if e.date.year == session.year
+            ]
+            local_tz = ZoneInfo("Pacific/Auckland")
+
+            # Fetch active block links fresh from DB (after flush)
+            active_links_result = await db.execute(
+                select(m.BlockLink).where(m.BlockLink.session_id == session_id)
+            )
+            active_links = active_links_result.scalars().all()
+            active_block_ids = {link.block_id for link in active_links}
+
+            # Delete all occurrences for blocks no longer linked (fresh DB query)
+            old_occs_result = await db.execute(
+                select(m.Occurrence).where(
+                    m.Occurrence.session_id == session_id,
+                    m.Occurrence.block_id.notin_(active_block_ids)
+                    if active_block_ids
+                    else m.Occurrence.block_id.isnot(None),
+                )
+            )
+            for occ in old_occs_result.scalars().all():
+                await session_service.occurrences.delete(occ.id)
+
+            await db.flush()
+
+            # Recalculate occurrences for each active block
+            for link in active_links:
+                block = await session_service.blocks.get(link.block_id)
+                if not block:
+                    continue
+
+                day = block.start_date
+                day_of_week_int = (
+                    int(session.day_of_week)
+                    if session.day_of_week is not None
+                    else 0
+                )
+                day_of_week_python = (day_of_week_int - 1) % 7
+                days_ahead = (day_of_week_python - day.weekday() + 7) % 7
+                day = day + timedelta(days=days_ahead)
+
+                desired_dates: list = []
+                while day <= block.end_date:
+                    if day not in filtered_exclusions:
+                        desired_dates.append(day)
+                    day += timedelta(weeks=1)
+
+                # Fetch existing occurrences for this block fresh from DB
+                existing_occs_result = await db.execute(
+                    select(m.Occurrence).where(
+                        m.Occurrence.session_id == session_id,
+                        m.Occurrence.block_id == block.id,
+                    ).order_by(m.Occurrence.starts_at)
+                )
+                occurrences = existing_occs_result.scalars().all()
+
+                for index, occ_day in enumerate(desired_dates):
+                    starts_at_local = datetime.combine(
+                        occ_day, session.start_time, tzinfo=local_tz
+                    )
+                    ends_at_local = datetime.combine(
+                        occ_day, session.end_time, tzinfo=local_tz
+                    )
+                    starts_at = starts_at_local.astimezone(timezone.utc)
+                    ends_at = ends_at_local.astimezone(timezone.utc)
+
+                    if index < len(occurrences):
+                        await session_service.occurrences.update(
+                            {
+                                "starts_at": starts_at,
+                                "ends_at": ends_at,
+                                "cancelled": False,
+                                "cancellation_reason": None,
+                            },
+                            occurrences[index].id,
+                        )
+                    else:
+                        await session_service.occurrences.create(
+                            m.Occurrence(
+                                session_id=session_id,
+                                block_id=block.id,
+                                starts_at=starts_at,
+                                ends_at=ends_at,
+                            )
+                        )
+
+                for extra in occurrences[len(desired_dates):]:
+                    await session_service.occurrences.delete(extra.id)
+
+        session = await session_service.get(session_id)
         return session_service.to_schema(session, schema_type=Session)
 
     @delete("/{session_id:uuid}", status_code=HTTP_200_OK)

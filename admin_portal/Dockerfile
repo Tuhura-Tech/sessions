@@ -1,5 +1,5 @@
 # Frontend admin portal build
-FROM docker.io/library/node:24-alpine@sha256:01743339035a5c3c11a373cd7c83aeab6ed1457b55da6a69e014a95ac4e4700b AS builder
+FROM docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14 AS builder
 
 # Build-time argument for API base URL (must be set at build time)
 # Usage: docker build --build-arg PUBLIC_BASE_URL=https://api.example.com

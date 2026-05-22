@@ -23,7 +23,7 @@ ENV PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
 RUN pnpm run build
 
 # Production image
-FROM node:24-alpine@sha256:01743339035a5c3c11a373cd7c83aeab6ed1457b55da6a69e014a95ac4e4700b
+FROM node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14
 
 WORKDIR /app
 
